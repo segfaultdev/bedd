@@ -31,6 +31,9 @@ struct bedd_t {
 
   // scroll offset
   int off_row;
+
+  // screen height
+  int height;
 };
 
 void bedd_init(bedd_t *tab, const char *path);

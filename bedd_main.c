@@ -51,6 +51,8 @@ int prompt_str(char *buffer, int length, const char *prompt) {
 
   int first = 1;
 
+  printf("\x1B[?25h");
+
   for (;;) {
     int width = 80, height = 25;
     get_winsize(&width, &height);
@@ -110,6 +112,8 @@ int main(int argc, const char **argv) {
   for (;;) {
     int width = 80, height = 25;
     get_winsize(&width, &height);
+
+    tabs[tab_pos].height = height;
 
     char c;
 
@@ -333,6 +337,7 @@ int main(int argc, const char **argv) {
       continue;
     }
 
+    printf("\x1B[?25l");
     printf("\x1B[2J\x1B[H" BEDD_BLACK);
 
     bedd_tabs(tabs, tab_pos, tab_cnt, width);
@@ -362,16 +367,8 @@ int main(int argc, const char **argv) {
       line_len++;
     }
 
-    if (tabs[tab_pos].off_row > tabs[tab_pos].row) {
-      tabs[tab_pos].off_row = tabs[tab_pos].row;
-    }
-
-    if (tabs[tab_pos].off_row < tabs[tab_pos].row - (height - 3)) {
-      tabs[tab_pos].off_row = tabs[tab_pos].row - (height - 3);
-    }
-
     int row = tabs[tab_pos].off_row;
-    int pos = 2;
+    int pos = 0;
 
     for (int i = 0; i < height - 2; i++, row++) {
       if (row >= 0 && row < tabs[tab_pos].line_cnt) {
@@ -447,10 +444,15 @@ int main(int argc, const char **argv) {
       col = tabs[tab_pos].lines[tabs[tab_pos].row].length;
     }
 
-    printf("\x1B[%d;%dH", pos, col + line_len + 6);
+    if (pos) {
+      printf("\x1B[?25h");
+      printf("\x1B[%d;%dH", pos, col + line_len + 6);
+    }
+
     fflush(stdout);
   }
 
+  printf("\x1B[?25h");
   printf("\x1B[?1000;1002;1006;1015l");
   printf("\x1B[2J\x1B[H" BEDD_BLACK);
 

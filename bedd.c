@@ -157,6 +157,14 @@ void bedd_write(bedd_t *tab, char c) {
   tab->lines[tab->row].buffer[tab->col++] = c;
   tab->lines[tab->row].length++;
 
+  if (tab->off_row > tab->row) {
+    tab->off_row = tab->row;
+  }
+
+  if (tab->off_row < tab->row - (tab->height - 3)) {
+    tab->off_row = tab->row - (tab->height - 3);
+  }
+
   tab->sel_row = tab->row;
   tab->sel_col = tab->col;
 }
@@ -207,6 +215,14 @@ void bedd_delete(bedd_t *tab) {
   tab->sel_row = tab->row;
   tab->sel_col = tab->col;
 
+  if (tab->off_row > tab->row) {
+    tab->off_row = tab->row;
+  }
+
+  if (tab->off_row < tab->row - (tab->height - 3)) {
+    tab->off_row = tab->row - (tab->height - 3);
+  }
+
   tab->dirty = 1;
 }
 
@@ -221,6 +237,14 @@ void bedd_up(bedd_t *tab, int select) {
     tab->sel_row = tab->row;
     tab->sel_col = tab->col;
   }
+
+  if (tab->off_row > tab->row) {
+    tab->off_row = tab->row;
+  }
+
+  if (tab->off_row < tab->row - (tab->height - 3)) {
+    tab->off_row = tab->row - (tab->height - 3);
+  }
 }
 
 void bedd_down(bedd_t *tab, int select) {
@@ -233,6 +257,14 @@ void bedd_down(bedd_t *tab, int select) {
   if (!select || tab->sel_row > tab->row || (tab->sel_row == tab->row && tab->sel_col > tab->col)) {
     tab->sel_row = tab->row;
     tab->sel_col = tab->col;
+  }
+
+  if (tab->off_row > tab->row) {
+    tab->off_row = tab->row;
+  }
+
+  if (tab->off_row < tab->row - (tab->height - 3)) {
+    tab->off_row = tab->row - (tab->height - 3);
   }
 }
 
@@ -252,6 +284,14 @@ void bedd_left(bedd_t *tab, int select) {
     tab->sel_row = tab->row;
     tab->sel_col = tab->col;
   }
+
+  if (tab->off_row > tab->row) {
+    tab->off_row = tab->row;
+  }
+
+  if (tab->off_row < tab->row - (tab->height - 3)) {
+    tab->off_row = tab->row - (tab->height - 3);
+  }
 }
 
 void bedd_right(bedd_t *tab, int select) {
@@ -265,5 +305,13 @@ void bedd_right(bedd_t *tab, int select) {
   if (!select || tab->sel_row > tab->row || (tab->sel_row == tab->row && tab->sel_col > tab->col)) {
     tab->sel_row = tab->row;
     tab->sel_col = tab->col;
+  }
+
+  if (tab->off_row > tab->row) {
+    tab->off_row = tab->row;
+  }
+
+  if (tab->off_row < tab->row - (tab->height - 3)) {
+    tab->off_row = tab->row - (tab->height - 3);
   }
 }
