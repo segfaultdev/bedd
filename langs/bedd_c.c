@@ -238,3 +238,30 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
 
   return state;
 }
+
+void bedd_indent_c(bedd_t *tab) {
+  int level = 0;
+  int step = 0;
+
+  for (int i = 0; i < tab->lines[tab->row - 1].length; i++) {
+    if (tab->lines[tab->row - 1].buffer[i] == ' ') {
+      level++;
+    } else {
+      break;
+    }
+  }
+
+  for (int i = level; i < tab->lines[tab->row - 1].length; i++) {
+    if (tab->lines[tab->row - 1].buffer[i] == '{' || tab->lines[tab->row - 1].buffer[i] == '(') {
+      step++;
+    } else if (tab->lines[tab->row - 1].buffer[i] == '}' || tab->lines[tab->row - 1].buffer[i] == ')') {
+      step--;
+    }
+  }
+
+  level += 2 * step;
+
+  for (int i = 0; i < level; i++) {
+    bedd_write(tab, ' ');
+  }
+}

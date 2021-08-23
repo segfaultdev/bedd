@@ -59,6 +59,9 @@ struct bedd_t {
 
   // screen height
   int height;
+
+  // code flag
+  int code;
 };
 
 void bedd_init(bedd_t *tab, const char *path);
@@ -67,6 +70,7 @@ int  bedd_save(bedd_t *tab);
 void bedd_tabs(bedd_t *tabs, int tab_pos, int tab_cnt, int width);
 void bedd_stat(bedd_t *tab, const char *status);
 int  bedd_color(bedd_t *tab, int state, int row, int col);
+void bedd_indent(bedd_t *tab);
 
 void bedd_write(bedd_t *tab, char c);
 void bedd_delete(bedd_t *tab);
@@ -77,6 +81,7 @@ void bedd_left(bedd_t *tab, int select);
 void bedd_right(bedd_t *tab, int select);
 
 // langs
-int bedd_color_c(bedd_t *tab, int state, int row, int col);
+int  bedd_color_c(bedd_t *tab, int state, int row, int col);
+void bedd_indent_c(bedd_t *tab);
 
 #endif

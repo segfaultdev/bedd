@@ -123,12 +123,49 @@ int bedd_color(bedd_t *tab, int state, int row, int col) {
         !strcmp(tab->path + (strlen(tab->path) - 4), ".cpp") ||
         !strcmp(tab->path + (strlen(tab->path) - 4), ".hpp") ||
         !strcmp(tab->path + (strlen(tab->path) - 4), ".cxx")) {
+      tab->code = 1;
       return bedd_color_c(tab, state, row, col);
     }
   }
 
+  tab->code = 0;
+
   printf(BEDD_WHITE);
   return 0;
+}
+
+void bedd_indent(bedd_t *tab) {
+  if (tab->path) {
+    if (!strcmp(tab->path + (strlen(tab->path) - 2), ".c") ||
+        !strcmp(tab->path + (strlen(tab->path) - 2), ".h") ||
+        !strcmp(tab->path + (strlen(tab->path) - 3), ".cc") ||
+        !strcmp(tab->path + (strlen(tab->path) - 3), ".hh") ||
+        !strcmp(tab->path + (strlen(tab->path) - 4), ".cpp") ||
+        !strcmp(tab->path + (strlen(tab->path) - 4), ".hpp") ||
+        !strcmp(tab->path + (strlen(tab->path) - 4), ".cxx")) {
+      bedd_indent_c(tab);
+    }
+  }
+}
+
+static void bedd_write_opt(bedd_t *tab, char c) {
+  tab->lines[tab->row].buffer = realloc(tab->lines[tab->row].buffer, tab->lines[tab->row].length + 1);
+
+  memmove(tab->lines[tab->row].buffer + tab->col + 1, tab->lines[tab->row].buffer + tab->col, tab->lines[tab->row].length - tab->col);
+
+  tab->lines[tab->row].buffer[tab->col++] = c;
+  tab->lines[tab->row].length++;
+
+  if (tab->off_row > tab->row) {
+    tab->off_row = tab->row;
+  }
+
+  if (tab->off_row < tab->row - (tab->height - 3)) {
+    tab->off_row = tab->row - (tab->height - 3);
+  }
+
+  tab->sel_row = tab->row;
+  tab->sel_col = tab->col;
 }
 
 void bedd_write(bedd_t *tab, char c) {
@@ -150,8 +187,14 @@ void bedd_write(bedd_t *tab, char c) {
     int col = tab->col;
     tab->col = 0;
 
+    if (tab->code) {
+      bedd_indent(tab);
+    }
+
+    int new_col = tab->col;
+
     for (int i = col; i < tab->lines[tab->row - 1].length; i++) {
-      bedd_write(tab, tab->lines[tab->row - 1].buffer[i]);
+      bedd_write_opt(tab, tab->lines[tab->row - 1].buffer[i]);
     }
 
     if (col < tab->lines[tab->row - 1].length) {
@@ -159,7 +202,7 @@ void bedd_write(bedd_t *tab, char c) {
       tab->lines[tab->row - 1].buffer = realloc(tab->lines[tab->row - 1].buffer, tab->lines[tab->row - 1].length);
     }
 
-    tab->col = 0;
+    tab->col = new_col;
     tab->line_cnt++;
 
     tab->sel_row = tab->row;
@@ -168,23 +211,71 @@ void bedd_write(bedd_t *tab, char c) {
     return;
   }
 
-  tab->lines[tab->row].buffer = realloc(tab->lines[tab->row].buffer, tab->lines[tab->row].length + 1);
+  if (tab->code) {
+    if (c == ')' && tab->col < tab->lines[tab->row].length) {
+      if (tab->lines[tab->row].buffer[tab->col] == ')') {
+        bedd_right(tab, 0);
+        return;
+      }
+    }
 
-  memmove(tab->lines[tab->row].buffer + tab->col + 1, tab->lines[tab->row].buffer + tab->col, tab->lines[tab->row].length - tab->col);
+    if (c == '}' && tab->col < tab->lines[tab->row].length) {
+      if (tab->lines[tab->row].buffer[tab->col] == '}') {
+        bedd_right(tab, 0);
+        return;
+      }
+    }
 
-  tab->lines[tab->row].buffer[tab->col++] = c;
-  tab->lines[tab->row].length++;
+    if (c == ']' && tab->col < tab->lines[tab->row].length) {
+      if (tab->lines[tab->row].buffer[tab->col] == ']') {
+        bedd_right(tab, 0);
+        return;
+      }
+    }
 
-  if (tab->off_row > tab->row) {
-    tab->off_row = tab->row;
+    if (c == '"' && tab->col < tab->lines[tab->row].length) {
+      if (tab->lines[tab->row].buffer[tab->col] == '"') {
+        bedd_right(tab, 0);
+        return;
+      }
+    }
+
+    if (c == '\'' && tab->col < tab->lines[tab->row].length) {
+      if (tab->lines[tab->row].buffer[tab->col] == '\'') {
+        bedd_right(tab, 0);
+        return;
+      }
+    }
   }
 
-  if (tab->off_row < tab->row - (tab->height - 3)) {
-    tab->off_row = tab->row - (tab->height - 3);
-  }
+  bedd_write_opt(tab, c);
 
-  tab->sel_row = tab->row;
-  tab->sel_col = tab->col;
+  if (tab->code) {
+    if (c == '(') {
+      bedd_write_opt(tab, ')');
+      bedd_left(tab, 0);
+    }
+
+    if (c == '{') {
+      bedd_write_opt(tab, '}');
+      bedd_left(tab, 0);
+    }
+
+    if (c == '[') {
+      bedd_write_opt(tab, ']');
+      bedd_left(tab, 0);
+    }
+
+    if (c == '"') {
+      bedd_write_opt(tab, '"');
+      bedd_left(tab, 0);
+    }
+
+    if (c == '\'') {
+      bedd_write_opt(tab, '\'');
+      bedd_left(tab, 0);
+    }
+  }
 }
 
 void bedd_delete(bedd_t *tab) {
