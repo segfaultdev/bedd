@@ -220,8 +220,10 @@ int main(int argc, const char **argv) {
                 if (seq[2] == '~') {
                   if (seq[1] == '1' || seq[1] == '7') {
                     tabs[tab_pos].col = 0;
+                    tabs[tab_pos].sel_col = tabs[tab_pos].col;
                   } else if (seq[1] == '4' || seq[1] == '8') {
                     tabs[tab_pos].col = tabs[tab_pos].lines[tabs[tab_pos].row].length;
+                    tabs[tab_pos].sel_col = tabs[tab_pos].col;
                   } else if (seq[1] == '3') {
                     if (tabs[tab_pos].sel_row == tabs[tab_pos].row && tabs[tab_pos].sel_col == tabs[tab_pos].col) {
                       bedd_right(tabs + tab_pos, 0);
@@ -252,8 +254,26 @@ int main(int argc, const char **argv) {
                     } else if (seq[3] == '5') {
                       if (seq[4] == 'A') {
                         tabs[tab_pos].row = 0;
+                        tabs[tab_pos].sel_row = tabs[tab_pos].row;
+
+                        if (tabs[tab_pos].off_row > tabs[tab_pos].row) {
+                          tabs[tab_pos].off_row = tabs[tab_pos].row;
+                        }
+
+                        if (tabs[tab_pos].off_row < tabs[tab_pos].row - (height - 3)) {
+                          tabs[tab_pos].off_row = tabs[tab_pos].row - (height - 3);
+                        }
                       } else if (seq[4] == 'B') {
                         tabs[tab_pos].row = tabs[tab_pos].line_cnt - 1;
+                        tabs[tab_pos].sel_row = tabs[tab_pos].row;
+
+                        if (tabs[tab_pos].off_row > tabs[tab_pos].row) {
+                          tabs[tab_pos].off_row = tabs[tab_pos].row;
+                        }
+
+                        if (tabs[tab_pos].off_row < tabs[tab_pos].row - (height - 3)) {
+                          tabs[tab_pos].off_row = tabs[tab_pos].row - (height - 3);
+                        }
                       } else if (seq[4] == 'C') {
                         if (tab_pos < tab_cnt - 1) {
                           tab_pos++;
@@ -321,6 +341,60 @@ int main(int argc, const char **argv) {
                             tab_pos = tab_cnt - 1;
                           }
                         }
+
+                        if (col == width && row > 1 && row < height) {
+                          int scroll_start = ((tabs[tab_pos].off_row) * (height - 2)) / tabs[tab_pos].line_cnt;
+                          int scroll_end   = ((tabs[tab_pos].off_row + (height - 2)) * (height - 2)) / tabs[tab_pos].line_cnt;
+
+                          if (row - 1 >= scroll_start && row - 1 <= scroll_end) {
+                            tabs[tab_pos].tmp_row = (row - 1) - scroll_start;
+                          } else {
+                            tabs[tab_pos].tmp_row = (scroll_end - scroll_start) / 2;
+
+                            int scroll = (row - 1) - tabs[tab_pos].tmp_row;
+                            tabs[tab_pos].off_row = (tabs[tab_pos].line_cnt * scroll) / (height - 2);
+                          }
+                        } else {
+                          tabs[tab_pos].tmp_row = -1;
+                        }
+                      }
+                    }
+                  } else if (seq[2] == '3') {
+                    if (read(STDIN_FILENO, &seq[3], 1) >= 1 && read(STDIN_FILENO, &seq[4], 1) >= 1) {
+                      if (seq[4] == ';') {
+                        int row = 0;
+                        int col = 0;
+
+                        for (;;) {
+                          if (!read(STDIN_FILENO, &c, 1)) {
+                            break;
+                          }
+
+                          if (!(c >= '0' && c <= '9')) {
+                            break;
+                          }
+
+                          col *= 10;
+                          col += (c - '0');
+                        }
+
+                        for (;;) {
+                          if (!read(STDIN_FILENO, &c, 1)) {
+                            break;
+                          }
+
+                          if (!(c >= '0' && c <= '9')) {
+                            break;
+                          }
+
+                          row *= 10;
+                          row += (c - '0');
+                        }
+
+                        if (tabs[tab_pos].tmp_row != -1) {
+                          int scroll = (row - 1) - tabs[tab_pos].tmp_row;
+                          tabs[tab_pos].off_row = (tabs[tab_pos].line_cnt * scroll) / (height - 2);
+                        }
                       }
                     }
                   } else if (seq[2] == '6') {
@@ -356,8 +430,10 @@ int main(int argc, const char **argv) {
           } else if (seq[0] == 'O') {
             if (seq[1] == 'H') {
               tabs[tab_pos].col = 0;
+              tabs[tab_pos].sel_col = tabs[tab_pos].col;
             } else if (seq[1] == 'F') {
               tabs[tab_pos].col = tabs[tab_pos].lines[tabs[tab_pos].row].length;
+              tabs[tab_pos].sel_col = tabs[tab_pos].col;
             }
           }
         }
@@ -382,6 +458,14 @@ int main(int argc, const char **argv) {
     printf("\x1B[2J\x1B[H" BEDD_BLACK);
 
     bedd_tabs(tabs, tab_pos, tab_cnt, width);
+
+    if (tabs[tab_pos].off_row < 0) {
+      tabs[tab_pos].off_row = 0;
+    } else if (tabs[tab_pos].off_row >= tabs[tab_pos].line_cnt - (height - 2)) {
+      if (tabs[tab_pos].line_cnt - (height - 2) > 0) {
+        tabs[tab_pos].off_row = tabs[tab_pos].line_cnt - (height - 2);
+      }
+    }
 
     int scroll_size = ((height - 2) * (height - 2) + (tabs[tab_pos].line_cnt - 1)) / tabs[tab_pos].line_cnt;
 

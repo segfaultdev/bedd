@@ -59,6 +59,7 @@ void bedd_init(bedd_t *tab, const char *path) {
   tab->sel_col = 0;
 
   tab->off_row = 0;
+  tab->tmp_row = -1;
 }
 
 int bedd_save(bedd_t *tab) {

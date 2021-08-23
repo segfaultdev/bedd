@@ -23,8 +23,11 @@ struct bedd_t {
   bedd_line_t *lines;
   int line_cnt;
 
-  // mouse position
+  // cursor position
   int row, col;
+
+  // temp. offset
+  int tmp_row;
 
   // start of selection
   int sel_row, sel_col;
