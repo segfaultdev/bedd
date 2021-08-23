@@ -14,15 +14,30 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
   // 6 = inside char
   // 7 = inside escape code(string)
   // 8 = inside escape code(char)
+  // 9 = ending multiline comment
 
-  if (state == 4) {
-    if (col == 0) {
+  if (col == 0) {
+    if (state == 1 || state == 2 || state == 4 || state == 7 || state == 8) {
       printf(BEDD_WHITE);
       state = 0;
-    } else {
-      printf(BEDD_GRAY);
-      return 4;
     }
+  }
+
+  if (state == 3) {
+    printf(BEDD_GRAY);
+
+    if (tab->lines[row].buffer[col] == '*' && col < tab->lines[row].length) {
+      if (tab->lines[row].buffer[col + 1] == '/') {
+        return 9;
+      }
+    }
+    
+    return 3;
+  }
+
+  if (state == 4) {
+    printf(BEDD_GRAY);
+    return 4;
   }
 
   if (state == 7) {
@@ -31,6 +46,10 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
 
   if (state == 8) {
     return 6;
+  }
+
+  if (state == 9) {
+    return 0;
   }
 
   if (state == 5) {
@@ -72,6 +91,11 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
       printf(BEDD_GRAY);
       return 4;
     }
+
+    if (tab->lines[row].buffer[col + 1] == '*') {
+      printf(BEDD_GRAY);
+      return 3;
+    }
   }
 
   if (tab->lines[row].buffer[col] == ' ' ||
@@ -104,6 +128,11 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
       tab->lines[row].buffer[col] == '\\') {
     printf(BEDD_RED);
     return 0;
+  }
+
+  if (tab->lines[row].buffer[col] == '#') {
+    printf(BEDD_MAGENTA);
+    return 1;
   }
 
   int length = 0;
