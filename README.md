@@ -28,7 +28,7 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 
 - Find: `Ctrl+F` (TODO)
 - Replace: `Ctrl+G` (TODO) (cannot use `Ctrl+H` as of now for terminal limitations, sorry!)
-- Select all: `Ctrl+A` (TODO)
+- Select all: `Ctrl+A`
 
 - Open file(new tab): `Ctrl+O`
 - New file(new tab): `Ctrl+N`
@@ -39,7 +39,7 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Next tab: `Ctrl+Right`
 
 - Move cursor: `Up/Down/Left/Right`
-- Select text: `Shift+Up/Down/Left/Right` (TODO)
+- Select text: `Shift+Up/Down/Left/Right`
 
 ### Prompt(find/replace/open/save/etc.) mode
 

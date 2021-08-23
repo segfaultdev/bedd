@@ -144,6 +144,12 @@ int main(int argc, const char **argv) {
             tab_pos = tab_cnt - 1;
           }
         }
+      } else if (c == BEDD_CTRL('a')) {
+        tabs[tab_pos].sel_row = 0;
+        tabs[tab_pos].sel_col = 0;
+
+        tabs[tab_pos].row = tabs[tab_pos].line_cnt - 1;
+        tabs[tab_pos].col = tabs[tab_pos].lines[tabs[tab_pos].row].length;
       } else if (c == BEDD_CTRL('n')) {
         tabs = realloc(tabs, (tab_cnt + 1) * sizeof(bedd_t));
         bedd_init(tabs + tab_cnt, NULL);
@@ -313,6 +319,10 @@ int main(int argc, const char **argv) {
       } else {
         if (strlen(status)) {
           status[0] = '\0';
+        }
+
+        if (tabs[tab_pos].sel_row != tabs[tab_pos].row || tabs[tab_pos].sel_col != tabs[tab_pos].col) {
+          bedd_delete(tabs + tab_pos);
         }
 
         bedd_write(tabs + tab_pos, c);

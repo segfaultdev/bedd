@@ -162,6 +162,20 @@ void bedd_write(bedd_t *tab, char c) {
 }
 
 void bedd_delete(bedd_t *tab) {
+  if (tab->sel_row != tab->row || tab->sel_col != tab->col) {
+    int row = tab->sel_row;
+    int col = tab->sel_col;
+
+    tab->sel_row = tab->row;
+    tab->sel_col = tab->col;
+
+    while (row != tab->row || col != tab->col) {
+      bedd_delete(tab);
+    }
+
+    return;
+  }
+
   if (tab->col == 0) {
     if (tab->row == 0) {
       return;
