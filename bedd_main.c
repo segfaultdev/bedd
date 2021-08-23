@@ -107,6 +107,7 @@ int main(int argc, const char **argv) {
 
   char status[1024] = {0};
 
+  printf("\x1B[?47h");
   printf("\x1B[?1000;1002;1006;1015h");
 
   for (;;) {
@@ -281,7 +282,46 @@ int main(int argc, const char **argv) {
               } else if (seq[1] == '<') {
                 if (read(STDIN_FILENO, &seq[2], 1) >= 1) {
                   if (seq[2] == '0') {
-                    break;
+                    if (read(STDIN_FILENO, &seq[3], 1) >= 1) {
+                      if (seq[3] == ';') {
+                        int row = 0;
+                        int col = 0;
+
+                        for (;;) {
+                          if (!read(STDIN_FILENO, &c, 1)) {
+                            break;
+                          }
+
+                          if (!(c >= '0' && c <= '9')) {
+                            break;
+                          }
+
+                          col *= 10;
+                          col += (c - '0');
+                        }
+
+                        for (;;) {
+                          if (!read(STDIN_FILENO, &c, 1)) {
+                            break;
+                          }
+
+                          if (!(c >= '0' && c <= '9')) {
+                            break;
+                          }
+
+                          row *= 10;
+                          row += (c - '0');
+                        }
+
+                        if (row == 1) {
+                          tab_pos = (col * tab_cnt) / width;
+                          
+                          if (tab_pos >= tab_cnt) {
+                            tab_pos = tab_cnt - 1;
+                          }
+                        }
+                      }
+                    }
                   } else if (seq[2] == '6') {
                     if (read(STDIN_FILENO, &seq[3], 1) >= 1) {
                       if (seq[3] == '4') {
@@ -304,7 +344,7 @@ int main(int argc, const char **argv) {
                     }
                   }
 
-                  while (c != 'M') {
+                  while (c != 'M' && c != 'm') {
                     if (read(STDIN_FILENO, &c, 1) < 1) {
                       break;
                     }
@@ -455,6 +495,7 @@ int main(int argc, const char **argv) {
   printf("\x1B[?25h");
   printf("\x1B[?1000;1002;1006;1015l");
   printf("\x1B[2J\x1B[H" BEDD_BLACK);
+  printf("\x1B[?47l");
 
   return 0;
 }
