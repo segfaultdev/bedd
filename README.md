@@ -1,5 +1,5 @@
 # bedd: The weird editor
-NOTE: This editor is not meant to be used by anyone other than me, @segfaultdev, as this is a project adapted to my usage and needs, so please don't submit any pull requests changing core functionality, and instead create your own fork. If you do so, please let me know so I can add a link to it below!
+NOTE: This editor is not meant to be used by anyone other than me, @segfaultdev, as this is a project adapted to my usage and needs, so please don't submit any pull requests changing core functionality(specially the python and Java checks), and instead create your own fork. If you do so, please let me know so I can add a link to it below!
 
 bedd is a tiny tab-based terminal text editor with mouse support, syntax highlighting, indentation and other features.
 
@@ -17,7 +17,7 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 
 ## Keybindings
 
-### Editor mode:
+### Editor mode
 
 - Copy: `Ctrl+C` (TODO)
 - Cut: `Ctrl+X` (TODO)
@@ -37,6 +37,9 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 
 - Prev. tab: `Ctrl+Left`
 - Next tab: `Ctrl+Right`
+
+- Start of file: `Ctrl+Up`
+- End of file: `Ctrl+Down`
 
 - Move cursor: `Up/Down/Left/Right`
 - Select text: `Shift+Up/Down/Left/Right`
