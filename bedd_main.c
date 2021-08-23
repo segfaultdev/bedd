@@ -357,6 +357,40 @@ int main(int argc, const char **argv) {
                         } else {
                           tabs[tab_pos].tmp_row = -1;
                         }
+
+                        if (col < width && row > 1 && row < height) {
+                          tabs[tab_pos].row = (row - 2) + tabs[tab_pos].off_row;
+
+                          if (tabs[tab_pos].row < 0) {
+                            tabs[tab_pos].row = 0;
+                          }
+
+                          if (tabs[tab_pos].row >= tabs[tab_pos].line_cnt) {
+                            tabs[tab_pos].row = tabs[tab_pos].line_cnt - 1;
+                          }    
+
+                          int line_len = 0;
+                          int line_tmp = tabs[tab_pos].line_cnt;
+
+                          while (line_tmp) {
+                            line_len++;
+                            line_tmp /= 10;
+                          }
+
+                          if (line_len < 0) {
+                            line_len++;
+                          }
+
+                          tabs[tab_pos].col = col - (line_len + 6);
+
+                          if (tabs[tab_pos].col < 0) {
+                            tabs[tab_pos].col = 0;
+                          }
+
+                          if (tabs[tab_pos].col > tabs[tab_pos].lines[tabs[tab_pos].row].length) {
+                            tabs[tab_pos].col = tabs[tab_pos].lines[tabs[tab_pos].row].length;
+                          }
+                        }
                       }
                     }
                   } else if (seq[2] == '3') {
@@ -394,6 +428,65 @@ int main(int argc, const char **argv) {
                         if (tabs[tab_pos].tmp_row != -1) {
                           int scroll = (row - 1) - tabs[tab_pos].tmp_row;
                           tabs[tab_pos].off_row = (tabs[tab_pos].line_cnt * scroll) / (height - 2);
+                        } else {
+                          if (col < width && row > 1 && row < height) {
+                            tabs[tab_pos].row = (row - 2) + tabs[tab_pos].off_row;
+
+                            if (tabs[tab_pos].row < 0) {
+                              tabs[tab_pos].row = 0;
+                            }
+
+                            if (tabs[tab_pos].row >= tabs[tab_pos].line_cnt) {
+                              tabs[tab_pos].row = tabs[tab_pos].line_cnt - 1;
+                            }    
+
+                            int line_len = 0;
+                            int line_tmp = tabs[tab_pos].line_cnt;
+
+                            while (line_tmp) {
+                              line_len++;
+                              line_tmp /= 10;
+                            }
+
+                            if (line_len < 0) {
+                              line_len++;
+                            }
+
+                            tabs[tab_pos].col = col - (line_len + 6);
+
+                            if (tabs[tab_pos].col < 0) {
+                              tabs[tab_pos].col = 0;
+                            }
+
+                            if (tabs[tab_pos].col > tabs[tab_pos].lines[tabs[tab_pos].row].length) {
+                              tabs[tab_pos].col = tabs[tab_pos].lines[tabs[tab_pos].row].length;
+                            }
+
+                            if (tabs[tab_pos].sel_row > tabs[tab_pos].row || (tabs[tab_pos].sel_row == tabs[tab_pos].row && tabs[tab_pos].sel_col > tabs[tab_pos].col)) {
+                              tabs[tab_pos].sel_row = tabs[tab_pos].row;
+                              tabs[tab_pos].sel_col = tabs[tab_pos].col;
+                            }
+                          } else if (row == 1) {
+                            tabs[tab_pos].off_row--;
+
+                            if (tabs[tab_pos].off_row < 0) {
+                              tabs[tab_pos].off_row = 0;
+                            } else if (tabs[tab_pos].off_row >= tabs[tab_pos].line_cnt - (height - 2)) {
+                              if (tabs[tab_pos].line_cnt - (height - 2) > 0) {
+                                tabs[tab_pos].off_row = tabs[tab_pos].line_cnt - (height - 2);
+                              }
+                            }
+                          } else if (row == height) {
+                            tabs[tab_pos].off_row++;
+                            
+                            if (tabs[tab_pos].off_row < 0) {
+                              tabs[tab_pos].off_row = 0;
+                            } else if (tabs[tab_pos].off_row >= tabs[tab_pos].line_cnt - (height - 2)) {
+                              if (tabs[tab_pos].line_cnt - (height - 2) > 0) {
+                                tabs[tab_pos].off_row = tabs[tab_pos].line_cnt - (height - 2);
+                              }
+                            }
+                          }
                         }
                       }
                     }
@@ -423,6 +516,11 @@ int main(int argc, const char **argv) {
                     if (read(STDIN_FILENO, &c, 1) < 1) {
                       break;
                     }
+                  }
+
+                  if (seq[2] == '0' && c == 'M') {
+                    tabs[tab_pos].sel_row = tabs[tab_pos].row;
+                    tabs[tab_pos].sel_col = tabs[tab_pos].col;
                   }
                 }
               }
