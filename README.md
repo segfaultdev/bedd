@@ -11,7 +11,7 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Fully complete mouse support(mousewheel for scrolling, draggable scrollbar, clickable tabs, selectable text, etc.)
 - Doesn't force the use of the mouse either(page buttons for scrolling, Ctrl+Left/Right for tab switching, etc.)
 - Syntax highlighting, indentation and parentheses closing(for C, C++, JavaScript, HTML, CSS and more!)
-- Clean and tiny user interface
+- Clean and tidy user interface
 - Automatic offline updates(thanks to cupd!)
 - Fully python and Java-prone(doesn't let you open .py and .java files, for your own sanity)
 
@@ -19,16 +19,16 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 
 ### Editor mode:
 
-- Copy: `Ctrl+C`
-- Cut: `Ctrl+X`
-- Paste: `Ctrl+V`
+- Copy: `Ctrl+C` (TODO)
+- Cut: `Ctrl+X` (TODO)
+- Paste: `Ctrl+V` (TODO)
 
-- Undo: `Ctrl+Z`
-- Redo: `Ctrl+Y`
+- Undo: `Ctrl+Z` (TODO)
+- Redo: `Ctrl+Y` (TODO)
 
-- Find: `Ctrl+F`
-- Replace: `Ctrl+G`(cannot use `Ctrl+H` as of now for terminal limitations, sorry!)
-- Select all: `Ctrl+A`
+- Find: `Ctrl+F` (TODO)
+- Replace: `Ctrl+G` (TODO) (cannot use `Ctrl+H` as of now for terminal limitations, sorry!)
+- Select all: `Ctrl+A` (TODO)
 
 - Open file(new tab): `Ctrl+O`
 - New file(new tab): `Ctrl+N`
@@ -39,7 +39,7 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Next tab: `Ctrl+Right`
 
 - Move cursor: `Up/Down/Left/Right`
-- Select text: `Shift+Up/Down/Left/Right`
+- Select text: `Shift+Up/Down/Left/Right` (TODO)
 
 ### Prompt(find/replace/open/save/etc.) mode
 

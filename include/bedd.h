@@ -23,21 +23,28 @@ struct bedd_t {
   bedd_line_t *lines;
   int line_cnt;
 
+  // mouse position
   int row, col;
+
+  // start of selection
+  int sel_row, sel_col;
+
+  // scroll offset
   int off_row;
 };
 
 void bedd_init(bedd_t *tab, const char *path);
+int  bedd_save(bedd_t *tab);
 
 void bedd_tabs(bedd_t *tabs, int tab_pos, int tab_cnt, int width);
-void bedd_stat(bedd_t *tab);
+void bedd_stat(bedd_t *tab, const char *status);
 
 void bedd_write(bedd_t *tab, char c);
 void bedd_delete(bedd_t *tab);
 
-void bedd_up(bedd_t *tab);
-void bedd_down(bedd_t *tab);
-void bedd_left(bedd_t *tab);
-void bedd_right(bedd_t *tab);
+void bedd_up(bedd_t *tab, int select);
+void bedd_down(bedd_t *tab, int select);
+void bedd_left(bedd_t *tab, int select);
+void bedd_right(bedd_t *tab, int select);
 
 #endif

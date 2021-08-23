@@ -9,32 +9,75 @@ void bedd_init(bedd_t *tab, const char *path) {
     return;
   }
 
+  tab->lines = NULL;
+  tab->line_cnt = 0;
+
+  tab->lines = malloc(sizeof(bedd_line_t));
+
+  tab->lines[0].buffer = NULL;
+  tab->lines[0].length = 0;
+
+  tab->line_cnt++;
+
   if (path) {
     tab->path = malloc(strlen(path) + 1);
     memcpy(tab->path, path, strlen(path) + 1);
 
-    tab->dirty = 0;
+    FILE *file = fopen(tab->path, "r");
+
+    if (!file) {
+      exit(1);
+    }
+
+    while (!feof(file)) {
+      char c = fgetc(file);
+
+      if ((c >= 32 && c != 127) || c == '\t') {
+        tab->lines[tab->line_cnt - 1].buffer = realloc(tab->lines[tab->line_cnt - 1].buffer, tab->lines[tab->line_cnt - 1].length + 1);
+        tab->lines[tab->line_cnt - 1].buffer[tab->lines[tab->line_cnt - 1].length++] = c;
+      } else if (c == '\n') {
+        tab->lines = realloc(tab->lines, (tab->line_cnt + 1) * sizeof(bedd_line_t));
+
+        tab->lines[tab->line_cnt].buffer = NULL;
+        tab->lines[tab->line_cnt].length = 0;
+
+        tab->line_cnt++;
+      }
+    }
+
+    fclose(file);
   } else {
     tab->path = NULL;
-    tab->dirty = 1;
   }
 
-  tab->lines = NULL;
-  tab->line_cnt = 0;
+  tab->dirty = 0;
 
   tab->row = 0;
   tab->col = 0;
 
+  tab->sel_row = 0;
+  tab->sel_col = 0;
+
   tab->off_row = 0;
+}
 
-  if (!tab->line_cnt) {
-    tab->lines = malloc(sizeof(bedd_line_t));
+int bedd_save(bedd_t *tab) {
+  FILE *file = fopen(tab->path, "w");
 
-    tab->lines[0].buffer = NULL;
-    tab->lines[0].length = 0;
-
-    tab->line_cnt++;
+  if (!file) {
+    return 0;
   }
+
+  for (int i = 0; i < tab->line_cnt; i++) {
+    fwrite(tab->lines[i].buffer, 1, tab->lines[i].length, file);
+    
+    if (i < tab->line_cnt - 1 || tab->lines[i].length) {
+      fputc('\n', file);
+    }
+  }
+
+  fclose(file);
+  return 1;
 }
 
 void bedd_tabs(bedd_t *tabs, int tab_pos, int tab_cnt, int width) {
@@ -66,8 +109,8 @@ void bedd_tabs(bedd_t *tabs, int tab_pos, int tab_cnt, int width) {
   }
 }
 
-void bedd_stat(bedd_t *tab) {
-  printf(BEDD_WHITE " bedd r%s " BEDD_BLACK " %s%s (%d,%d)", BEDD_VER, tab->path ? tab->path : "no name", tab->dirty ? "*" : "", tab->row + 1, tab->col + 1);
+void bedd_stat(bedd_t *tab, const char *status) {
+  printf(BEDD_WHITE " bedd r%s " BEDD_BLACK " %s%s (%d,%d) %s", BEDD_VER, tab->path ? tab->path : "no name", tab->dirty ? "*" : "", tab->row + 1, tab->col + 1, status);
 }
 
 void bedd_write(bedd_t *tab, char c) {
@@ -81,7 +124,7 @@ void bedd_write(bedd_t *tab, char c) {
     tab->lines = realloc(tab->lines, (tab->line_cnt + 1) * sizeof(bedd_line_t));
     tab->row++;
 
-    memmove(tab->lines + tab->row, tab->lines + tab->row + 1, tab->line_cnt - tab->row);
+    memmove(tab->lines + tab->row + 1, tab->lines + tab->row, (tab->line_cnt - tab->row) * sizeof(bedd_line_t));
 
     tab->lines[tab->row].buffer = NULL;
     tab->lines[tab->row].length = 0;
@@ -101,6 +144,9 @@ void bedd_write(bedd_t *tab, char c) {
     tab->col = 0;
     tab->line_cnt++;
 
+    tab->sel_row = tab->row;
+    tab->sel_col = tab->col;
+
     return;
   }
 
@@ -110,6 +156,9 @@ void bedd_write(bedd_t *tab, char c) {
 
   tab->lines[tab->row].buffer[tab->col++] = c;
   tab->lines[tab->row].length++;
+
+  tab->sel_row = tab->row;
+  tab->sel_col = tab->col;
 }
 
 void bedd_delete(bedd_t *tab) {
@@ -141,26 +190,39 @@ void bedd_delete(bedd_t *tab) {
     tab->lines[tab->row].buffer = realloc(tab->lines[tab->row].buffer, tab->lines[tab->row].length);
   }
 
+  tab->sel_row = tab->row;
+  tab->sel_col = tab->col;
+
   tab->dirty = 1;
 }
 
-void bedd_up(bedd_t *tab) {
+void bedd_up(bedd_t *tab, int select) {
   if (tab->row > 0) {
     tab->row--;
   } else {
     tab->col = 0;
   }
+
+  if (!select || tab->sel_row > tab->row || (tab->sel_row == tab->row && tab->sel_col > tab->col)) {
+    tab->sel_row = tab->row;
+    tab->sel_col = tab->col;
+  }
 }
 
-void bedd_down(bedd_t *tab) {
+void bedd_down(bedd_t *tab, int select) {
   if (tab->row < tab->line_cnt - 1) {
     tab->row++;
   } else {
     tab->col = tab->lines[tab->row].length;
   }
+
+  if (!select || tab->sel_row > tab->row || (tab->sel_row == tab->row && tab->sel_col > tab->col)) {
+    tab->sel_row = tab->row;
+    tab->sel_col = tab->col;
+  }
 }
 
-void bedd_left(bedd_t *tab) {
+void bedd_left(bedd_t *tab, int select) {
   if (tab->col > tab->lines[tab->row].length) {
     tab->col = tab->lines[tab->row].length;
   }
@@ -171,13 +233,23 @@ void bedd_left(bedd_t *tab) {
     tab->row--;
     tab->col = tab->lines[tab->row].length;
   }
+
+  if (!select || tab->sel_row > tab->row || (tab->sel_row == tab->row && tab->sel_col > tab->col)) {
+    tab->sel_row = tab->row;
+    tab->sel_col = tab->col;
+  }
 }
 
-void bedd_right(bedd_t *tab) {
+void bedd_right(bedd_t *tab, int select) {
   if (tab->col < tab->lines[tab->row].length) {
     tab->col++;
   } else if (tab->row < tab->line_cnt - 1) {
     tab->row++;
     tab->col = 0;
+  }
+
+  if (!select || tab->sel_row > tab->row || (tab->sel_row == tab->row && tab->sel_col > tab->col)) {
+    tab->sel_row = tab->row;
+    tab->sel_col = tab->col;
   }
 }

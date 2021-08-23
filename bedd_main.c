@@ -97,9 +97,13 @@ int main(int argc, const char **argv) {
   bedd_t *tabs = malloc(sizeof(bedd_t));
   int tab_pos = 0, tab_cnt = 1;
 
-  bedd_init(tabs + tab_pos, "bar.txt");
+  bedd_init(tabs + tab_pos, NULL);
 
   int first = 1;
+
+  struct stat file;
+
+  char status[1024] = {0};
 
   printf("\x1B[?1000;1002;1006;1015h");
 
@@ -111,18 +115,34 @@ int main(int argc, const char **argv) {
 
     if (read(STDIN_FILENO, &c, 1) > 0) {
       if (c == BEDD_CTRL('q')) {
-        if (tab_cnt == 1) {
-          break;
+        int do_exit = 0;
+
+        if (tabs[tab_pos].dirty) {
+          char buffer[1024];
+
+          if (prompt_str(buffer, sizeof(buffer), "there are unsaved changes, sure? (y/n)")) {
+            if (buffer[0] == 'y' || buffer[0] == 'Y') {
+              do_exit = 1;
+            }
+          }
+        } else {
+          do_exit = 1;
         }
 
-        for (int i = tab_pos; i < tab_cnt - 1; i++) {
-          tabs[i] = tabs[i + 1];
-        }
+        if (do_exit) {
+          if (tab_cnt == 1) {
+            break;
+          }
 
-        tabs = realloc(tabs, (--tab_cnt) * sizeof(bedd_t));
+          for (int i = tab_pos; i < tab_cnt - 1; i++) {
+            tabs[i] = tabs[i + 1];
+          }
 
-        if (tab_pos >= tab_cnt) {
-          tab_pos = tab_cnt - 1;
+          tabs = realloc(tabs, (--tab_cnt) * sizeof(bedd_t));
+
+          if (tab_pos >= tab_cnt) {
+            tab_pos = tab_cnt - 1;
+          }
         }
       } else if (c == BEDD_CTRL('n')) {
         tabs = realloc(tabs, (tab_cnt + 1) * sizeof(bedd_t));
@@ -134,10 +154,44 @@ int main(int argc, const char **argv) {
 
         if (prompt_str(buffer, sizeof(buffer), "path:")) {
           if (strlen(buffer)) {
-            tabs = realloc(tabs, (tab_cnt + 1) * sizeof(bedd_t));
-            bedd_init(tabs + tab_cnt, buffer);
+            if (stat(buffer, &file) < 0) {
+              sprintf(status, "| cannot open file: \"%s\"", buffer);
+            } else if (!strcmp(buffer + (strlen(buffer) - 5), ".java") || !strcmp(buffer + (strlen(buffer) - 3), ".py")) {
+              sprintf(status, "| file too dangerous: \"%s\"", buffer);
+            } else {
+              tabs = realloc(tabs, (tab_cnt + 1) * sizeof(bedd_t));
+              bedd_init(tabs + tab_cnt, buffer);
 
-            tab_pos = tab_cnt++;
+              tab_pos = tab_cnt++;
+            }
+          }
+        }
+      } else if (c == BEDD_CTRL('s')) {
+        if (tabs[tab_pos].dirty) {
+          char buffer[1024];
+          int prompted = 0;
+
+          if (!tabs[tab_pos].path) {
+            if (prompt_str(buffer, sizeof(buffer), "path:")) {
+              if (strlen(buffer)) {
+                tabs[tab_pos].path = malloc(strlen(buffer) + 1);
+                strcpy(tabs[tab_pos].path, buffer);
+
+                prompted = 1;
+              }
+            }
+          }
+
+          if (!bedd_save(tabs + tab_pos)) {
+            sprintf(status, "| cannot save file: \"%s\"", tabs[tab_pos].path);
+
+            if (prompted) {
+              free(tabs[tab_pos].path);
+              tabs[tab_pos].path = NULL;
+            }
+          } else {
+            sprintf(status, "| file saved succefully");
+            tabs[tab_pos].dirty = 0;
           }
         }
       } else if (c == '\x7F' || c == BEDD_CTRL('h')) {
@@ -157,48 +211,59 @@ int main(int argc, const char **argv) {
                   } else if (seq[1] == '4' || seq[1] == '8') {
                     tabs[tab_pos].col = tabs[tab_pos].lines[tabs[tab_pos].row].length;
                   } else if (seq[1] == '3') {
-                    bedd_right(tabs + tab_pos);
+                    if (tabs[tab_pos].sel_row == tabs[tab_pos].row && tabs[tab_pos].sel_col == tabs[tab_pos].col) {
+                      bedd_right(tabs + tab_pos, 0);
+                    }
+
                     bedd_delete(tabs + tab_pos);
                   } else if (seq[1] == '5') {
                     for (int i = 0; i < (height - 2) / 2; i++) {
-                      bedd_up(tabs + tab_pos);
+                      bedd_up(tabs + tab_pos, 0);
                     }
                   } else if (seq[1] == '6') {
                     for (int i = 0; i < (height - 2) / 2; i++) {
-                      bedd_down(tabs + tab_pos);
+                      bedd_down(tabs + tab_pos, 0);
                     }
                   }
                 } else if (seq[2] == ';') {
                   if (read(STDIN_FILENO, &seq[3], 1) >= 1 && read(STDIN_FILENO, &seq[4], 1) >= 1) {
-                    if (seq[4] == 'A') {
-                      tabs[tab_pos].row = 0;
-                    } else if (seq[4] == 'B') {
-                      tabs[tab_pos].row = tabs[tab_pos].line_cnt - 1;
-                    } else if (seq[4] == 'C') {
-                      if (tab_pos < tab_cnt - 1) {
-                        tab_pos++;
+                    if (seq[3] == '2') {
+                      if (seq[4] == 'A') {
+                        bedd_up(tabs + tab_pos, 1);
+                      } else if (seq[4] == 'B') {
+                        bedd_down(tabs + tab_pos, 1);
+                      } else if (seq[4] == 'C') {
+                        bedd_right(tabs + tab_pos, 1);
+                      } else if (seq[4] == 'D') {
+                        bedd_left(tabs + tab_pos, 1);
                       }
-
-                      continue;
-                    } else if (seq[4] == 'D') {
-                      if (tab_pos) {
-                        tab_pos--;first = 0;
+                    } else if (seq[3] == '5') {
+                      if (seq[4] == 'A') {
+                        tabs[tab_pos].row = 0;
+                      } else if (seq[4] == 'B') {
+                        tabs[tab_pos].row = tabs[tab_pos].line_cnt - 1;
+                      } else if (seq[4] == 'C') {
+                        if (tab_pos < tab_cnt - 1) {
+                          tab_pos++;
+                        }
+                      } else if (seq[4] == 'D') {
+                        if (tab_pos) {
+                          tab_pos--;
+                        }
                       }
-
-                      continue;
                     }
                   }
                 }
               }
             } else {
               if (seq[1] == 'A') {
-                bedd_up(tabs + tab_pos);
+                bedd_up(tabs + tab_pos, 0);
               } else if (seq[1] == 'B') {
-                bedd_down(tabs + tab_pos);
+                bedd_down(tabs + tab_pos, 0);
               } else if (seq[1] == 'C') {
-                bedd_right(tabs + tab_pos);
+                bedd_right(tabs + tab_pos, 0);
               } else if (seq[1] == 'D') {
-                bedd_left(tabs + tab_pos);
+                bedd_left(tabs + tab_pos, 0);
               } else if (seq[1] == 'H') {
                 tabs[tab_pos].col = 0;
               } else if (seq[1] == 'F') {
@@ -246,6 +311,10 @@ int main(int argc, const char **argv) {
           }
         }
       } else {
+        if (strlen(status)) {
+          status[0] = '\0';
+        }
+
         bedd_write(tabs + tab_pos, c);
       }
     } else if (first) {
@@ -290,17 +359,55 @@ int main(int argc, const char **argv) {
           printf(BEDD_BLACK "  %*d |" BEDD_BLACK " ", line_len, row + 1);
         }
 
-        if (tabs[tab_pos].lines[row].buffer) {
-          fwrite(tabs[tab_pos].lines[row].buffer, 1, tabs[tab_pos].lines[row].length, stdout);
+        for (int j = 0; j < tabs[tab_pos].lines[row].length && j < width - (line_len + 6); j++) {
+          printf(BEDD_WHITE);
+
+          if (row == tabs[tab_pos].sel_row) {
+            if (j < tabs[tab_pos].sel_col) {
+              printf(BEDD_BLACK);
+            }
+          }
+
+          if (row == tabs[tab_pos].row) {
+            if (j >= tabs[tab_pos].col) {
+              printf(BEDD_BLACK);
+            }
+          }
+
+          if (row < tabs[tab_pos].sel_row || row > tabs[tab_pos].row) {
+            printf(BEDD_BLACK);
+          }
+
+          printf("%c", tabs[tab_pos].lines[row].buffer[j]);
         }
+
+        printf(BEDD_WHITE);
+
+        if (row == tabs[tab_pos].sel_row) {
+          if (tabs[tab_pos].lines[row].length < tabs[tab_pos].sel_col) {
+            printf(BEDD_BLACK);
+          }
+        }
+
+        if (row == tabs[tab_pos].row) {
+          if (tabs[tab_pos].lines[row].length >= tabs[tab_pos].col) {
+            printf(BEDD_BLACK);
+          }
+        }
+
+        if (row < tabs[tab_pos].sel_row || row > tabs[tab_pos].row) {
+          printf(BEDD_BLACK);
+        }
+
+        printf(" ");
       } else {
         printf(BEDD_BLACK "  %*s :" BEDD_BLACK " ", line_len, "");
       }
 
-      printf("\r\n");
+      printf(BEDD_BLACK "\r\n");
     }
 
-    bedd_stat(tabs + tab_pos);
+    bedd_stat(tabs + tab_pos, status);
 
     int col = tabs[tab_pos].col;
 
