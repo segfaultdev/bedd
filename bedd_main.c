@@ -337,6 +337,19 @@ int main(int argc, const char **argv) {
 
     bedd_tabs(tabs, tab_pos, tab_cnt, width);
 
+    int scroll_size = ((height - 2) * (height - 2) + (tabs[tab_pos].line_cnt - 1)) / tabs[tab_pos].line_cnt;
+
+    if (scroll_size < 1) {
+      scroll_size = 1;
+    }
+
+    if (scroll_size > height - 2) {
+      scroll_size = height - 2;
+    }
+
+    int scroll_start = ((tabs[tab_pos].off_row) * (height - 2)) / tabs[tab_pos].line_cnt;
+    int scroll_end   = ((tabs[tab_pos].off_row + (height - 2)) * (height - 2)) / tabs[tab_pos].line_cnt;
+
     int line_len = 0;
     int line_tmp = tabs[tab_pos].line_cnt;
 
@@ -414,6 +427,15 @@ int main(int argc, const char **argv) {
         printf(BEDD_BLACK "  %*s :" BEDD_BLACK " ", line_len, "");
       }
 
+      printf("\x1B[%d;%dH", i + 2, width);
+
+      if (i >= scroll_start && i <= scroll_end) {
+        printf(BEDD_WHITE);
+      } else {
+        printf(BEDD_BLACK);
+      }
+
+      printf("|");
       printf(BEDD_BLACK "\r\n");
     }
 
