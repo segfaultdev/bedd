@@ -193,7 +193,9 @@ int main(int argc, const char **argv) {
             }
           }
 
-          if (!bedd_save(tabs + tab_pos)) {
+          if (!bedd_save(tabs + tab_pos) ||
+              !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 5), ".java") ||
+              !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 3), ".py")) {
             sprintf(status, "| cannot save file: \"%s\"", tabs[tab_pos].path);
 
             if (prompted) {
@@ -315,7 +317,7 @@ int main(int argc, const char **argv) {
 
                         if (row == 1) {
                           tab_pos = (col * tab_cnt) / width;
-                          
+
                           if (tab_pos >= tab_cnt) {
                             tab_pos = tab_cnt - 1;
                           }
