@@ -3,7 +3,7 @@ NOTE: This editor is not meant to be used by anyone other than me, @segfaultdev,
 
 bedd is a tiny tab-based terminal text editor with mouse support, syntax highlighting, indentation and other features.
 
-![(screenshot of bedd)](TODO:_add_link_here)
+![(screenshot of bedd)](https://raw.githubusercontent.com/segfaultdev/bedd/master/image.png)
 
 ## Features
 
