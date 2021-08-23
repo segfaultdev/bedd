@@ -44,13 +44,13 @@ void bedd_init(bedd_t *tab, const char *path) {
         tab->line_cnt++;
       }
     }
-
-    tab->dirty = 0;
+    
     fclose(file);
   } else {
-    tab->dirty = 1;
     tab->path = NULL;
   }
+
+  tab->dirty = 0;
 
   tab->row = 0;
   tab->col = 0;

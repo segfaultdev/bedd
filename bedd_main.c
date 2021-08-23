@@ -52,6 +52,7 @@ int prompt_str(char *buffer, int length, const char *prompt) {
   int first = 1;
 
   printf("\x1B[?25h");
+  printf("\x1B[3 q");
 
   for (;;) {
     int width = 80, height = 25;
@@ -178,34 +179,32 @@ int main(int argc, const char **argv) {
           }
         }
       } else if (c == BEDD_CTRL('s')) {
-        if (tabs[tab_pos].dirty) {
-          char buffer[1024];
-          int prompted = 0;
+        char buffer[1024];
+        int prompted = 0;
 
-          if (!tabs[tab_pos].path) {
-            if (prompt_str(buffer, sizeof(buffer), "path:")) {
-              if (strlen(buffer)) {
-                tabs[tab_pos].path = malloc(strlen(buffer) + 1);
-                strcpy(tabs[tab_pos].path, buffer);
+        if (!tabs[tab_pos].path) {
+          if (prompt_str(buffer, sizeof(buffer), "path:")) {
+            if (strlen(buffer)) {
+              tabs[tab_pos].path = malloc(strlen(buffer) + 1);
+              strcpy(tabs[tab_pos].path, buffer);
 
-                prompted = 1;
-              }
+              prompted = 1;
             }
           }
+        }
 
-          if (!bedd_save(tabs + tab_pos) ||
-              !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 5), ".java") ||
-              !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 3), ".py")) {
-            sprintf(status, "| cannot save file: \"%s\"", tabs[tab_pos].path);
+        if (!bedd_save(tabs + tab_pos) ||
+            !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 5), ".java") ||
+            !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 3), ".py")) {
+          sprintf(status, "| cannot save file: \"%s\"", tabs[tab_pos].path);
 
-            if (prompted) {
-              free(tabs[tab_pos].path);
-              tabs[tab_pos].path = NULL;
-            }
-          } else {
-            sprintf(status, "| file saved succefully");
-            tabs[tab_pos].dirty = 0;
+          if (prompted) {
+            free(tabs[tab_pos].path);
+            tabs[tab_pos].path = NULL;
           }
+        } else {
+          sprintf(status, "| file saved succefully");
+          tabs[tab_pos].dirty = 0;
         }
       } else if (c == '\x7F' || c == BEDD_CTRL('h')) {
         bedd_delete(tabs + tab_pos);
@@ -487,6 +486,7 @@ int main(int argc, const char **argv) {
     }
 
     if (pos) {
+      printf("\x1B[3 q");
       printf("\x1B[?25h");
       printf("\x1B[%d;%dH", pos, col + line_len + 6);
     }
@@ -498,6 +498,7 @@ int main(int argc, const char **argv) {
   printf("\x1B[?1000;1002;1006;1015l");
   printf("\x1B[2J\x1B[H" BEDD_BLACK);
   printf("\x1B[?47l");
+  printf("\x1B[1 q");
 
   return 0;
 }
