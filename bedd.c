@@ -87,9 +87,9 @@ void bedd_tabs(bedd_t *tabs, int tab_pos, int tab_cnt, int width) {
     int tab_width = (((i + 1) * width) / tab_cnt) - ((i * width) / tab_cnt);
 
     if (i == tab_pos) {
-      printf(BEDD_WHITE);
+      printf(BEDD_INVERT);
     } else {
-      printf(BEDD_BLACK);
+      printf(BEDD_NORMAL);
     }
     
     char *path_buffer = "no name";
@@ -111,7 +111,24 @@ void bedd_tabs(bedd_t *tabs, int tab_pos, int tab_cnt, int width) {
 }
 
 void bedd_stat(bedd_t *tab, const char *status) {
-  printf(BEDD_WHITE " bedd r%s " BEDD_BLACK " %s%s (%d,%d) %s", BEDD_VER, tab->path ? tab->path : "no name", tab->dirty ? "*" : "", tab->row + 1, tab->col + 1, status);
+  printf(BEDD_INVERT " bedd r%s " BEDD_NORMAL " %s%s (%d,%d) %s", BEDD_VER, tab->path ? tab->path : "no name", tab->dirty ? "*" : "", tab->row + 1, tab->col + 1, status);
+}
+
+int bedd_color(bedd_t *tab, int state, int row, int col) {
+  if (tab->path) {
+    if (!strcmp(tab->path + (strlen(tab->path) - 2), ".c") ||
+        !strcmp(tab->path + (strlen(tab->path) - 2), ".h") ||
+        !strcmp(tab->path + (strlen(tab->path) - 3), ".cc") ||
+        !strcmp(tab->path + (strlen(tab->path) - 3), ".hh") ||
+        !strcmp(tab->path + (strlen(tab->path) - 4), ".cpp") ||
+        !strcmp(tab->path + (strlen(tab->path) - 4), ".hpp") ||
+        !strcmp(tab->path + (strlen(tab->path) - 4), ".cxx")) {
+      return bedd_color_c(tab, state, row, col);
+    }
+  }
+
+  printf(BEDD_WHITE);
+  return 0;
 }
 
 void bedd_write(bedd_t *tab, char c) {

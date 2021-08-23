@@ -80,7 +80,7 @@ int prompt_str(char *buffer, int length, const char *prompt) {
     }
 
     printf("\x1B[%d;%dH", height, 1);
-    printf(BEDD_WHITE " %s " BEDD_BLACK " %s", prompt, buffer);
+    printf(BEDD_INVERT " %s " BEDD_NORMAL " %s", prompt, buffer);
 
     printf("\x1B[K");
     printf("\x1B[%d;%dH", height, pos + strlen(prompt) + 4);
@@ -110,6 +110,7 @@ int main(int argc, const char **argv) {
 
   printf("\x1B[?47h");
   printf("\x1B[?1000;1002;1006;1015h");
+  printf(BEDD_WHITE);
 
   for (;;) {
     int width = 80, height = 25;
@@ -196,15 +197,19 @@ int main(int argc, const char **argv) {
         if (!bedd_save(tabs + tab_pos) ||
             !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 5), ".java") ||
             !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 3), ".py")) {
-          sprintf(status, "| cannot save file: \"%s\"", tabs[tab_pos].path);
-
           if (prompted) {
+            sprintf(status, "| cannot save file: \"%s\"", tabs[tab_pos].path);
+
             free(tabs[tab_pos].path);
             tabs[tab_pos].path = NULL;
           }
         } else {
           sprintf(status, "| file saved succefully");
           tabs[tab_pos].dirty = 0;
+        }
+      } else if (c == '\t') {
+        for (int i = 0; i < 2 - (tabs[tab_pos].col + 1) % 2; i++) {
+          bedd_write(tabs + tab_pos, ' ');
         }
       } else if (c == '\x7F' || c == BEDD_CTRL('h')) {
         bedd_delete(tabs + tab_pos);
@@ -553,7 +558,7 @@ int main(int argc, const char **argv) {
     }
 
     printf("\x1B[?25l");
-    printf("\x1B[2J\x1B[H" BEDD_BLACK);
+    printf("\x1B[2J\x1B[H" BEDD_NORMAL);
 
     bedd_tabs(tabs, tab_pos, tab_cnt, width);
 
@@ -593,70 +598,76 @@ int main(int argc, const char **argv) {
     int row = tabs[tab_pos].off_row;
     int pos = 0;
 
+    int state = 0;
+
     for (int i = 0; i < height - 2; i++, row++) {
       if (row >= 0 && row < tabs[tab_pos].line_cnt) {
         if (tabs[tab_pos].row == row) {
-          printf(BEDD_WHITE "  %*d  " BEDD_BLACK " ", line_len, row + 1);
+          printf(BEDD_INVERT "  %*d  " BEDD_NORMAL " ", line_len, row + 1);
           pos = i + 2;
         } else {
-          printf(BEDD_BLACK "  %*d |" BEDD_BLACK " ", line_len, row + 1);
+          printf(BEDD_NORMAL "  %*d |" BEDD_NORMAL " ", line_len, row + 1);
         }
 
+        printf(BEDD_WHITE);
+
         for (int j = 0; j < tabs[tab_pos].lines[row].length && j < width - (line_len + 6); j++) {
-          printf(BEDD_WHITE);
+          printf(BEDD_SELECT);
 
           if (row == tabs[tab_pos].sel_row) {
             if (j < tabs[tab_pos].sel_col) {
-              printf(BEDD_BLACK);
+              printf(BEDD_DEFAULT);
             }
           }
 
           if (row == tabs[tab_pos].row) {
             if (j >= tabs[tab_pos].col) {
-              printf(BEDD_BLACK);
+              printf(BEDD_DEFAULT);
             }
           }
 
           if (row < tabs[tab_pos].sel_row || row > tabs[tab_pos].row) {
-            printf(BEDD_BLACK);
+            printf(BEDD_DEFAULT);
           }
+
+          state = bedd_color(tabs + tab_pos, state, row, j);
 
           printf("%c", tabs[tab_pos].lines[row].buffer[j]);
         }
 
-        printf(BEDD_WHITE);
+        printf(BEDD_WHITE BEDD_SELECT);
 
         if (row == tabs[tab_pos].sel_row) {
           if (tabs[tab_pos].lines[row].length < tabs[tab_pos].sel_col) {
-            printf(BEDD_BLACK);
+            printf(BEDD_DEFAULT);
           }
         }
 
         if (row == tabs[tab_pos].row) {
           if (tabs[tab_pos].lines[row].length >= tabs[tab_pos].col) {
-            printf(BEDD_BLACK);
+            printf(BEDD_DEFAULT);
           }
         }
 
         if (row < tabs[tab_pos].sel_row || row > tabs[tab_pos].row) {
-          printf(BEDD_BLACK);
+          printf(BEDD_DEFAULT);
         }
 
         printf(" ");
       } else {
-        printf(BEDD_BLACK "  %*s :" BEDD_BLACK " ", line_len, "");
+        printf(BEDD_NORMAL "  %*s :" BEDD_NORMAL " ", line_len, "");
       }
 
-      printf("\x1B[%d;%dH", i + 2, width);
+      printf(BEDD_DEFAULT "\x1B[%d;%dH", i + 2, width);
 
       if (i >= scroll_start && i <= scroll_end) {
-        printf(BEDD_WHITE);
+        printf(BEDD_INVERT);
       } else {
-        printf(BEDD_BLACK);
+        printf(BEDD_NORMAL);
       }
 
       printf("|");
-      printf(BEDD_BLACK "\r\n");
+      printf(BEDD_NORMAL "\r\n");
     }
 
     bedd_stat(tabs + tab_pos, status);
@@ -678,7 +689,7 @@ int main(int argc, const char **argv) {
 
   printf("\x1B[?25h");
   printf("\x1B[?1000;1002;1006;1015l");
-  printf("\x1B[2J\x1B[H" BEDD_BLACK);
+  printf("\x1B[2J\x1B[H" BEDD_NORMAL);
   printf("\x1B[?47l");
   printf("\x1B[1 q");
 
