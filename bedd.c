@@ -64,6 +64,8 @@ void bedd_init(bedd_t *tab, const char *path) {
   tab->undo_cnt = 0;
   tab->undo_pos = -1;
 
+  tab->step = 0;
+
   memset(tab->query, 0, 1024);
 
   bedd_push_undo(tab);

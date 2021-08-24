@@ -2,7 +2,9 @@
 #define __BEDD_H__
 
 #define BEDD_VER "01"
-#define BEDD_UNDO 256
+
+#define BEDD_UNDO 128
+#define BEDD_STEP 20
 
 #define BEDD_INVERT "\x1B[7m"
 #define BEDD_NORMAL "\x1B[27m"
@@ -58,6 +60,9 @@ struct bedd_t {
 
   bedd_undo_t undo_buf[BEDD_UNDO];
   int undo_pos, undo_cnt;
+
+  // step count?
+  int step;
 
   // cursor position
   int row, col;

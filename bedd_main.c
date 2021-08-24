@@ -167,10 +167,20 @@ int main(int argc, const char **argv) {
           }
         }
       } else if (c == BEDD_CTRL('z')) {
+        if (tabs[tab_pos].step) {
+          bedd_push_undo(tabs + tab_pos);
+          tabs[tab_pos].step = 0;
+        }
+
         if (tabs[tab_pos].undo_pos) {
           bedd_peek_undo(tabs + tab_pos, --tabs[tab_pos].undo_pos);
         }
       } else if (c == BEDD_CTRL('y')) {
+        if (tabs[tab_pos].step) {
+          bedd_push_undo(tabs + tab_pos);
+          tabs[tab_pos].step = 0;
+        }
+
         if (tabs[tab_pos].undo_pos < tabs[tab_pos].undo_cnt - 1) {
           bedd_peek_undo(tabs + tab_pos, ++tabs[tab_pos].undo_pos);
         }
@@ -248,6 +258,11 @@ int main(int argc, const char **argv) {
         char buffer[1024];
         int prompted = 0;
 
+        if (tabs[tab_pos].step) {
+          bedd_push_undo(tabs + tab_pos);
+          tabs[tab_pos].step = 0;
+        }
+
         if (!tabs[tab_pos].path) {
           if (prompt_str(buffer, sizeof(buffer), 1, "path:")) {
             if (strlen(buffer)) {
@@ -277,10 +292,21 @@ int main(int argc, const char **argv) {
           bedd_write(tabs + tab_pos, ' ');
         }
 
-        bedd_push_undo(tabs + tab_pos);
+        tabs[tab_pos].step++;
+
+        if (tabs[tab_pos].step >= BEDD_STEP) {
+          bedd_push_undo(tabs + tab_pos);
+          tabs[tab_pos].step = 0;
+        }
       } else if (c == '\x7F' || c == BEDD_CTRL('h')) {
         bedd_delete(tabs + tab_pos);
-        bedd_push_undo(tabs + tab_pos);
+        
+        tabs[tab_pos].step++;
+
+        if (tabs[tab_pos].step >= BEDD_STEP) {
+          bedd_push_undo(tabs + tab_pos);
+          tabs[tab_pos].step = 0;
+        }
       } else if (c == BEDD_CTRL('b')) {
         tabs[tab_pos].col = 0;
       } else if (c == '\x1B') {
@@ -303,7 +329,13 @@ int main(int argc, const char **argv) {
                     }
 
                     bedd_delete(tabs + tab_pos);
-                    bedd_push_undo(tabs + tab_pos);
+                    
+                    tabs[tab_pos].step++;
+
+                    if (tabs[tab_pos].step >= BEDD_STEP) {
+                      bedd_push_undo(tabs + tab_pos);
+                      tabs[tab_pos].step = 0;
+                    }
                   } else if (seq[1] == '5') {
                     for (int i = 0; i < (height - 2) / 2; i++) {
                       bedd_up(tabs + tab_pos, 0);
@@ -615,7 +647,13 @@ int main(int argc, const char **argv) {
         }
 
         bedd_write(tabs + tab_pos, c);
-        bedd_push_undo(tabs + tab_pos);
+        
+        tabs[tab_pos].step++;
+
+        if (tabs[tab_pos].step >= BEDD_STEP) {
+          bedd_push_undo(tabs + tab_pos);
+          tabs[tab_pos].step = 0;
+        }
       }
     } else if (first) {
       first = 0;
