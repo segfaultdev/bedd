@@ -26,7 +26,7 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Undo: `Ctrl+Z` (TODO)
 - Redo: `Ctrl+Y` (TODO)
 
-- Find: `Ctrl+F` (TODO)
+- Find: `Ctrl+F` (first result after the cursor position)
 - Replace: `Ctrl+G`
 - Select all: `Ctrl+A`
 
@@ -58,11 +58,22 @@ NOTE: Add `~` before a find/replace query to only match whole words.
 - x86 assembly(`.asm`, `.s`): full support, NASM syntax
 - bash/sh(`.sh`): partial support, has some errors with special cases
 
+## How to build
+
+Thanks to the cupd updating system(check cupd.h), you just have to run the provided binary(./bedd)
+and, if the code has been modified, it will rebuild itself. This will only happen when it's inside
+this directory, and thus if you move it to /usr/bin or just outside this directory, it won't check
+for updates. In the incredibly rare case you don't trust me and my weird binaries, you can rebuild
+it with `gcc -Iinclude $(file . -name "*.c") -o bedd`, and for the next build you can use `./bedd`
+instead, as recommended.
+
 ## License
 
 This project is licensed with the nop license, check LICENSE for more details.
 
 ## Forks!
+
+(yes I do hate python and Java)
 
 ### Forks that remove the python + Java check(shitty forks):
 

@@ -45,8 +45,13 @@ int get_winsize(int *width, int *height) {
   }
 }
 
-int prompt_str(char *buffer, int length, const char *prompt) {
+int prompt_str(char *buffer, int length, int clear, const char *prompt) {
   int pos = 0;
+
+  if (!clear) {
+    pos = strlen(buffer);
+  }
+
   buffer[pos] = '\0';
 
   int first = 1;
@@ -137,7 +142,7 @@ int main(int argc, const char **argv) {
         if (tabs[tab_pos].dirty) {
           char buffer[1024];
 
-          if (prompt_str(buffer, sizeof(buffer), "there are unsaved changes, sure? (y/n)")) {
+          if (prompt_str(buffer, sizeof(buffer), 1, "there are unsaved changes, sure? (y/n)")) {
             if (buffer[0] == 'y' || buffer[0] == 'Y') {
               do_exit = 1;
             }
@@ -168,20 +173,37 @@ int main(int argc, const char **argv) {
         tabs[tab_pos].row = tabs[tab_pos].line_cnt - 1;
         tabs[tab_pos].col = tabs[tab_pos].lines[tabs[tab_pos].row].length;
       } else if (c == BEDD_CTRL('f')) {
-        // find
+        // we preserve the last query, as this is going to be
+        // called a lot of times consecutively
+
+        int whole_word = 0;
+
+        if (prompt_str(tabs[tab_pos].query, 1024, 0, "query:")) {
+          if (tabs[tab_pos].query[0] == '~') {
+            whole_word = 1;
+          }
+
+          if (strlen(tabs[tab_pos].query)) {
+            if (bedd_find(tabs + tab_pos, tabs[tab_pos].query + whole_word, whole_word)) {
+              sprintf(status, "| query found(Ctrl+F, then Enter to get next)");
+            } else {
+              sprintf(status, "| query not found(go to top with Ctrl+Up first)");
+            }
+          }
+        }
       } else if (c == BEDD_CTRL('g')) {
         char buffer_1[1024];
         char buffer_2[1024];
 
         int whole_word = 0;
 
-        if (prompt_str(buffer_1, sizeof(buffer_1), "query:")) {
+        if (prompt_str(buffer_1, sizeof(buffer_1), 1, "query:")) {
           if (buffer_1[0] == '~') {
             whole_word = 1;
           }
 
           if (strlen(buffer_1 + whole_word)) {
-            if (prompt_str(buffer_2, sizeof(buffer_2), "replace with:")) {
+            if (prompt_str(buffer_2, sizeof(buffer_2), 1, "replace with:")) {
               int count = bedd_replace(tabs + tab_pos, buffer_1 + whole_word, buffer_2, whole_word);
 
               sprintf(status, "| replaced %d occurence%s", count, count == 1 ? "" : "s");
@@ -196,7 +218,7 @@ int main(int argc, const char **argv) {
       } else if (c == BEDD_CTRL('o')) {
         char buffer[1024];
 
-        if (prompt_str(buffer, sizeof(buffer), "path:")) {
+        if (prompt_str(buffer, sizeof(buffer), 1, "path:")) {
           if (strlen(buffer)) {
             if (stat(buffer, &file) < 0) {
               sprintf(status, "| cannot open file: \"%s\"", buffer);
@@ -215,7 +237,7 @@ int main(int argc, const char **argv) {
         int prompted = 0;
 
         if (!tabs[tab_pos].path) {
-          if (prompt_str(buffer, sizeof(buffer), "path:")) {
+          if (prompt_str(buffer, sizeof(buffer), 1, "path:")) {
             if (strlen(buffer)) {
               tabs[tab_pos].path = malloc(strlen(buffer) + 1);
               strcpy(tabs[tab_pos].path, buffer);
@@ -572,10 +594,6 @@ int main(int argc, const char **argv) {
           }
         }
       } else {
-        if (strlen(status)) {
-          status[0] = '\0';
-        }
-
         if (tabs[tab_pos].sel_row != tabs[tab_pos].row || tabs[tab_pos].sel_col != tabs[tab_pos].col) {
           bedd_delete(tabs + tab_pos);
         }
@@ -702,6 +720,10 @@ int main(int argc, const char **argv) {
     }
 
     bedd_stat(tabs + tab_pos, status);
+
+    if (strlen(status)) {
+      status[0] = '\0';
+    }
 
     int col = tabs[tab_pos].col;
 

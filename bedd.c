@@ -60,6 +60,8 @@ void bedd_init(bedd_t *tab, const char *path) {
 
   tab->off_row = 0;
   tab->tmp_row = -1;
+
+  memset(tab->query, 0, 1024);
 }
 
 int bedd_save(bedd_t *tab) {
@@ -388,6 +390,70 @@ void bedd_delete(bedd_t *tab) {
   tab->dirty = 1;
 }
 
+int bedd_find(bedd_t *tab, const char *query, int whole_word) {
+  if (!query) {
+    return 0;
+  }
+
+  if (tab->col > tab->lines[tab->row].length) {
+    tab->col = tab->lines[tab->row].length;
+  }
+
+  if (tab->col < 0) {
+    tab->col = 0;
+  }
+
+  for (int i = tab->row; i < tab->line_cnt; i++) {
+    if (tab->lines[i].length < strlen(query)) {
+      continue;
+    }
+
+    for (int j = ((i == tab->row) ? tab->col : 0); j <= (tab->lines[i].length - strlen(query)); j++) {
+      if (!tab->lines[i].buffer) {
+        break;
+      }
+
+      if (memcmp(tab->lines[i].buffer + j, query, strlen(query))) {
+        continue;
+      }
+
+      if (whole_word) {
+        if (j > 0) {
+          if (BEDD_ISIDENT(tab->lines[i].buffer[j - 1])) {
+            continue;
+          }
+        }
+
+        if (j < (tab->lines[i].length - (strlen(query) + 1))) {
+          if (BEDD_ISIDENT(tab->lines[i].buffer[j + strlen(query)])) {
+            continue;
+          }
+        }
+      }
+
+      tab->row = i;
+      tab->col = j;
+
+      tab->sel_row = tab->row;
+      tab->sel_col = tab->col;
+
+      tab->col += strlen(query);
+
+      if (tab->off_row > tab->row) {
+        tab->off_row = tab->row;
+      }
+
+      if (tab->off_row < tab->row - (tab->height - 3)) {
+        tab->off_row = tab->row - (tab->height - 3);
+      }
+
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 int bedd_replace(bedd_t *tab, const char *query, const char *replace, int whole_word) {
   int count = 0;
 
@@ -396,7 +462,11 @@ int bedd_replace(bedd_t *tab, const char *query, const char *replace, int whole_
   }
 
   for (int i = 0; i < tab->line_cnt; i++) {
-    for (int j = 0; j <= tab->lines[i].length - strlen(query); j++) {
+    if (tab->lines[i].length < strlen(query)) {
+      continue;
+    }
+
+    for (int j = 0; j <= (tab->lines[i].length - strlen(query)); j++) {
       if (!tab->lines[i].buffer) {
         break;
       }

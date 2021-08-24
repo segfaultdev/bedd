@@ -62,6 +62,9 @@ struct bedd_t {
 
   // code flag
   int code;
+
+  // last Ctrl+F query
+  char query[1024];
 };
 
 void bedd_init(bedd_t *tab, const char *path);
@@ -75,6 +78,7 @@ void bedd_indent(bedd_t *tab);
 void bedd_write(bedd_t *tab, char c);
 void bedd_delete(bedd_t *tab);
 
+int  bedd_find(bedd_t *tab, const char *query, int whole_word);
 int  bedd_replace(bedd_t *tab, const char *query, const char *replace, int whole_word);
 
 void bedd_up(bedd_t *tab, int select);
