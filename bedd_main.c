@@ -157,6 +157,10 @@ int main(int argc, const char **argv) {
 
         tabs[tab_pos].row = tabs[tab_pos].line_cnt - 1;
         tabs[tab_pos].col = tabs[tab_pos].lines[tabs[tab_pos].row].length;
+      } else if (c == BEDD_CTRL('f')) {
+        // find
+      } else if (c == BEDD_CTRL('g')) {
+        // replace
       } else if (c == BEDD_CTRL('n')) {
         tabs = realloc(tabs, (tab_cnt + 1) * sizeof(bedd_t));
         bedd_init(tabs + tab_cnt, NULL);

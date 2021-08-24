@@ -125,6 +125,13 @@ int bedd_color(bedd_t *tab, int state, int row, int col) {
         !strcmp(tab->path + (strlen(tab->path) - 4), ".cxx")) {
       tab->code = 1;
       return bedd_color_c(tab, state, row, col);
+    } else if (!strcmp(tab->path + (strlen(tab->path) - 4), ".asm") ||
+               !strcmp(tab->path + (strlen(tab->path) - 2), ".s")) {
+      tab->code = 1;
+      return bedd_color_asm(tab, state, row, col);
+    } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".sh")) {
+      tab->code = 1;
+      return bedd_color_sh(tab, state, row, col);
     }
   }
 
@@ -144,11 +151,24 @@ void bedd_indent(bedd_t *tab) {
         !strcmp(tab->path + (strlen(tab->path) - 4), ".hpp") ||
         !strcmp(tab->path + (strlen(tab->path) - 4), ".cxx")) {
       bedd_indent_c(tab);
+    } else if (!strcmp(tab->path + (strlen(tab->path) - 4), ".asm") ||
+               !strcmp(tab->path + (strlen(tab->path) - 2), ".s")) {
+      bedd_indent_asm(tab);
+    } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".sh")) {
+      bedd_indent_sh(tab);
     }
   }
 }
 
 static void bedd_write_raw(bedd_t *tab, char c) {
+  if (c < 32 || c >= 127) {
+    return;
+  }
+
+  if (tab->col > tab->lines[tab->row].length) {
+    tab->col = tab->lines[tab->row].length;
+  }
+
   tab->lines[tab->row].buffer = realloc(tab->lines[tab->row].buffer, tab->lines[tab->row].length + 1);
 
   memmove(tab->lines[tab->row].buffer + tab->col + 1, tab->lines[tab->row].buffer + tab->col, tab->lines[tab->row].length - tab->col);

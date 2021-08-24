@@ -10,7 +10,7 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Simple and familiar keybindings(Ctrl+C for copying, Ctrl+Q for quitting, Ctrl+F for searching, etc.)
 - Fully complete mouse support(mousewheel for scrolling, draggable scrollbar, clickable tabs, selectable text, etc.)
 - Doesn't force the use of the mouse either(page buttons for scrolling, Ctrl+Left/Right for tab switching, etc.)
-- Syntax highlighting, indentation and parentheses closing(for C, C++, JavaScript, HTML, CSS and more!)
+- Syntax highlighting, indentation and parentheses closing
 - Clean and tidy user interface
 - Automatic offline updates(thanks to cupd!)
 - Fully python and Java-prone(doesn't let you open .py and .java files, for your own sanity)
@@ -27,7 +27,7 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Redo: `Ctrl+Y` (TODO)
 
 - Find: `Ctrl+F` (TODO)
-- Replace: `Ctrl+G` (TODO) (cannot use `Ctrl+H` as of now for terminal limitations, sorry!)
+- Replace: `Ctrl+G` (TODO)
 - Select all: `Ctrl+A`
 
 - Open file(new tab): `Ctrl+O`
@@ -49,10 +49,23 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Cancel: `Ctrl+Q`
 - Accept: `Return/Enter/Ctrl+M`
 
+## Supported languages
+
+- C(`.c`, `.h`): full support
+- C++(`.cc`, `.hh`, `.cpp`, `.hpp`, `.cxx`): partial support, C++-specific features missing
+- x86 assembly(`.asm`, `.s`): full support, NASM syntax
+- bash/sh(`.sh`): partial support, has some errors with special cases
+
 ## License
 
 This project is licensed with the nop license, check LICENSE for more details.
 
 ## Forks!
 
-(ummm none, yet...)
+### Forks that remove the python + Java check(shitty forks):
+
+- [@aa2006's fork](https://github.com/aa2006/bedd)
+
+### Forks that do NOT remove the python + Java check(good forks):
+
+Not a single one? Weird...
