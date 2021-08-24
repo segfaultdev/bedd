@@ -259,6 +259,10 @@ void bedd_indent_c(bedd_t *tab) {
     }
   }
 
+  if (step < 0) {
+    step = 0;
+  }
+
   level += 2 * step;
 
   for (int i = 0; i < level; i++) {

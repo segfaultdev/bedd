@@ -83,5 +83,6 @@ void bedd_right(bedd_t *tab, int select);
 // langs
 int  bedd_color_c(bedd_t *tab, int state, int row, int col);
 void bedd_indent_c(bedd_t *tab);
+void bedd_write_c(bedd_t *tab, char c);
 
 #endif
