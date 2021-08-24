@@ -204,7 +204,7 @@ int main(int argc, const char **argv) {
             tabs[tab_pos].path = NULL;
           }
         } else {
-          sprintf(status, "| file saved succefully");
+          sprintf(status, "| file saved successfully");
           tabs[tab_pos].dirty = 0;
         }
       } else if (c == '\t') {
