@@ -197,6 +197,7 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
   if (state == 0 && length == 6) {
     if (!memcmp(tab->lines[row].buffer + col, "double", 6) ||
         !memcmp(tab->lines[row].buffer + col, "extern", 6) ||
+        !memcmp(tab->lines[row].buffer + col, "inline", 6) ||
         !memcmp(tab->lines[row].buffer + col, "return", 6) ||
         !memcmp(tab->lines[row].buffer + col, "signed", 6) ||
         !memcmp(tab->lines[row].buffer + col, "sizeof", 6) ||
@@ -222,6 +223,13 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
         !memcmp(tab->lines[row].buffer + col, "unsigned", 8) ||
         !memcmp(tab->lines[row].buffer + col, "volatile", 8)) {
       printf(BEDD_MAGENTA);
+      return 1;
+    }
+  }
+
+  if (state == 0 && length > 2) {
+    if (!memcmp(tab->lines[row].buffer + col + (length - 2), "_t", 2)) {
+      printf(BEDD_CYAN);
       return 1;
     }
   }
