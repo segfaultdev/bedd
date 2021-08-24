@@ -263,7 +263,7 @@ int main(int argc, const char **argv) {
           if (strlen(buffer)) {
             if (stat(buffer, &file) < 0) {
               sprintf(status, "| cannot open file: \"%s\"", buffer);
-            } else if (!strcmp(buffer + (strlen(buffer) - 5), ".java") || !strcmp(buffer + (strlen(buffer) - 3), ".py")) {
+            } else if (!strcmp(buffer + (strlen(buffer) - 5), ".java")) {
               sprintf(status, "| file too dangerous: \"%s\"", buffer);
             } else {
               tabs = realloc(tabs, (tab_cnt + 1) * sizeof(bedd_t));
