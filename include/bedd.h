@@ -2,6 +2,7 @@
 #define __BEDD_H__
 
 #define BEDD_VER "01"
+#define BEDD_UNDO 256
 
 #define BEDD_INVERT "\x1B[7m"
 #define BEDD_NORMAL "\x1B[27m"
@@ -29,6 +30,7 @@
 #define BEDD_ISIDENT(c) (BEDD_ISALNUM((c)) || (c) == '_')
 
 typedef struct bedd_line_t bedd_line_t;
+typedef struct bedd_undo_t bedd_undo_t;
 typedef struct bedd_t bedd_t;
 
 typedef struct bedd_word_t bedd_word_t;
@@ -38,12 +40,24 @@ struct bedd_line_t {
   int length;
 };
 
+struct bedd_undo_t {
+  // original state
+  bedd_line_t *lines;
+  int line_cnt;
+
+  // cursor position
+  int row, col;
+};
+
 struct bedd_t {
   char *path;
   int dirty;
 
   bedd_line_t *lines;
   int line_cnt;
+
+  bedd_undo_t undo_buf[BEDD_UNDO];
+  int undo_pos, undo_cnt;
 
   // cursor position
   int row, col;
@@ -85,6 +99,11 @@ void bedd_up(bedd_t *tab, int select);
 void bedd_down(bedd_t *tab, int select);
 void bedd_left(bedd_t *tab, int select);
 void bedd_right(bedd_t *tab, int select);
+
+void bedd_free_undo(bedd_undo_t *undo);
+
+void bedd_push_undo(bedd_t *tab);
+void bedd_peek_undo(bedd_t *tab, int pos);
 
 // langs
 

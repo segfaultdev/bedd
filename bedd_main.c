@@ -63,7 +63,7 @@ int prompt_str(char *buffer, int length, int clear, const char *prompt) {
     int width = 80, height = 25;
     get_winsize(&width, &height);
 
-    char c;
+    char c = '\0';
 
     if (read(STDIN_FILENO, &c, 1) > 0) {
       if (c == BEDD_CTRL('q')) {
@@ -166,6 +166,14 @@ int main(int argc, const char **argv) {
             tab_pos = tab_cnt - 1;
           }
         }
+      } else if (c == BEDD_CTRL('z')) {
+        if (tabs[tab_pos].undo_pos) {
+          bedd_peek_undo(tabs + tab_pos, --tabs[tab_pos].undo_pos);
+        }
+      } else if (c == BEDD_CTRL('y')) {
+        if (tabs[tab_pos].undo_pos < tabs[tab_pos].undo_cnt - 1) {
+          bedd_peek_undo(tabs + tab_pos, ++tabs[tab_pos].undo_pos);
+        }
       } else if (c == BEDD_CTRL('a')) {
         tabs[tab_pos].sel_row = 0;
         tabs[tab_pos].sel_col = 0;
@@ -207,6 +215,10 @@ int main(int argc, const char **argv) {
               int count = bedd_replace(tabs + tab_pos, buffer_1 + whole_word, buffer_2, whole_word);
 
               sprintf(status, "| replaced %d occurence%s", count, count == 1 ? "" : "s");
+
+              if (count) {
+                bedd_push_undo(tabs + tab_pos);
+              }
             }
           }
         }
@@ -264,8 +276,11 @@ int main(int argc, const char **argv) {
         for (int i = 0; i < 2 - (tabs[tab_pos].col + 1) % 2; i++) {
           bedd_write(tabs + tab_pos, ' ');
         }
+
+        bedd_push_undo(tabs + tab_pos);
       } else if (c == '\x7F' || c == BEDD_CTRL('h')) {
         bedd_delete(tabs + tab_pos);
+        bedd_push_undo(tabs + tab_pos);
       } else if (c == BEDD_CTRL('b')) {
         tabs[tab_pos].col = 0;
       } else if (c == '\x1B') {
@@ -288,6 +303,7 @@ int main(int argc, const char **argv) {
                     }
 
                     bedd_delete(tabs + tab_pos);
+                    bedd_push_undo(tabs + tab_pos);
                   } else if (seq[1] == '5') {
                     for (int i = 0; i < (height - 2) / 2; i++) {
                       bedd_up(tabs + tab_pos, 0);
@@ -599,6 +615,7 @@ int main(int argc, const char **argv) {
         }
 
         bedd_write(tabs + tab_pos, c);
+        bedd_push_undo(tabs + tab_pos);
       }
     } else if (first) {
       first = 0;

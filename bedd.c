@@ -61,7 +61,12 @@ void bedd_init(bedd_t *tab, const char *path) {
   tab->off_row = 0;
   tab->tmp_row = -1;
 
+  tab->undo_cnt = 0;
+  tab->undo_pos = -1;
+
   memset(tab->query, 0, 1024);
+
+  bedd_push_undo(tab);
 }
 
 int bedd_save(bedd_t *tab) {
@@ -113,7 +118,7 @@ void bedd_tabs(bedd_t *tabs, int tab_pos, int tab_cnt, int width) {
 }
 
 void bedd_stat(bedd_t *tab, const char *status) {
-  printf(BEDD_INVERT " bedd r%s " BEDD_NORMAL " %s%s (%d,%d) %s", BEDD_VER, tab->path ? tab->path : "no name", tab->dirty ? "*" : "", tab->row + 1, tab->col + 1, status);
+  printf(BEDD_INVERT " bedd r%s " BEDD_NORMAL " %s%s (%d,%d) (%d/%d) %s", BEDD_VER, tab->path ? tab->path : "no name", tab->dirty ? "*" : "", tab->row + 1, tab->col + 1, tab->undo_pos, tab->undo_cnt, status);
 }
 
 int bedd_color(bedd_t *tab, int state, int row, int col) {
@@ -591,6 +596,86 @@ void bedd_right(bedd_t *tab, int select) {
     tab->sel_row = tab->row;
     tab->sel_col = tab->col;
   }
+
+  if (tab->off_row > tab->row) {
+    tab->off_row = tab->row;
+  }
+
+  if (tab->off_row < tab->row - (tab->height - 3)) {
+    tab->off_row = tab->row - (tab->height - 3);
+  }
+}
+
+void bedd_free_undo(bedd_undo_t *undo) {
+  for (int i = 0; i < undo->line_cnt; i++) {
+    if (undo->lines[i].buffer) {
+      free(undo->lines[i].buffer);
+    }
+  }
+
+  free(undo->lines);
+}
+
+void bedd_push_undo(bedd_t *tab) {
+  while ((tab->undo_cnt - 1) > tab->undo_pos) {
+    bedd_free_undo(tab->undo_buf + (--tab->undo_cnt));
+  }
+
+  if (tab->undo_cnt >= BEDD_UNDO) {
+    tab->undo_pos = BEDD_UNDO - 2;
+    tab->undo_cnt = BEDD_UNDO - 1;
+    memmove(tab->undo_buf, tab->undo_buf + 1, tab->undo_cnt * sizeof(bedd_undo_t));
+  }
+
+  tab->undo_buf[tab->undo_cnt].lines = malloc(tab->line_cnt * sizeof(bedd_line_t));
+  tab->undo_buf[tab->undo_cnt].line_cnt = tab->line_cnt;
+
+  for (int i = 0; i < tab->line_cnt; i++) {
+    if (tab->lines[i].length) {
+      tab->undo_buf[tab->undo_cnt].lines[i].buffer = malloc(tab->lines[i].length);
+      memcpy(tab->undo_buf[tab->undo_cnt].lines[i].buffer, tab->lines[i].buffer, tab->lines[i].length);
+    } else {
+      tab->undo_buf[tab->undo_cnt].lines[i].buffer = NULL;
+    }
+
+    tab->undo_buf[tab->undo_cnt].lines[i].length = tab->lines[i].length;
+  }
+
+  tab->undo_buf[tab->undo_cnt].row = tab->row;
+  tab->undo_buf[tab->undo_cnt].col = tab->col;
+
+  tab->undo_cnt++;
+  tab->undo_pos++;
+}
+
+void bedd_peek_undo(bedd_t *tab, int pos) {
+  for (int i = 0; i < tab->line_cnt; i++) {
+    if (tab->lines[i].buffer) {
+      free(tab->lines[i].buffer);
+    }
+  }
+
+  free(tab->lines);
+
+  tab->lines = malloc(tab->undo_buf[pos].line_cnt * sizeof(bedd_undo_t));
+  tab->line_cnt = tab->undo_buf[pos].line_cnt;
+
+  for (int i = 0; i < tab->line_cnt; i++) {
+    if (tab->undo_buf[pos].lines[i].length) {
+      tab->lines[i].buffer = malloc(tab->undo_buf[pos].lines[i].length);
+      memcpy(tab->lines[i].buffer, tab->undo_buf[pos].lines[i].buffer, tab->undo_buf[pos].lines[i].length);
+    } else {
+      tab->lines[i].buffer = NULL;
+    }
+
+    tab->lines[i].length = tab->undo_buf[pos].lines[i].length;
+  }
+
+  tab->row = tab->undo_buf[pos].row;
+  tab->col = tab->undo_buf[pos].col;
+
+  tab->sel_row = tab->row;
+  tab->sel_col = tab->col;
 
   if (tab->off_row > tab->row) {
     tab->off_row = tab->row;

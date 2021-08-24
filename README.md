@@ -23,8 +23,8 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Cut: `Ctrl+X` (TODO)
 - Paste: `Ctrl+V` (TODO)
 
-- Undo: `Ctrl+Z` (TODO)
-- Redo: `Ctrl+Y` (TODO)
+- Undo: `Ctrl+Z`
+- Redo: `Ctrl+Y`
 
 - Find: `Ctrl+F` (first result after the cursor position)
 - Replace: `Ctrl+G`
