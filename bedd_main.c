@@ -97,14 +97,24 @@ int main(int argc, const char **argv) {
   atexit(raw_off);
   raw_on();
 
-  bedd_t *tabs = malloc(sizeof(bedd_t));
-  int tab_pos = 0, tab_cnt = 1;
-
-  bedd_init(tabs + tab_pos, NULL);
-
-  int first = 1;
+  bedd_t *tabs = NULL;
+  int tab_pos = 0, tab_cnt = 0;
 
   struct stat file;
+
+  for (int i = 1; i < argc; i++) {
+    if (stat(argv[i], &file) >= 0) {
+      tabs = realloc(tabs, (++tab_cnt) * sizeof(bedd_t));
+      bedd_init(tabs + (tab_cnt - 1), argv[i]);
+    }
+  }
+
+  if (!tab_cnt) {
+    tabs = realloc(tabs, (++tab_cnt) * sizeof(bedd_t));
+    bedd_init(tabs + tab_pos, NULL);
+  }
+
+  int first = 1;
 
   char status[1024] = {0};
 
@@ -160,8 +170,6 @@ int main(int argc, const char **argv) {
       } else if (c == BEDD_CTRL('f')) {
         // find
       } else if (c == BEDD_CTRL('g')) {
-        // replace
-
         char buffer_1[1024];
         char buffer_2[1024];
 
@@ -634,7 +642,7 @@ int main(int argc, const char **argv) {
 
         printf(BEDD_WHITE);
 
-        for (int j = 0; j < tabs[tab_pos].lines[row].length && j < width - (line_len + 6); j++) {
+        for (int j = 0; j < tabs[tab_pos].lines[row].length && j < width - (line_len + 7); j++) {
           printf(BEDD_SELECT);
 
           if (row == tabs[tab_pos].sel_row) {

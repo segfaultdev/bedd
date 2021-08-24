@@ -49,7 +49,7 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Cancel: `Ctrl+Q`
 - Accept: `Return/Enter/Ctrl+M`
 
-NOTE: Add `~` before find/replace query to only match whole words.
+NOTE: Add `~` before a find/replace query to only match whole words.
 
 ## Supported languages
 
