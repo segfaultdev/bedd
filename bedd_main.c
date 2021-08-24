@@ -108,9 +108,11 @@ int main(int argc, const char **argv) {
   struct stat file;
 
   for (int i = 1; i < argc; i++) {
-    if (stat(argv[i], &file) >= 0) {
-      tabs = realloc(tabs, (++tab_cnt) * sizeof(bedd_t));
-      bedd_init(tabs + (tab_cnt - 1), argv[i]);
+    if (strcmp(argv[i] + (strlen(argv[i]) - 5), ".java") && strcmp(argv[i] + (strlen(argv[i]) - 3), ".py")) {
+      if (stat(argv[i], &file) >= 0) {
+        tabs = realloc(tabs, (++tab_cnt) * sizeof(bedd_t));
+        bedd_init(tabs + (tab_cnt - 1), argv[i]);
+      }
     }
   }
 
