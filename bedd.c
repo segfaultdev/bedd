@@ -388,6 +388,59 @@ void bedd_delete(bedd_t *tab) {
   tab->dirty = 1;
 }
 
+int bedd_replace(bedd_t *tab, const char *query, const char *replace, int whole_word) {
+  int count = 0;
+
+  if (!query || !replace) {
+    return count;
+  }
+
+  for (int i = 0; i < tab->line_cnt; i++) {
+    for (int j = 0; j <= tab->lines[i].length - strlen(query); j++) {
+      if (!tab->lines[i].buffer) {
+        break;
+      }
+
+      if (memcmp(tab->lines[i].buffer + j, query, strlen(query))) {
+        continue;
+      }
+
+      if (whole_word) {
+        if (j > 0) {
+          if (BEDD_ISIDENT(tab->lines[i].buffer[j - 1])) {
+            continue;
+          }
+        }
+
+        if (j < (tab->lines[i].length - (strlen(query) + 1))) {
+          if (BEDD_ISIDENT(tab->lines[i].buffer[j + strlen(query)])) {
+            continue;
+          }
+        }
+      }
+
+      tab->row = i;
+      tab->col = j + strlen(query);
+
+      tab->sel_row = tab->row;
+      tab->sel_col = tab->col;
+
+      for (int k = 0; k < strlen(query); k++) {
+        bedd_delete(tab);
+      }
+
+      for (int k = 0; k < strlen(replace); k++) {
+        bedd_write_raw(tab, replace[k]);
+      }
+
+      j = tab->col - 1;
+      count++;
+    }
+  }
+
+  return count;
+}
+
 void bedd_up(bedd_t *tab, int select) {
   if (tab->row > 0) {
     tab->row--;

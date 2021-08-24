@@ -75,6 +75,8 @@ void bedd_indent(bedd_t *tab);
 void bedd_write(bedd_t *tab, char c);
 void bedd_delete(bedd_t *tab);
 
+int  bedd_replace(bedd_t *tab, const char *query, const char *replace, int whole_word);
+
 void bedd_up(bedd_t *tab, int select);
 void bedd_down(bedd_t *tab, int select);
 void bedd_left(bedd_t *tab, int select);

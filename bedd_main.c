@@ -69,7 +69,7 @@ int prompt_str(char *buffer, int length, const char *prompt) {
         if (pos) {
           buffer[--pos] = '\0';
         }
-      } else {
+      } else if (c >= 32 && c < 127) {
         buffer[pos++] = c;
         buffer[pos] = '\0';
       }
@@ -161,6 +161,25 @@ int main(int argc, const char **argv) {
         // find
       } else if (c == BEDD_CTRL('g')) {
         // replace
+
+        char buffer_1[1024];
+        char buffer_2[1024];
+
+        int whole_word = 0;
+
+        if (prompt_str(buffer_1, sizeof(buffer_1), "query:")) {
+          if (buffer_1[0] == '~') {
+            whole_word = 1;
+          }
+
+          if (strlen(buffer_1 + whole_word)) {
+            if (prompt_str(buffer_2, sizeof(buffer_2), "replace with:")) {
+              int count = bedd_replace(tabs + tab_pos, buffer_1 + whole_word, buffer_2, whole_word);
+
+              sprintf(status, "| replaced %d occurence%s", count, count == 1 ? "" : "s");
+            }
+          }
+        }
       } else if (c == BEDD_CTRL('n')) {
         tabs = realloc(tabs, (tab_cnt + 1) * sizeof(bedd_t));
         bedd_init(tabs + tab_cnt, NULL);
