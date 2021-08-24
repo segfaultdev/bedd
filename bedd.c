@@ -71,6 +71,20 @@ void bedd_init(bedd_t *tab, const char *path) {
   bedd_push_undo(tab);
 }
 
+void bedd_free(bedd_t *tab) {
+  for (int i = 0; i < tab->line_cnt; i++) {
+    if (tab->lines[i].buffer) {
+      free(tab->lines[i].buffer);
+    }
+  }
+
+  free(tab->lines);
+
+  while (tab->undo_cnt) {
+    bedd_free_undo(tab->undo_buf + (--tab->undo_cnt));
+  }
+}
+
 int bedd_save(bedd_t *tab) {
   FILE *file = fopen(tab->path, "w");
 
@@ -204,7 +218,7 @@ void bedd_write(bedd_t *tab, char c) {
     tab->col = tab->lines[tab->row].length;
   }
 
-  if (c == BEDD_CTRL('m')) {
+  if (c == '\n' || c == BEDD_CTRL('m')) {
     int on_block = 0;
 
     if (tab->col > 0 && tab->col < tab->lines[tab->row].length) {
@@ -686,4 +700,63 @@ void bedd_peek_undo(bedd_t *tab, int pos) {
   if (tab->off_row < tab->row - (tab->height - 3)) {
     tab->off_row = tab->row - (tab->height - 3);
   }
+}
+
+void bedd_copy(bedd_t *tab) {
+  FILE *xclip = popen("xclip -selection clipboard -i", "w");
+  
+  if (!xclip) {
+    return;
+  }
+
+  int row = tab->sel_row;
+  int col = tab->sel_col;
+
+  if (!tab->lines) {
+    return;
+  }
+
+  if (row < 0) {
+    row = 0;
+  }
+
+  if (row >= tab->line_cnt) {
+    row = tab->line_cnt - 1;
+  }
+
+  if (col > tab->lines[row].length) {
+    col = tab->lines[row].length;
+  }
+
+  while (row < tab->row || (row == tab->row && col < tab->col)) {
+    if (col >= tab->lines[row].length) {
+      col = 0;
+      row++;
+
+      fputc('\n', xclip);
+    }
+
+    if (col < tab->lines[row].length) {
+      fputc(tab->lines[row].buffer[col], xclip);
+    }
+
+    col++;
+  }
+
+  pclose(xclip);
+}
+
+void bedd_paste(bedd_t *tab) {
+  FILE *xclip = popen("xclip -selection clipboard -o", "r");
+  if (!xclip) return;
+
+  int code = tab->code;
+  tab->code = 0;
+
+  while (!feof(xclip)) {
+    bedd_write(tab, fgetc(xclip));
+  }
+
+  tab->code = code;
+  pclose(xclip);
 }

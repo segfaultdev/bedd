@@ -1,5 +1,5 @@
 #define CUPD_FILE "bedd_main.c"
-#define CUPD_ARGS "-g -Iinclude"
+#define CUPD_ARGS "-Os -Iinclude"
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -154,6 +154,8 @@ int main(int argc, const char **argv) {
         }
 
         if (do_exit) {
+          bedd_free(tabs + tab_pos);
+
           if (tab_cnt == 1) {
             break;
           }
@@ -192,6 +194,21 @@ int main(int argc, const char **argv) {
 
         tabs[tab_pos].row = tabs[tab_pos].line_cnt - 1;
         tabs[tab_pos].col = tabs[tab_pos].lines[tabs[tab_pos].row].length;
+      } else if (c == BEDD_CTRL('c')) {
+        if (tabs[tab_pos].row != tabs[tab_pos].sel_row || tabs[tab_pos].col != tabs[tab_pos].sel_col) {
+          bedd_copy(tabs + tab_pos);
+        }
+      } else if (c == BEDD_CTRL('x')) {
+        if (tabs[tab_pos].row != tabs[tab_pos].sel_row || tabs[tab_pos].col != tabs[tab_pos].sel_col) {
+          bedd_copy(tabs + tab_pos);
+          bedd_delete(tabs + tab_pos);
+        }
+      } else if (c == BEDD_CTRL('v')) {
+        if (tabs[tab_pos].row != tabs[tab_pos].sel_row || tabs[tab_pos].col != tabs[tab_pos].sel_col) {
+          bedd_delete(tabs + tab_pos);
+        }
+
+        bedd_paste(tabs + tab_pos);
       } else if (c == BEDD_CTRL('f')) {
         // we preserve the last query, as this is going to be
         // called a lot of times consecutively

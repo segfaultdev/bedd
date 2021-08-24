@@ -87,6 +87,7 @@ struct bedd_t {
 };
 
 void bedd_init(bedd_t *tab, const char *path);
+void bedd_free(bedd_t *tab);
 int  bedd_save(bedd_t *tab);
 
 void bedd_tabs(bedd_t *tabs, int tab_pos, int tab_cnt, int width);
@@ -109,6 +110,9 @@ void bedd_free_undo(bedd_undo_t *undo);
 
 void bedd_push_undo(bedd_t *tab);
 void bedd_peek_undo(bedd_t *tab, int pos);
+
+void bedd_copy(bedd_t *tab);
+void bedd_paste(bedd_t *tab);
 
 // langs
 

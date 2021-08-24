@@ -19,9 +19,9 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 
 ### Editor mode
 
-- Copy: `Ctrl+C` (TODO)
-- Cut: `Ctrl+X` (TODO)
-- Paste: `Ctrl+V` (TODO)
+- Copy: `Ctrl+C`
+- Cut: `Ctrl+X`
+- Paste: `Ctrl+V`
 
 - Undo: `Ctrl+Z`
 - Redo: `Ctrl+Y`
@@ -50,6 +50,7 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Accept: `Return/Enter/Ctrl+M`
 
 NOTE: Add `~` before a find/replace query to only match whole words.
+NOTE: The clipboard actions(copy, cut and paste) all require `xclip` to be installed and in the PATH.
 
 ## Supported languages
 
