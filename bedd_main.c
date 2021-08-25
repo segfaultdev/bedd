@@ -241,6 +241,30 @@ int main(int argc, const char **argv) {
         }
       } else if (c == BEDD_CTRL('t')) {
         show_tree = 1 - show_tree;
+      } else if (c == BEDD_CTRL('d')) {
+        char buffer[1024];
+
+        if (prompt_str(buffer, 1024, 1, "path:")) {
+          if (strlen(buffer)) {
+            char command[1280];
+            sprintf(command, "rm -rf %s", buffer);
+
+            system(command);
+            sprintf(status, "| file/directory deleted successfully");
+          }
+        }
+      } else if (c == BEDD_CTRL('k')) {
+        char buffer[1024];
+
+        if (prompt_str(buffer, 1024, 1, "path:")) {
+          if (strlen(buffer)) {
+            char command[1280];
+            sprintf(command, "mkdir -p %s", buffer);
+
+            system(command);
+            sprintf(status, "| directory created successfully");
+          }
+        }
       } else if (c == BEDD_CTRL('z')) {
         if (tabs[tab_pos].step) {
           bedd_push_undo(tabs + tab_pos);

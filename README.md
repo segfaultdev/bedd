@@ -37,6 +37,8 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - New file(new tab): `Ctrl+N`
 - Save file: `Ctrl+S`
 - Close file/tab: `Ctrl+Q`
+- Delete file/directory(specify path): `Ctrl+D`
+- New directory: `Ctrl+K`
 
 - Prev. tab: `Ctrl+Left`
 - Next tab: `Ctrl+Right`

@@ -134,7 +134,7 @@ void bedd_tabs(bedd_t *tabs, int tab_pos, int tab_cnt, int width) {
 }
 
 void bedd_stat(bedd_t *tab, const char *status) {
-  printf(BEDD_INVERT " bedd r%s " BEDD_NORMAL " %s%s (%d,%d) (%d/%d) %s", BEDD_VER, tab->path ? tab->path : "no name", tab->dirty ? "*" : "", tab->row + 1, tab->col + 1, tab->undo_pos, tab->undo_cnt, status);
+  printf(BEDD_INVERT " bedd r%s " BEDD_NORMAL " %s%s (%d,%d) (%d/%d) %s \x1B[K", BEDD_VER, tab->path ? tab->path : "no name", tab->dirty ? "*" : "", tab->row + 1, tab->col + 1, tab->undo_pos, tab->undo_cnt, status);
 }
 
 int bedd_color(bedd_t *tab, int state, int row, int col) {
