@@ -114,8 +114,13 @@ int dir_tree(int row, int col, int height, const char *path) {
 
     if (entry->d_type == DT_DIR) {
       if (row > 1 && row < height) {
-        printf("\x1B[%d;%dH+ ", row, col);
-
+        printf("\x1B[%d;%dH", row, 1);
+        
+        for (int i = 1; i < col; i++) {
+          printf(" ");
+        }
+        
+        printf("+ ");
         int pos = 0;
 
         for (int i = col; i < BEDD_TREE - 2; i++) {
@@ -132,8 +137,13 @@ int dir_tree(int row, int col, int height, const char *path) {
       row = dir_tree(row + 1, col + 2, height, new_path);
     } else {
       if (row > 1 && row < height) {
-        printf("\x1B[%d;%dH- ", row, col);
-
+        printf("\x1B[%d;%dH", row, 1);
+        
+        for (int i = 1; i < col; i++) {
+          printf(" ");
+        }
+        
+        printf("- ");
         int pos = 0;
 
         for (int i = col; i < BEDD_TREE - 2; i++) {
