@@ -118,7 +118,7 @@ int dir_tree(int row, int col, int height, const char *path) {
 
         int pos = 0;
 
-        for (int i = col; i < BEDD_TREE; i++) {
+        for (int i = col; i < BEDD_TREE - 2; i++) {
           if (pos < strlen(entry->d_name)) {
             printf("%c", entry->d_name[pos]);
           } else {
@@ -136,7 +136,7 @@ int dir_tree(int row, int col, int height, const char *path) {
 
         int pos = 0;
 
-        for (int i = col; i < BEDD_TREE; i++) {
+        for (int i = col; i < BEDD_TREE - 2; i++) {
           if (pos < strlen(entry->d_name)) {
             printf("%c", entry->d_name[pos]);
           } else {
