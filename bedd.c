@@ -281,6 +281,14 @@ void bedd_write(bedd_t *tab, char c) {
       bedd_write_raw(tab, ' ');
       bedd_write_raw(tab, ' ');
     }
+    
+    if (tab->off_row > tab->row) {
+      tab->off_row = tab->row;
+    }
+
+    if (tab->off_row < tab->row - (tab->height - 3)) {
+      tab->off_row = tab->row - (tab->height - 3);
+    }
 
     return;
   }
