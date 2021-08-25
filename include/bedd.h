@@ -6,6 +6,8 @@
 #define BEDD_UNDO 128
 #define BEDD_STEP 20
 
+#define BEDD_TREE 31
+
 #define BEDD_INVERT "\x1B[7m"
 #define BEDD_NORMAL "\x1B[27m"
 

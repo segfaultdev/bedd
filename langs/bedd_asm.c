@@ -84,6 +84,11 @@ int bedd_color_asm(bedd_t *tab, int state, int row, int col) {
     return 0;
   }
 
+  if (tab->lines[row].buffer[col] == '%') {
+    printf(BEDD_MAGENTA);
+    return 1;
+  }
+
   int length = 0;
   char last = ' ';
 
@@ -104,6 +109,32 @@ int bedd_color_asm(bedd_t *tab, int state, int row, int col) {
   if (state == 0 && last == ':') {
     printf(BEDD_CYAN);
     return 1;
+  }
+
+  if (state == 0 && length == 2) {
+    if (!memcmp(tab->lines[row].buffer + col, "db", 2) ||
+        !memcmp(tab->lines[row].buffer + col, "dw", 2) ||
+        !memcmp(tab->lines[row].buffer + col, "dd", 2) ||
+        !memcmp(tab->lines[row].buffer + col, "dq", 2)) {
+      printf(BEDD_RED);
+      return 1;
+    }
+  }
+
+  if (state == 0 && length == 4) {
+    if (!memcmp(tab->lines[row].buffer + col, "byte", 4) ||
+        !memcmp(tab->lines[row].buffer + col, "word", 4)) {
+      printf(BEDD_RED);
+      return 1;
+    }
+  }
+
+  if (state == 0 && length == 5) {
+    if (!memcmp(tab->lines[row].buffer + col, "dword", 5) ||
+        !memcmp(tab->lines[row].buffer + col, "qword", 5)) {
+      printf(BEDD_RED);
+      return 1;
+    }
   }
 
   if (state == 0 && length == 2) {

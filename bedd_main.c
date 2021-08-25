@@ -96,6 +96,58 @@ int prompt_str(char *buffer, int length, int clear, const char *prompt) {
   return 1;
 }
 
+int dir_tree(int row, int col, int height, const char *path) {
+  struct dirent *entry;
+  DIR *dir;
+
+  if (!(dir = opendir(path))) {
+    return row;
+  }
+
+  while ((entry = readdir(dir)) != NULL) {
+    if (entry->d_name[0] == '.') {
+      continue;
+    }
+
+    char new_path[strlen(path) + strlen(entry->d_name) + 2];  
+    sprintf(new_path, "%s/%s", path, entry->d_name);
+
+    if (entry->d_type == DT_DIR) {
+      if (row > 1 && row < height) {
+        printf("\x1B[%d;%dH+ ", row, col);
+
+        for (int i = 0; i < strlen(entry->d_name); i++) {
+          if (col + i < BEDD_TREE) {
+            printf("%c", entry->d_name[i]);
+          } else {
+            break;
+          }
+        }
+      }
+
+      row = dir_tree(row + 1, col + 2, height, new_path);
+    } else {
+      if (row > 1 && row < height) {
+        printf("\x1B[%d;%dH- ", row, col);
+
+        for (int i = 0; i < strlen(entry->d_name); i++) {
+          if (col + i < BEDD_TREE) {
+            printf("%c", entry->d_name[i]);
+          } else {
+            break;
+          }
+        }
+      }
+
+      row++;
+    }
+  }
+
+  closedir(dir);
+  return row;
+}
+
+
 int main(int argc, const char **argv) {
   cupd_init(argc, argv);
 
@@ -122,6 +174,11 @@ int main(int argc, const char **argv) {
   }
 
   int first = 1;
+  int show_tree = 0;
+
+  int off_dir = 0;
+  int tmp_dir = -1;
+  int dir_len = 25;
 
   char status[1024] = {0};
 
@@ -170,6 +227,8 @@ int main(int argc, const char **argv) {
             tab_pos = tab_cnt - 1;
           }
         }
+      } else if (c == BEDD_CTRL('t')) {
+        show_tree = 1 - show_tree;
       } else if (c == BEDD_CTRL('z')) {
         if (tabs[tab_pos].step) {
           bedd_push_undo(tabs + tab_pos);
@@ -471,7 +530,7 @@ int main(int argc, const char **argv) {
                           int scroll_start = ((tabs[tab_pos].off_row) * (height - 2)) / tabs[tab_pos].line_cnt;
                           int scroll_end   = ((tabs[tab_pos].off_row + (height - 2)) * (height - 2)) / tabs[tab_pos].line_cnt;
 
-                          if (row - 1 >= scroll_start && row - 1 <= scroll_end) {
+                          if (row - 2 >= scroll_start && row - 2 <= scroll_end) {
                             tabs[tab_pos].tmp_row = (row - 1) - scroll_start;
                           } else {
                             tabs[tab_pos].tmp_row = (scroll_end - scroll_start) / 2;
@@ -483,7 +542,23 @@ int main(int argc, const char **argv) {
                           tabs[tab_pos].tmp_row = -1;
                         }
 
-                        if (col < width && row > 1 && row < height) {
+                        if (show_tree && col <= BEDD_TREE && row > 1 && row < height) {
+                          int scroll_start = (off_dir * (height - 2)) / dir_len;
+                          int scroll_end   = ((off_dir + (height - 2)) * (height - 2)) / dir_len;
+
+                          if (row - 2 >= scroll_start && row - 2 <= scroll_end) {
+                            tmp_dir = (row - 1) - scroll_start;
+                          } else {
+                            tmp_dir = (scroll_end - scroll_start) / 2;
+
+                            int scroll = (row - 1) - tmp_dir;
+                            off_dir = (dir_len * scroll) / (height - 2);
+                          }
+                        } else {
+                          tmp_dir = -1;
+                        }
+
+                        if (!(show_tree && col <= BEDD_TREE) && col < width && row > 1 && row < height) {
                           tabs[tab_pos].row = (row - 2) + tabs[tab_pos].off_row;
 
                           if (tabs[tab_pos].row < 0) {
@@ -506,7 +581,7 @@ int main(int argc, const char **argv) {
                             line_len++;
                           }
 
-                          tabs[tab_pos].col = col - (line_len + 6);
+                          tabs[tab_pos].col = col - (line_len + (show_tree * BEDD_TREE) + 6);
 
                           if (tabs[tab_pos].col < 0) {
                             tabs[tab_pos].col = 0;
@@ -553,6 +628,9 @@ int main(int argc, const char **argv) {
                         if (tabs[tab_pos].tmp_row != -1) {
                           int scroll = (row - 1) - tabs[tab_pos].tmp_row;
                           tabs[tab_pos].off_row = (tabs[tab_pos].line_cnt * scroll) / (height - 2);
+                        } else if (tmp_dir != -1) {
+                          int scroll = (row - 1) - tmp_dir;
+                          off_dir = (dir_len * scroll) / (height - 2);
                         } else {
                           if (col < width && row > 1 && row < height) {
                             tabs[tab_pos].row = (row - 2) + tabs[tab_pos].off_row;
@@ -577,7 +655,7 @@ int main(int argc, const char **argv) {
                               line_len++;
                             }
 
-                            tabs[tab_pos].col = col - (line_len + 6);
+                            tabs[tab_pos].col = col - (line_len + (show_tree * BEDD_TREE) + 6);
 
                             if (tabs[tab_pos].col < 0) {
                               tabs[tab_pos].col = 0;
@@ -643,7 +721,7 @@ int main(int argc, const char **argv) {
                     }
                   }
 
-                  if (seq[2] == '0' && c == 'M') {
+                  if (tmp_dir == -1 && tabs[tab_pos].tmp_row == -1 && seq[2] == '0' && c == 'M') {
                     tabs[tab_pos].sel_row = tabs[tab_pos].row;
                     tabs[tab_pos].sel_col = tabs[tab_pos].col;
                   }
@@ -690,21 +768,26 @@ int main(int argc, const char **argv) {
     } else if (tabs[tab_pos].off_row >= tabs[tab_pos].line_cnt - (height - 2)) {
       if (tabs[tab_pos].line_cnt - (height - 2) > 0) {
         tabs[tab_pos].off_row = tabs[tab_pos].line_cnt - (height - 2);
+      } else {
+        tabs[tab_pos].off_row = 0;
       }
     }
 
-    int scroll_size = ((height - 2) * (height - 2) + (tabs[tab_pos].line_cnt - 1)) / tabs[tab_pos].line_cnt;
-
-    if (scroll_size < 1) {
-      scroll_size = 1;
-    }
-
-    if (scroll_size > height - 2) {
-      scroll_size = height - 2;
+    if (off_dir < 0) {
+      off_dir = 0;
+    } else if (off_dir >= dir_len - (height - 2)) {
+      if (dir_len - (height - 2) > 0) {
+        off_dir = dir_len - (height - 2);
+      } else {
+        off_dir = 0;
+      }
     }
 
     int scroll_start = ((tabs[tab_pos].off_row) * (height - 2)) / tabs[tab_pos].line_cnt;
     int scroll_end   = ((tabs[tab_pos].off_row + (height - 2)) * (height - 2)) / tabs[tab_pos].line_cnt;
+
+    int dir_start = (off_dir * (height - 2)) / dir_len;
+    int dir_end   = ((off_dir + (height - 2)) * (height - 2)) / dir_len;
 
     int line_len = 0;
     int line_tmp = tabs[tab_pos].line_cnt;
@@ -724,6 +807,22 @@ int main(int argc, const char **argv) {
     int state = 0;
 
     for (int i = 0; i < height - 2; i++, row++) {
+      printf(BEDD_NORMAL BEDD_WHITE);
+
+      if (show_tree) {
+        for (int i = 0; i < BEDD_TREE - 1; i++) {
+          printf(" ");
+        }
+
+        if (i >= dir_start && i <= dir_end) {
+          printf(BEDD_INVERT);
+        } else {
+          printf(BEDD_NORMAL);
+        }
+
+        printf("|" BEDD_NORMAL);
+      }
+
       if (row >= 0 && row < tabs[tab_pos].line_cnt) {
         if (tabs[tab_pos].row == row) {
           printf(BEDD_INVERT "  %*d  " BEDD_NORMAL " ", line_len, row + 1);
@@ -732,9 +831,7 @@ int main(int argc, const char **argv) {
           printf(BEDD_NORMAL "  %*d |" BEDD_NORMAL " ", line_len, row + 1);
         }
 
-        printf(BEDD_WHITE);
-
-        for (int j = 0; j < tabs[tab_pos].lines[row].length && j < width - (line_len + 7); j++) {
+        for (int j = 0; j < tabs[tab_pos].lines[row].length && j < width - (line_len + (show_tree * BEDD_TREE) + 7); j++) {
           printf(BEDD_SELECT);
 
           if (row == tabs[tab_pos].sel_row) {
@@ -793,6 +890,11 @@ int main(int argc, const char **argv) {
       printf(BEDD_NORMAL "\r\n");
     }
 
+    if (show_tree) {
+      dir_len = dir_tree(2 - off_dir, 1, height, ".") - (2 - off_dir);
+    }
+
+    printf("\x1B[%d;%dH", height, 0);
     bedd_stat(tabs + tab_pos, status);
 
     if (strlen(status)) {
@@ -808,7 +910,7 @@ int main(int argc, const char **argv) {
     if (pos) {
       printf("\x1B[3 q");
       printf("\x1B[?25h");
-      printf("\x1B[%d;%dH", pos, col + line_len + 6);
+      printf("\x1B[%d;%dH", pos, col + line_len + (show_tree * BEDD_TREE) + 6);
     }
 
     fflush(stdout);

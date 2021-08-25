@@ -17,7 +17,7 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
   // 9 = ending multiline comment
 
   if (col == 0) {
-    if (state == 1 || state == 2 || state == 4 || state == 7 || state == 8) {
+    if (state == 1 || state == 2 || state == 4 || state == 5 || state == 6 || state == 7 || state == 8) {
       printf(BEDD_WHITE);
       state = 0;
     }

@@ -149,6 +149,7 @@ int bedd_color(bedd_t *tab, int state, int row, int col) {
       tab->code = 1;
       return bedd_color_c(tab, state, row, col);
     } else if (!strcmp(tab->path + (strlen(tab->path) - 4), ".asm") ||
+               !strcmp(tab->path + (strlen(tab->path) - 4), ".inc") ||
                !strcmp(tab->path + (strlen(tab->path) - 2), ".s")) {
       tab->code = 1;
       return bedd_color_asm(tab, state, row, col);
@@ -175,6 +176,7 @@ void bedd_indent(bedd_t *tab) {
         !strcmp(tab->path + (strlen(tab->path) - 4), ".cxx")) {
       bedd_indent_c(tab);
     } else if (!strcmp(tab->path + (strlen(tab->path) - 4), ".asm") ||
+               !strcmp(tab->path + (strlen(tab->path) - 4), ".inc") ||
                !strcmp(tab->path + (strlen(tab->path) - 2), ".s")) {
       bedd_indent_asm(tab);
     } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".sh")) {
