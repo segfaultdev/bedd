@@ -116,12 +116,16 @@ int dir_tree(int row, int col, int height, const char *path) {
       if (row > 1 && row < height) {
         printf("\x1B[%d;%dH+ ", row, col);
 
-        for (int i = 0; i < strlen(entry->d_name); i++) {
-          if (col + i < BEDD_TREE) {
-            printf("%c", entry->d_name[i]);
+        int pos = 0;
+
+        for (int i = col; i < BEDD_TREE; i++) {
+          if (pos < strlen(entry->d_name)) {
+            printf("%c", entry->d_name[pos]);
           } else {
-            break;
+            printf(" ");
           }
+
+          pos++;
         }
       }
 
@@ -130,12 +134,16 @@ int dir_tree(int row, int col, int height, const char *path) {
       if (row > 1 && row < height) {
         printf("\x1B[%d;%dH- ", row, col);
 
-        for (int i = 0; i < strlen(entry->d_name); i++) {
-          if (col + i < BEDD_TREE) {
-            printf("%c", entry->d_name[i]);
+        int pos = 0;
+
+        for (int i = col; i < BEDD_TREE; i++) {
+          if (pos < strlen(entry->d_name)) {
+            printf("%c", entry->d_name[pos]);
           } else {
-            break;
+            printf(" ");
           }
+
+          pos++;
         }
       }
 
@@ -160,7 +168,11 @@ int main(int argc, const char **argv) {
   struct stat file;
 
   for (int i = 1; i < argc; i++) {
-    if (strcmp(argv[i] + (strlen(argv[i]) - 5), ".java") && strcmp(argv[i] + (strlen(argv[i]) - 3), ".py")) {
+    if (strcmp(argv[i] + (strlen(argv[i]) -  5), ".java") &&
+        strcmp(argv[i] + (strlen(argv[i]) -  3), ".py") &&
+        strcmp(argv[i] + (strlen(argv[i]) -  7), ".python") &&
+        strcmp(argv[i] + (strlen(argv[i]) - 10), ".gordavaca") &&
+        strcmp(argv[i] + (strlen(argv[i]) -  3), ".gv")) {
       if (stat(argv[i], &file) >= 0) {
         tabs = realloc(tabs, (++tab_cnt) * sizeof(bedd_t));
         bedd_init(tabs + (tab_cnt - 1), argv[i]);
@@ -322,7 +334,11 @@ int main(int argc, const char **argv) {
           if (strlen(buffer)) {
             if (stat(buffer, &file) < 0) {
               sprintf(status, "| cannot open file: \"%s\"", buffer);
-            } else if (!strcmp(buffer + (strlen(buffer) - 5), ".java") || !strcmp(buffer + (strlen(buffer) - 3), ".py")) {
+            } else if (!strcmp(buffer + (strlen(buffer) -  5), ".java") ||
+                       !strcmp(buffer + (strlen(buffer) -  3), ".py") ||
+                       !strcmp(buffer + (strlen(buffer) -  7), ".python") ||
+                       !strcmp(buffer + (strlen(buffer) - 10), ".gordavaca") ||
+                       !strcmp(buffer + (strlen(buffer) -  3), ".gv")) {
               sprintf(status, "| file too dangerous: \"%s\"", buffer);
             } else {
               tabs = realloc(tabs, (tab_cnt + 1) * sizeof(bedd_t));
@@ -353,8 +369,11 @@ int main(int argc, const char **argv) {
         }
 
         if (!bedd_save(tabs + tab_pos) ||
-            !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 5), ".java") ||
-            !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 3), ".py")) {
+            !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) -  5), ".java") ||
+            !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) -  3), ".py") ||
+            !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) -  7), ".python") ||
+            !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 10), ".gordavaca") ||
+            !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) -  3), ".gv")) {
           if (prompted) {
             sprintf(status, "| cannot save file: \"%s\"", tabs[tab_pos].path);
 
@@ -759,7 +778,7 @@ int main(int argc, const char **argv) {
     }
 
     printf("\x1B[?25l");
-    printf("\x1B[2J\x1B[H" BEDD_NORMAL);
+    printf("\x1B[H" BEDD_NORMAL);
 
     bedd_tabs(tabs, tab_pos, tab_cnt, width);
 
@@ -806,14 +825,25 @@ int main(int argc, const char **argv) {
 
     int state = 0;
 
+    printf(BEDD_NORMAL BEDD_WHITE);
+
+    if (show_tree) {
+      dir_len = dir_tree(2 - off_dir, 1, height, ".") - (2 - off_dir);
+
+      for (int i = dir_len; i < height - 1; i++) {
+        printf("\x1B[%d;%dH", i + 2, 1);
+
+        for (int j = 0; j < BEDD_TREE - 1; j++) {
+          printf(" ");
+        }
+      }
+    }
+
     for (int i = 0; i < height - 2; i++, row++) {
+      printf("\x1B[%d;%dH", i + 2, 1 + (show_tree * (BEDD_TREE - 1)));
       printf(BEDD_NORMAL BEDD_WHITE);
 
       if (show_tree) {
-        for (int i = 0; i < BEDD_TREE - 1; i++) {
-          printf(" ");
-        }
-
         if (i >= dir_start && i <= dir_end) {
           printf(BEDD_INVERT);
         } else {
@@ -878,7 +908,8 @@ int main(int argc, const char **argv) {
         printf(BEDD_NORMAL "  %*s :" BEDD_NORMAL " ", line_len, "");
       }
 
-      printf(BEDD_DEFAULT "\x1B[%d;%dH", i + 2, width);
+      printf(BEDD_DEFAULT "\x1B[K");
+      printf("\x1B[%d;%dH", i + 2, width);
 
       if (i >= scroll_start && i <= scroll_end) {
         printf(BEDD_INVERT);
@@ -888,10 +919,6 @@ int main(int argc, const char **argv) {
 
       printf("|");
       printf(BEDD_NORMAL "\r\n");
-    }
-
-    if (show_tree) {
-      dir_len = dir_tree(2 - off_dir, 1, height, ".") - (2 - off_dir);
     }
 
     printf("\x1B[%d;%dH", height, 0);

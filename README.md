@@ -53,13 +53,14 @@ bedd is a tiny tab-based terminal text editor with mouse support, syntax highlig
 - Accept: `Return/Enter/Ctrl+M`
 
 NOTE: Add `~` before a find/replace query to only match whole words.
+
 NOTE: The clipboard actions(copy, cut and paste) all require `xclip` to be installed and in the PATH.
 
 ## Supported languages
 
 - C(`.c`, `.h`): full support
 - C++(`.cc`, `.hh`, `.cpp`, `.hpp`, `.cxx`): partial support, C++-specific features missing
-- x86 assembly(`.asm`, `.s`): full support, NASM syntax
+- x86 assembly(`.asm`, `.s`, `.inc`): full support, NASM syntax
 - bash/sh(`.sh`): partial support, has some errors with special cases
 
 ## How to build
