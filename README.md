@@ -83,6 +83,10 @@ This project is licensed with the nop license, check LICENSE for more details.
 ### Forks that remove the python + Java check(shitty forks):
 
 - [@aa2006's fork](https://github.com/aa2006/bedd)
+- [@kushagra765's fork](https://github.com/kushagra765/bedd) This fork not only removes the check, but also uses the _far inferior_ Makefile system, so it's shitty² ):<
+- [@DamieFC's fork](https://github.com/DamieFC/bedd) Hasn't removed the check yet, but his changes to README.md make it look like he will soooooooooooooooooo
+
+NOTE: Although my hate to python and Java is huge and real, everything offensive I say to people here is just said as a joke, so don't take it seriously.
 
 ### Forks that do NOT remove the python + Java check(good forks):
 
