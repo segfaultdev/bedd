@@ -247,7 +247,7 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
   return state;
 }
 
-void bedd_indent_c(bedd_t *tab) {
+void bedd_indent_c(bedd_t *tab, int col) {
   int level = 0;
   int step = 0;
 
@@ -259,7 +259,7 @@ void bedd_indent_c(bedd_t *tab) {
     }
   }
 
-  for (int i = level; i < tab->lines[tab->row - 1].length; i++) {
+  for (int i = level; i < col; i++) {
     if (tab->lines[tab->row - 1].buffer[i] == '{' || tab->lines[tab->row - 1].buffer[i] == '(') {
       step++;
     } else if (tab->lines[tab->row - 1].buffer[i] == '}' || tab->lines[tab->row - 1].buffer[i] == ')') {

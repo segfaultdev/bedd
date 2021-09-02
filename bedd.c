@@ -165,7 +165,7 @@ int bedd_color(bedd_t *tab, int state, int row, int col) {
   return 0;
 }
 
-void bedd_indent(bedd_t *tab) {
+void bedd_indent(bedd_t *tab, int col) {
   if (tab->path) {
     if (!strcmp(tab->path + (strlen(tab->path) - 2), ".c") ||
         !strcmp(tab->path + (strlen(tab->path) - 2), ".h") ||
@@ -174,13 +174,13 @@ void bedd_indent(bedd_t *tab) {
         !strcmp(tab->path + (strlen(tab->path) - 4), ".cpp") ||
         !strcmp(tab->path + (strlen(tab->path) - 4), ".hpp") ||
         !strcmp(tab->path + (strlen(tab->path) - 4), ".cxx")) {
-      bedd_indent_c(tab);
+      bedd_indent_c(tab, col);
     } else if (!strcmp(tab->path + (strlen(tab->path) - 4), ".asm") ||
                !strcmp(tab->path + (strlen(tab->path) - 4), ".inc") ||
                !strcmp(tab->path + (strlen(tab->path) - 2), ".s")) {
-      bedd_indent_asm(tab);
+      bedd_indent_asm(tab, col);
     } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".sh")) {
-      bedd_indent_sh(tab);
+      bedd_indent_sh(tab, col);
     }
   }
 }
@@ -249,7 +249,7 @@ void bedd_write(bedd_t *tab, char c) {
     tab->col = 0;
 
     if (tab->code) {
-      bedd_indent(tab);
+      bedd_indent(tab, col);
     }
 
     int new_col = tab->col;

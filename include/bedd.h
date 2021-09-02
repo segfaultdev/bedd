@@ -95,7 +95,7 @@ int  bedd_save(bedd_t *tab);
 void bedd_tabs(bedd_t *tabs, int tab_pos, int tab_cnt, int width);
 void bedd_stat(bedd_t *tab, const char *status);
 int  bedd_color(bedd_t *tab, int state, int row, int col);
-void bedd_indent(bedd_t *tab);
+void bedd_indent(bedd_t *tab, int col);
 
 void bedd_write(bedd_t *tab, char c);
 void bedd_delete(bedd_t *tab);
@@ -119,12 +119,12 @@ void bedd_paste(bedd_t *tab);
 // langs
 
 int  bedd_color_c(bedd_t *tab, int state, int row, int col);
-void bedd_indent_c(bedd_t *tab);
+void bedd_indent_c(bedd_t *tab, int col);
 
 int  bedd_color_asm(bedd_t *tab, int state, int row, int col);
-void bedd_indent_asm(bedd_t *tab);
+void bedd_indent_asm(bedd_t *tab, int col);
 
 int  bedd_color_sh(bedd_t *tab, int state, int row, int col);
-void bedd_indent_sh(bedd_t *tab);
+void bedd_indent_sh(bedd_t *tab, int col);
 
 #endif
