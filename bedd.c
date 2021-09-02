@@ -8,7 +8,7 @@ void bedd_init(bedd_t *tab, const char *path) {
   if (!tab) {
     return;
   }
-
+  
   tab->lines = NULL;
   tab->line_cnt = 0;
 
@@ -270,8 +270,10 @@ void bedd_write(bedd_t *tab, char c) {
     tab->sel_col = tab->col;
 
     if (on_block) {
+      bedd_delete(tab);
+      bedd_delete(tab);
       bedd_write(tab, BEDD_CTRL('m'));
-
+      
       tab->row--;
       tab->col = tab->lines[tab->row].length;
 
