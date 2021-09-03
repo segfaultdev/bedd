@@ -207,7 +207,7 @@ int bedd_color_asm(bedd_t *tab, int state, int row, int col) {
   return state;
 }
 
-void bedd_indent_asm(bedd_t *tab, int col) {
+void bedd_indent_asm(bedd_t *tab, int col, int on_block) {
   int level = 0;
 
   for (int i = 0; i < tab->lines[tab->row - 1].length; i++) {

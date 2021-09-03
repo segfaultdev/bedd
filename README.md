@@ -63,6 +63,8 @@ NOTE: The clipboard actions(copy, cut and paste) all require `xclip` to be insta
 - C++(`.cc`, `.hh`, `.cpp`, `.hpp`, `.cxx`): partial support, C++-specific features missing
 - x86 assembly(`.asm`, `.s`, `.inc`): full support, NASM syntax
 - bash/sh(`.sh`): partial support, has some errors with special cases
+- JavaScript(`.js`): full support
+- JSON(`.json`): full support, uses the JavaScript parser
 
 ## How to build
 

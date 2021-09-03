@@ -156,6 +156,10 @@ int bedd_color(bedd_t *tab, int state, int row, int col) {
     } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".sh")) {
       tab->code = 1;
       return bedd_color_sh(tab, state, row, col);
+    } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".js") ||
+               !strcmp(tab->path + (strlen(tab->path) - 3), ".json")) {
+      tab->code = 1;
+      return bedd_color_js(tab, state, row, col);
     }
   }
 
@@ -165,7 +169,7 @@ int bedd_color(bedd_t *tab, int state, int row, int col) {
   return 0;
 }
 
-void bedd_indent(bedd_t *tab, int col) {
+void bedd_indent(bedd_t *tab, int col, int on_block) {
   if (tab->path) {
     if (!strcmp(tab->path + (strlen(tab->path) - 2), ".c") ||
         !strcmp(tab->path + (strlen(tab->path) - 2), ".h") ||
@@ -174,13 +178,16 @@ void bedd_indent(bedd_t *tab, int col) {
         !strcmp(tab->path + (strlen(tab->path) - 4), ".cpp") ||
         !strcmp(tab->path + (strlen(tab->path) - 4), ".hpp") ||
         !strcmp(tab->path + (strlen(tab->path) - 4), ".cxx")) {
-      bedd_indent_c(tab, col);
+      bedd_indent_c(tab, col, on_block);
     } else if (!strcmp(tab->path + (strlen(tab->path) - 4), ".asm") ||
                !strcmp(tab->path + (strlen(tab->path) - 4), ".inc") ||
                !strcmp(tab->path + (strlen(tab->path) - 2), ".s")) {
-      bedd_indent_asm(tab, col);
+      bedd_indent_asm(tab, col, on_block);
     } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".sh")) {
-      bedd_indent_sh(tab, col);
+      bedd_indent_sh(tab, col, on_block);
+    } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".js") ||
+               !strcmp(tab->path + (strlen(tab->path) - 3), ".json")) {
+      bedd_indent_js(tab, col, on_block);
     }
   }
 }
@@ -249,7 +256,7 @@ void bedd_write(bedd_t *tab, char c) {
     tab->col = 0;
 
     if (tab->code) {
-      bedd_indent(tab, col);
+      bedd_indent(tab, col, on_block);
     }
 
     int new_col = tab->col;
@@ -270,8 +277,6 @@ void bedd_write(bedd_t *tab, char c) {
     tab->sel_col = tab->col;
 
     if (on_block) {
-      bedd_delete(tab);
-      bedd_delete(tab);
       bedd_write(tab, BEDD_CTRL('m'));
       
       tab->row--;

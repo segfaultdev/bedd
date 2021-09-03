@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <bedd.h>
 
-int bedd_color_c(bedd_t *tab, int state, int row, int col) {
+int bedd_color_js(bedd_t *tab, int state, int row, int col) {
   // 0 = neutral state
   // 1 = inside keyword/identifier
   // 2 = inside number
@@ -130,11 +130,6 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
     return 0;
   }
 
-  if (tab->lines[row].buffer[col] == '#') {
-    printf(BEDD_MAGENTA);
-    return 1;
-  }
-
   int length = 0;
   char last = ' ';
 
@@ -154,7 +149,9 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
 
   if (state == 0 && length == 2) {
     if (!memcmp(tab->lines[row].buffer + col, "do", 2) ||
-        !memcmp(tab->lines[row].buffer + col, "if", 2)) {
+        !memcmp(tab->lines[row].buffer + col, "if", 2) ||
+        !memcmp(tab->lines[row].buffer + col, "in", 2) ||
+        !memcmp(tab->lines[row].buffer + col, "of", 2)) {
       printf(BEDD_MAGENTA);
       return 1;
     }
@@ -162,48 +159,53 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
 
   if (state == 0 && length == 3) {
     if (!memcmp(tab->lines[row].buffer + col, "for", 3) ||
-        !memcmp(tab->lines[row].buffer + col, "int", 3)) {
+        !memcmp(tab->lines[row].buffer + col, "let", 3) ||
+        !memcmp(tab->lines[row].buffer + col, "try", 3) ||
+        !memcmp(tab->lines[row].buffer + col, "var", 3)) {
       printf(BEDD_MAGENTA);
       return 1;
     }
   }
 
   if (state == 0 && length == 4) {
-    if (!memcmp(tab->lines[row].buffer + col, "auto", 4) ||
-        !memcmp(tab->lines[row].buffer + col, "case", 4) ||
-        !memcmp(tab->lines[row].buffer + col, "char", 4) ||
+    if (!memcmp(tab->lines[row].buffer + col, "case", 4) ||
         !memcmp(tab->lines[row].buffer + col, "else", 4) ||
         !memcmp(tab->lines[row].buffer + col, "enum", 4) ||
-        !memcmp(tab->lines[row].buffer + col, "goto", 4) ||
-        !memcmp(tab->lines[row].buffer + col, "long", 4) ||
-        !memcmp(tab->lines[row].buffer + col, "void", 4)) {
+        !memcmp(tab->lines[row].buffer + col, "null", 4) ||
+        !memcmp(tab->lines[row].buffer + col, "this", 4) ||
+        !memcmp(tab->lines[row].buffer + col, "true", 4) ||
+        !memcmp(tab->lines[row].buffer + col, "void", 4) ||
+        !memcmp(tab->lines[row].buffer + col, "with", 4)) {
       printf(BEDD_MAGENTA);
       return 1;
     }
   }
 
   if (state == 0 && length == 5) {
-    if (!memcmp(tab->lines[row].buffer + col, "break", 5) ||
+    if (!memcmp(tab->lines[row].buffer + col, "await", 5) ||
+        !memcmp(tab->lines[row].buffer + col, "break", 5) ||
+        !memcmp(tab->lines[row].buffer + col, "catch", 5) ||
+        !memcmp(tab->lines[row].buffer + col, "class", 5) ||
         !memcmp(tab->lines[row].buffer + col, "const", 5) ||
-        !memcmp(tab->lines[row].buffer + col, "float", 5) ||
-        !memcmp(tab->lines[row].buffer + col, "short", 5) ||
-        !memcmp(tab->lines[row].buffer + col, "union", 5) ||
-        !memcmp(tab->lines[row].buffer + col, "while", 5)) {
+        !memcmp(tab->lines[row].buffer + col, "false", 5) ||
+        !memcmp(tab->lines[row].buffer + col, "super", 5) ||
+        !memcmp(tab->lines[row].buffer + col, "throw", 5) ||
+        !memcmp(tab->lines[row].buffer + col, "while", 5) ||
+        !memcmp(tab->lines[row].buffer + col, "yield", 5)) {
       printf(BEDD_MAGENTA);
       return 1;
     }
   }
 
   if (state == 0 && length == 6) {
-    if (!memcmp(tab->lines[row].buffer + col, "double", 6) ||
-        !memcmp(tab->lines[row].buffer + col, "extern", 6) ||
-        !memcmp(tab->lines[row].buffer + col, "inline", 6) ||
+    if (!memcmp(tab->lines[row].buffer + col, "delete", 6) ||
+        !memcmp(tab->lines[row].buffer + col, "export", 6) ||
+        !memcmp(tab->lines[row].buffer + col, "import", 6) ||
+        !memcmp(tab->lines[row].buffer + col, "public", 6) ||
         !memcmp(tab->lines[row].buffer + col, "return", 6) ||
-        !memcmp(tab->lines[row].buffer + col, "signed", 6) ||
-        !memcmp(tab->lines[row].buffer + col, "sizeof", 6) ||
         !memcmp(tab->lines[row].buffer + col, "static", 6) ||
-        !memcmp(tab->lines[row].buffer + col, "struct", 6) ||
-        !memcmp(tab->lines[row].buffer + col, "switch", 6)) {
+        !memcmp(tab->lines[row].buffer + col, "switch", 6) ||
+        !memcmp(tab->lines[row].buffer + col, "typeof", 6)) {
       printf(BEDD_MAGENTA);
       return 1;
     }
@@ -211,7 +213,10 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
 
   if (state == 0 && length == 7) {
     if (!memcmp(tab->lines[row].buffer + col, "default", 7) ||
-        !memcmp(tab->lines[row].buffer + col, "typedef", 7)) {
+        !memcmp(tab->lines[row].buffer + col, "extends", 7) ||
+        !memcmp(tab->lines[row].buffer + col, "finally", 7) ||
+        !memcmp(tab->lines[row].buffer + col, "package", 7) ||
+        !memcmp(tab->lines[row].buffer + col, "private", 7)) {
       printf(BEDD_MAGENTA);
       return 1;
     }
@@ -219,17 +224,25 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
 
   if (state == 0 && length == 8) {
     if (!memcmp(tab->lines[row].buffer + col, "continue", 8) ||
-        !memcmp(tab->lines[row].buffer + col, "register", 8) ||
-        !memcmp(tab->lines[row].buffer + col, "unsigned", 8) ||
-        !memcmp(tab->lines[row].buffer + col, "volatile", 8)) {
+        !memcmp(tab->lines[row].buffer + col, "debugger", 8) ||
+        !memcmp(tab->lines[row].buffer + col, "function", 8)) {
       printf(BEDD_MAGENTA);
       return 1;
     }
   }
-
-  if (state == 0 && length > 2) {
-    if (!memcmp(tab->lines[row].buffer + col + (length - 2), "_t", 2)) {
-      printf(BEDD_CYAN);
+  
+  if (state == 0 && length == 9) {
+    if (!memcmp(tab->lines[row].buffer + col, "interface", 9) ||
+        !memcmp(tab->lines[row].buffer + col, "protected", 9)) {
+      printf(BEDD_MAGENTA);
+      return 1;
+    }
+  }
+  
+  if (state == 0 && length == 10) {
+    if (!memcmp(tab->lines[row].buffer + col, "implements", 10) ||
+        !memcmp(tab->lines[row].buffer + col, "instanceof", 10)) {
+      printf(BEDD_MAGENTA);
       return 1;
     }
   }
@@ -247,7 +260,7 @@ int bedd_color_c(bedd_t *tab, int state, int row, int col) {
   return state;
 }
 
-void bedd_indent_c(bedd_t *tab, int col, int on_block) {
+void bedd_indent_js(bedd_t *tab, int col, int on_block) {
   int level = 0;
   int step = 0;
 
@@ -260,9 +273,9 @@ void bedd_indent_c(bedd_t *tab, int col, int on_block) {
   }
 
   for (int i = level; i < col; i++) {
-    if (tab->lines[tab->row - 1].buffer[i] == '{' || tab->lines[tab->row - 1].buffer[i] == '(') {
+    if (tab->lines[tab->row - 1].buffer[i] == '{' || tab->lines[tab->row - 1].buffer[i] == '(' || tab->lines[tab->row - 1].buffer[i] == '[') {
       step++;
-    } else if (tab->lines[tab->row - 1].buffer[i] == '}' || tab->lines[tab->row - 1].buffer[i] == ')') {
+    } else if (tab->lines[tab->row - 1].buffer[i] == '}' || tab->lines[tab->row - 1].buffer[i] == ')' || tab->lines[tab->row - 1].buffer[i] == ']') {
       step--;
     }
   }
