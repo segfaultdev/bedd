@@ -278,10 +278,10 @@ void bedd_indent_js(bedd_t *tab, int col, int on_block) {
     } else if (tab->lines[tab->row - 1].buffer[i] == '}' || tab->lines[tab->row - 1].buffer[i] == ')' || tab->lines[tab->row - 1].buffer[i] == ']') {
       step--;
     }
-  }
-
-  if (step < 0) {
-    step = 0;
+    
+    if (step < 0) {
+      step = 0;
+    }
   }
 
   if (!on_block) {
