@@ -298,16 +298,28 @@ int main(int argc, const char **argv) {
           bedd_copy(tabs + tab_pos);
         }
       } else if (c == BEDD_CTRL('x')) {
+        if (tabs[tab_pos].step) {
+          bedd_push_undo(tabs + tab_pos);
+          tabs[tab_pos].step = 0;
+        }
+        
         if (tabs[tab_pos].row != tabs[tab_pos].sel_row || tabs[tab_pos].col != tabs[tab_pos].sel_col) {
           bedd_copy(tabs + tab_pos);
           bedd_delete(tabs + tab_pos);
+          bedd_push_undo(tabs + tab_pos);
         }
       } else if (c == BEDD_CTRL('v')) {
+        if (tabs[tab_pos].step) {
+          bedd_push_undo(tabs + tab_pos);
+          tabs[tab_pos].step = 0;
+        }
+        
         if (tabs[tab_pos].row != tabs[tab_pos].sel_row || tabs[tab_pos].col != tabs[tab_pos].sel_col) {
           bedd_delete(tabs + tab_pos);
         }
 
         bedd_paste(tabs + tab_pos);
+        bedd_push_undo(tabs + tab_pos);
       } else if (c == BEDD_CTRL('f')) {
         // we preserve the last query, as this is going to be
         // called a lot of times consecutively

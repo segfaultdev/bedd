@@ -32,9 +32,16 @@ void bedd_init(bedd_t *tab, const char *path) {
     while (!feof(file)) {
       char c = fgetc(file);
 
-      if ((c >= 32 && c != 127) || c == '\t') {
+      if (c >= 32 && c != 127) {
         tab->lines[tab->line_cnt - 1].buffer = realloc(tab->lines[tab->line_cnt - 1].buffer, tab->lines[tab->line_cnt - 1].length + 1);
         tab->lines[tab->line_cnt - 1].buffer[tab->lines[tab->line_cnt - 1].length++] = c;
+      } else if (c == '\t') {
+        int left = 2 - (tab->lines[tab->line_cnt - 1].length % 2);
+        
+        for (int i = 0; i < left; i++) {
+          tab->lines[tab->line_cnt - 1].buffer = realloc(tab->lines[tab->line_cnt - 1].buffer, tab->lines[tab->line_cnt - 1].length + 1);
+          tab->lines[tab->line_cnt - 1].buffer[tab->lines[tab->line_cnt - 1].length++] = ' ';
+        }
       } else if (c == '\n') {
         tab->lines = realloc(tab->lines, (tab->line_cnt + 1) * sizeof(bedd_line_t));
 
