@@ -1,15 +1,17 @@
-#define CUPD_FILE "bedd_main.c"
-#define CUPD_ARGS "-Os -Iinclude"
+// #define CUPD_FILE "bedd_main.c"
+// #define CUPD_ARGS "-Os -Iinclude"
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <termios.h>
-#include <unistd.h>
+#include <dirent.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <bedd.h>
-#include <cupd.h>
+// #include <cupd.h>
 
 struct termios old_termios;
 
@@ -171,7 +173,7 @@ int dir_tree(int row, int col, int height, const char *path) {
 
 
 int main(int argc, const char **argv) {
-  cupd_init(argc, argv);
+  // cupd_init(argc, argv);
 
   atexit(raw_off);
   raw_on();
