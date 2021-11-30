@@ -93,4 +93,4 @@ NOTE: Although my hate to python and Java is huge and real, everything offensive
 
 ### Forks that do NOT remove the python + Java check(good forks):
 
-Not a single one? Weird...
+ - [@argvsc47's fork](https://github.com/argvsc47/bedd)
