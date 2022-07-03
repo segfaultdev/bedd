@@ -186,6 +186,7 @@ int main(int argc, const char **argv) {
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i] + (strlen(argv[i]) -  5), ".java") &&
         strcmp(argv[i] + (strlen(argv[i]) -  3), ".py") &&
+        strcmp(argv[i] + (strlen(argv[i]) -  4), ".pyw") &&
         strcmp(argv[i] + (strlen(argv[i]) -  7), ".python") &&
         strcmp(argv[i] + (strlen(argv[i]) - 10), ".gordavaca") &&
         strcmp(argv[i] + (strlen(argv[i]) -  3), ".gv")) {
@@ -378,6 +379,7 @@ int main(int argc, const char **argv) {
               sprintf(status, "| cannot open file: \"%s\"", buffer);
             } else if (!strcmp(buffer + (strlen(buffer) -  5), ".java") ||
                        !strcmp(buffer + (strlen(buffer) -  3), ".py") ||
+                       !strcmp(buffer + (strlen(buffer) -  4), ".pyw") ||
                        !strcmp(buffer + (strlen(buffer) -  7), ".python") ||
                        !strcmp(buffer + (strlen(buffer) - 10), ".gordavaca") ||
                        !strcmp(buffer + (strlen(buffer) -  3), ".gv")) {
@@ -413,6 +415,7 @@ int main(int argc, const char **argv) {
         if (!bedd_save(tabs + tab_pos) ||
             !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) -  5), ".java") ||
             !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) -  3), ".py") ||
+            !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) -  4), ".pyw") ||
             !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) -  7), ".python") ||
             !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) - 10), ".gordavaca") ||
             !strcmp(tabs[tab_pos].path + (strlen(tabs[tab_pos].path) -  3), ".gv")) {

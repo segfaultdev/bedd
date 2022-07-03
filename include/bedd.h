@@ -130,4 +130,7 @@ void bedd_indent_sh(bedd_t *tab, int col, int on_block);
 int  bedd_color_js(bedd_t *tab, int state, int row, int col);
 void bedd_indent_js(bedd_t *tab, int col, int on_block);
 
+int  bedd_color_ln(bedd_t *tab, int state, int row, int col);
+void bedd_indent_ln(bedd_t *tab, int col, int on_block);
+
 #endif

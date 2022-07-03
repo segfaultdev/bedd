@@ -167,6 +167,10 @@ int bedd_color(bedd_t *tab, int state, int row, int col) {
                !strcmp(tab->path + (strlen(tab->path) - 5), ".json")) {
       tab->code = 1;
       return bedd_color_js(tab, state, row, col);
+    } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".ln") ||
+               !strcmp(tab->path + (strlen(tab->path) - 5), ".lann")) {
+      tab->code = 1;
+      return bedd_color_ln(tab, state, row, col);
     }
   }
 
@@ -195,6 +199,9 @@ void bedd_indent(bedd_t *tab, int col, int on_block) {
     } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".js") ||
                !strcmp(tab->path + (strlen(tab->path) - 5), ".json")) {
       bedd_indent_js(tab, col, on_block);
+    } else if (!strcmp(tab->path + (strlen(tab->path) - 3), ".ln") ||
+               !strcmp(tab->path + (strlen(tab->path) - 5), ".lann")) {
+      bedd_indent_ln(tab, col, on_block);
     }
   }
 }
