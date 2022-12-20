@@ -64,9 +64,9 @@ void bd_global_draw(void) {
 
 int bd_global_click(int x, int y) {
   io_exit();
-        printf("%d, %d\n", x, y);
-        exit(0);
-        
+  printf("%d, %d\n", x, y);
+  exit(0);
+  
   if (y < 1) return 0;
   int start_x = 0;
   

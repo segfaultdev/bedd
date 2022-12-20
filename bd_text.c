@@ -317,6 +317,12 @@ void bd_text_draw(bd_view_t *view) {
       
       bd_line_t *line = text->lines + y;
       
+      int space_count = 0;
+      
+      while (space_count < line->length && line->data[space_count] == ' ') {
+        space_count++;
+      }
+      
       for (int j = 0; j < view_width; j++) {
         int x = j + text->scroll.x;
         bd_cursor_t cursor = (bd_cursor_t){x, y};
@@ -338,7 +344,11 @@ void bd_text_draw(bd_view_t *view) {
         } else if (x > line->length) {
           break;
         } else {
-          io_printf("%c", line->data[x]);
+          if (x < space_count) {
+            io_printf("%s\u00B7" IO_WHITE, y == text->cursor.y ? IO_DARK_GRAY : IO_BLACK);
+          } else {
+            io_printf("%c", line->data[x]);
+          }
         }
       }
       
@@ -476,7 +486,24 @@ void bd_text_save(bd_view_t *view) {
   
   if (text->path[0] && !text->dirty) return; // won't save if it has a path and isn't dirty
   
-  // TODO: save here (and prompt the user if necessary)
+  for (;;) {
+    if (text->path[0]) {
+      io_file_t file = io_fopen(text->path, 1);
+      
+      if (io_fvalid(file)) {
+        io_frewind(file);
+        
+        io_fwrite(file, NULL, 0); // TODO: get data to be saved
+        io_fclose(file);
+        
+        break;
+      }
+    }
+    
+    if (!bd_dialog("Save file (Ctrl+Q to cancel)", -16, "i[Path:]b[1;Save]", text->path)) {
+      return;
+    }
+  }
   
   strcpy(view->title, text->path);
   

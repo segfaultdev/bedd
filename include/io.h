@@ -20,7 +20,9 @@ struct io_file_t {
 io_file_t io_fopen(const char *path, int write_mode);
 int       io_fvalid(io_file_t file);
 void      io_fclose(io_file_t file);
+size_t    io_fwrite(io_file_t file, void *buffer, size_t count);
 size_t    io_fread(io_file_t file, void *buffer, size_t count);
+void      io_frewind(io_file_t file);
 int       io_feof(io_file_t file);
 
 // --- output functions ---
@@ -34,14 +36,16 @@ int       io_feof(io_file_t file);
 #define IO_BOLD_SHADOW_1 "\x1B[0m\x1B[1m\x1B[27m\x1B[40m"
 #define IO_BOLD_SHADOW_2 "\x1B[0m\x1B[1m\x1B[27m\x1B[100m"
 
-#define IO_WHITE  "\x1B[97m"
-#define IO_RED    "\x1B[31m"
-#define IO_GREEN  "\x1B[32m"
-#define IO_YELLOW "\x1B[33m"
-#define IO_BLUE   "\x1B[34m"
-#define IO_PURPLE "\x1B[35m"
-#define IO_CYAN   "\x1B[36m"
-#define IO_GRAY   "\x1B[37m"
+#define IO_WHITE     "\x1B[97m"
+#define IO_BLACK     "\x1B[30m"
+#define IO_RED       "\x1B[31m"
+#define IO_GREEN     "\x1B[32m"
+#define IO_YELLOW    "\x1B[33m"
+#define IO_BLUE      "\x1B[34m"
+#define IO_PURPLE    "\x1B[35m"
+#define IO_CYAN      "\x1B[36m"
+#define IO_GRAY      "\x1B[37m"
+#define IO_DARK_GRAY "\x1B[90m"
 
 #define IO_CLEAR_LINE   "\x1B[K"
 #define IO_CLEAR_SCREEN "\x1B[2J\x1B[H"

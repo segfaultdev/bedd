@@ -54,7 +54,7 @@ int main(void) {
           buffer[0] = '\0';
           
           for (;;) {
-            int result = bd_dialog("Open file (Ctrl+Q to cancel)", -8, "i[Path:]b[1;Open]", buffer);
+            int result = bd_dialog("Open file (Ctrl+Q to cancel)", -16, "i[Path:]b[1;Open]", buffer);
             
             if (result) {
               io_file_t file = io_fopen(buffer, 0);

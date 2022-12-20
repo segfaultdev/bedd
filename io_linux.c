@@ -53,8 +53,16 @@ void io_fclose(io_file_t file) {
   fclose(file.data);
 }
 
+size_t io_fwrite(io_file_t file, void *buffer, size_t count) {
+  return fwrite(buffer, 1, count, file.data);
+}
+
 size_t io_fread(io_file_t file, void *buffer, size_t count) {
   return fread(buffer, 1, count, file.data);
+}
+
+void io_frewind(io_file_t file) {
+  rewind(file.data);
 }
 
 int io_feof(io_file_t file) {
