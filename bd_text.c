@@ -25,7 +25,7 @@ struct bd_text_t {
 
 static void __bd_text_cursor(bd_text_t *text);
 static void __bd_text_backspace(bd_text_t *text, int fix_cursor);
-static void __bd_text_write(bd_text_t *text, char chr);
+static void __bd_text_write(bd_text_t *text, char chr, int by_user);
 static void __bd_text_up(bd_text_t *text, int hold);
 static void __bd_text_down(bd_text_t *text, int hold);
 static void __bd_text_right(bd_text_t *text, int hold);
@@ -109,7 +109,7 @@ static void __bd_text_backspace(bd_text_t *text, int fix_cursor) {
   __bd_text_follow(text);
 }
 
-static void __bd_text_write(bd_text_t *text, char chr) {
+static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
   __bd_text_cursor(text);
   text->dirty = 1;
   
@@ -122,17 +122,26 @@ static void __bd_text_write(bd_text_t *text, char chr) {
     
     text->count++;
     
+    int space_count = 0;
     bd_line_t line;
     
-    line.length = text->lines[text->cursor.y].length - text->cursor.x,
+    while (by_user && space_count < text->lines[text->cursor.y].length && text->lines[text->cursor.y].data[space_count] == ' ') {
+      space_count++;
+    }
+    
+    line.length = space_count + (text->lines[text->cursor.y].length - text->cursor.x),
     line.data = malloc(line.length);
     
-    memcpy(line.data, text->lines[text->cursor.y].data + text->cursor.x, line.length);
+    if (by_user) {
+      memset(line.data, ' ', space_count);
+    }
+    
+    memcpy(line.data + space_count, text->lines[text->cursor.y].data + text->cursor.x, line.length);
     text->lines[text->cursor.y].data = realloc(text->lines[text->cursor.y].data, text->lines[text->cursor.y].length = text->cursor.x);
     
     text->lines[text->cursor.y + 1] = line;
     
-    text->cursor.x = 0;
+    text->cursor.x = space_count;
     text->cursor.y++;
     
     text->hold_cursor = text->cursor;
@@ -392,10 +401,10 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
   
   if (event.type == IO_EVENT_KEY_PRESS) {
     if (event.key >= 32 && event.key < 127) {
-      __bd_text_write(text, event.key);
+      __bd_text_write(text, event.key, 1);
       return 1;
     } else if (event.key == IO_CTRL('M')) {
-      __bd_text_write(text, '\n');
+      __bd_text_write(text, '\n', 1);
       return 1;
     } else if (event.key == IO_CTRL('H')) {
       __bd_text_backspace(text, 1);
@@ -472,7 +481,7 @@ void bd_text_load(bd_view_t *view, const char *path) {
   char chr;
   
   while (io_fread(file, &chr, 1)) {
-    __bd_text_write(text, chr);
+    __bd_text_write(text, chr, 0);
   }
   
   text->cursor = text->hold_cursor = text->scroll = (bd_cursor_t){0, 0};
