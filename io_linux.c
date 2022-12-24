@@ -247,6 +247,7 @@ io_event_t io_get_event(void) {
           offset++;
         }
         
+        mouse_type &= ~32;
         offset++;
         
         while (isdigit(ansi_buffer[offset])) {
@@ -282,6 +283,16 @@ io_event_t io_get_event(void) {
               .mouse = {.x = mouse_x, .y = mouse_y},
             };
           }
+        } else if (mouse_type == 64) {
+          return (io_event_t){
+            .type = IO_EVENT_SCROLL,
+            .scroll = -1,
+          };
+        } else if (mouse_type == 65) {
+          return (io_event_t){
+            .type = IO_EVENT_SCROLL,
+            .scroll = 1,
+          };
         }
       }
     } else if (chr == '\x7F') {

@@ -20,15 +20,19 @@ int main(void) {
   
   while (!do_exit) {
     io_event_t event;
+    int handled = 0;
     
     if ((event = io_get_event()).type) {
       if (event.type == IO_EVENT_TIME_SECOND) {
         bd_time = event.time;
+        handled = 1;
         
         global_draw = 1;
       } else if (event.type == IO_EVENT_RESIZE) {
         bd_width = event.size.width;
         bd_height = event.size.height;
+        
+        handled = 1;
         
         global_draw = 1;
         view_draw = 1;
@@ -37,15 +41,19 @@ int main(void) {
           if (bd_view_count <= 1) do_exit = 1;
           else bd_view_remove(bd_views + bd_view);
           
+          handled = 1;
+          
           global_draw = 1;
           view_draw = 1;
         } else if (event.key == IO_CTRL('W')) {
           bd_view = bd_view_add("Welcome", bd_view_welcome) - bd_views;
+          handled = 1;
           
           global_draw = 1;
           view_draw = 1;
         } else if (event.key == IO_CTRL('N')) {
           bd_view = bd_view_add("", bd_view_text, NULL) - bd_views;
+          handled = 1;
           
           global_draw = 1;
           view_draw = 1;
@@ -70,6 +78,8 @@ int main(void) {
             }
           }
           
+          handled = 1;
+          
           global_draw = 1;
           view_draw = 1;
         } else if (event.key == IO_CTRL(IO_ARROW_LEFT)) {
@@ -79,6 +89,8 @@ int main(void) {
             global_draw = 1;
             view_draw = 1;
           }
+          
+          handled = 1;
         } else if (event.key == IO_CTRL(IO_ARROW_RIGHT)) {
           if (bd_view < bd_view_count - 1) {
             bd_view++;
@@ -86,16 +98,22 @@ int main(void) {
             global_draw = 1;
             view_draw = 1;
           }
-        } else if (bd_view_event(bd_views + bd_view, event)) {
-          view_draw = 1;
+          
+          handled = 1;
         }
-      } else if (event.key == IO_EVENT_MOUSE_DOWN) {
-        // if (event.mouse.y < 2) {
+      } else if (event.type == IO_EVENT_MOUSE_DOWN) {
+        if (event.mouse.y < 2) {
           if (bd_global_click(event.mouse.x, event.mouse.y)) {
             global_draw = 1;
             view_draw = 1;
           }
-        // }
+          
+          handled = 1;
+        }
+      }
+      
+      if (!handled && bd_view_event(bd_views + bd_view, event)) {
+        view_draw = 1;
       }
     }
     

@@ -312,9 +312,7 @@ static void __bd_text_follow(bd_text_t *text) {
 
 void bd_text_draw(bd_view_t *view) {
   bd_text_t *text = view->data;
-  
-  int lind_size = 1;
-  int lind_max = 10;
+  int lind_size = 1, lind_max = 10;
   
   while (text->count >= lind_max) {
     lind_size++;
@@ -509,6 +507,47 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       __bd_text_full_end(text, event.key != IO_UNSHIFT(event.key));
       return 1;
     }
+  } else if (event.type == IO_EVENT_MOUSE_DOWN || event.type == IO_EVENT_MOUSE_MOVE) {
+    int lind_size = 1, lind_max = 10;
+    
+    while (text->count >= lind_max) {
+      lind_size++;
+      lind_max *= 10;
+    }
+    
+    int cursor_x = (event.mouse.x - (5 + lind_size)) + text->scroll.x;
+    int cursor_y = (event.mouse.y - 2) + text->scroll.y;
+    
+    if (cursor_y < 0) {
+      cursor_y = 0;
+    } else if (cursor_y >= text->count) {
+      cursor_y = text->count - 1;
+    }
+    
+    if (cursor_x < 0) {
+      cursor_x = 0;
+    } else if (cursor_x > text->lines[cursor_y].length) {
+      cursor_x = text->lines[cursor_y].length;
+    }
+    
+    text->cursor = (bd_cursor_t){cursor_x, cursor_y};
+    
+    if (event.type == IO_EVENT_MOUSE_DOWN) {
+      text->hold_cursor = text->cursor;
+    }
+    
+    __bd_text_follow(text);
+    return 1;
+  } else if (event.type == IO_EVENT_SCROLL) {
+    text->scroll.y += event.scroll * bd_config.scroll_step;
+    
+    if (text->scroll.y < 0) {
+      text->scroll.y = 0;
+    } else if (text->scroll.y >= text->count) {
+      text->scroll.y = text->count - 1;
+    }
+    
+    return 1;
   }
   
   return 0;

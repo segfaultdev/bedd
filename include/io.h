@@ -80,8 +80,8 @@ void io_flush(void);
 #define IO_EVENT_MOUSE_MOVE  3
 #define IO_EVENT_MOUSE_UP    4
 #define IO_EVENT_SCROLL      5
-#define IO_EVENT_TIME_SECOND 5 // sent everytime the UNIX time changes
-#define IO_EVENT_RESIZE      6
+#define IO_EVENT_TIME_SECOND 6 // sent everytime the UNIX time changes
+#define IO_EVENT_RESIZE      7
 
 typedef struct io_event_t io_event_t;
 
