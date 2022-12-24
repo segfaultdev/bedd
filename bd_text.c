@@ -506,6 +506,14 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
     } else if (IO_UNSHIFT(event.key) == IO_CTRL(IO_ARROW_DOWN)) {
       __bd_text_full_end(text, event.key != IO_UNSHIFT(event.key));
       return 1;
+    } else if (event.key == IO_CTRL('A')) {
+      bd_cursor_t scroll = text->scroll;
+      
+      __bd_text_full_home(text, 0);
+      __bd_text_full_end(text, 1);
+      
+      text->scroll = scroll;
+      return 1;
     }
   } else if (event.type == IO_EVENT_MOUSE_DOWN || event.type == IO_EVENT_MOUSE_MOVE) {
     int lind_size = 1, lind_max = 10;
