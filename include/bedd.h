@@ -4,17 +4,23 @@
 #include <time.h>
 #include <io.h>
 
+typedef struct bd_config_t bd_config_t;
 typedef struct bd_cursor_t bd_cursor_t;
 typedef struct bd_view_t bd_view_t;
+
+struct bd_config_t {
+  int indent_width;  // anything other than 2 or 4 would be cringe af, but we must still provide room for customization and blah blah blah :p
+  int indent_spaces; // afects saving/loading, as in editing they're still shown as spaces no matter what
+};
 
 struct bd_cursor_t {
   int x, y;
 };
 
-#define BD_CURSOR_MIN(a, b)      ((a).y < (b).y ? (a) : ((a).y == (b).y ? ((a).x < (b).x ? (a) : (b)) : (b)))
-#define BD_CURSOR_MAX(a, b)      ((a).y > (b).y ? (a) : ((a).y == (b).y ? ((a).x > (b).x ? (a) : (b)) : (b)))
-#define BD_CURSOR_LESS(a, b)     ((a).y < (b).y || ((a).y == (b).y && (a).x < (b).x))
-#define BD_CURSOR_GREAT(a, b)    ((a).y > (b).y || ((a).y == (b).y && (a).x > (b).x))
+#define BD_CURSOR_MIN(a, b)   ((a).y < (b).y ? (a) : ((a).y == (b).y ? ((a).x < (b).x ? (a) : (b)) : (b)))
+#define BD_CURSOR_MAX(a, b)   ((a).y > (b).y ? (a) : ((a).y == (b).y ? ((a).x > (b).x ? (a) : (b)) : (b)))
+#define BD_CURSOR_LESS(a, b)  ((a).y < (b).y || ((a).y == (b).y && (a).x < (b).x))
+#define BD_CURSOR_GREAT(a, b) ((a).y > (b).y || ((a).y == (b).y && (a).x > (b).x))
 
 enum {
   bd_view_welcome,
@@ -30,6 +36,8 @@ struct bd_view_t {
   bd_cursor_t cursor;
   void *data;
 };
+
+extern bd_config_t bd_config;
 
 extern bd_view_t *bd_views;
 extern int bd_view_count, bd_view;

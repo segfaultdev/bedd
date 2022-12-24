@@ -23,7 +23,7 @@ struct bd_text_t {
 
 // static functions
 
-static void __bd_text_cursor(bd_text_t *text);
+static int  __bd_text_cursor(bd_text_t *text);
 static void __bd_text_backspace(bd_text_t *text, int fix_cursor);
 static void __bd_text_write(bd_text_t *text, char chr, int by_user);
 static void __bd_text_up(bd_text_t *text, int hold);
@@ -36,7 +36,7 @@ static void __bd_text_full_home(bd_text_t *text, int hold);
 static void __bd_text_full_end(bd_text_t *text, int hold);
 static void __bd_text_follow(bd_text_t *text);
 
-static void __bd_text_cursor(bd_text_t *text) {
+static int __bd_text_cursor(bd_text_t *text) {
   // cursor.x must not exceed the length of the line, but *can* be equal to it
   
   if (text->cursor.x > text->lines[text->cursor.y].length) {
@@ -60,13 +60,23 @@ static void __bd_text_cursor(bd_text_t *text) {
   
   // then, cursor must be equal to hold_cursor, so delete chars in between!
   
+  if (text->cursor.x == text->hold_cursor.x && text->cursor.y == text->hold_cursor.y) {
+    return 0;
+  }
+  
   while (text->cursor.x != text->hold_cursor.x || text->cursor.y != text->hold_cursor.y) {
     __bd_text_backspace(text, 0);
   }
+  
+  return 1;
 }
 
 static void __bd_text_backspace(bd_text_t *text, int fix_cursor) {
-  if (fix_cursor) __bd_text_cursor(text);
+  if (fix_cursor) {
+    if (__bd_text_cursor(text)) {
+      return;
+    }
+  }
   
   if (text->cursor.x) {
     bd_line_t *line = text->lines + text->cursor.y;
@@ -113,7 +123,13 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
   __bd_text_cursor(text);
   text->dirty = 1;
   
-  if (chr == '\n') {
+  if (chr == '\t') {
+    do {
+      __bd_text_write(text, ' ', by_user);
+    } while (text->cursor.x % bd_config.indent_width);
+    
+    return;
+  } else if (chr == '\n') {
     text->lines = realloc(text->lines, (text->count + 1) * sizeof(bd_line_t));
     
     if (text->cursor.y < text->count - 1) {
@@ -400,7 +416,49 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
   bd_text_t *text = view->data;
   
   if (event.type == IO_EVENT_KEY_PRESS) {
-    if (event.key >= 32 && event.key < 127) {
+    if (IO_UNSHIFT(event.key) == '\t' && memcmp(&(text->cursor), &(text->hold_cursor), sizeof(bd_cursor_t))) {
+      bd_cursor_t min_cursor = BD_CURSOR_MIN(text->cursor, text->hold_cursor);
+      bd_cursor_t max_cursor = BD_CURSOR_MAX(text->cursor, text->hold_cursor);
+      
+      bd_cursor_t old_cursor = text->cursor;
+      bd_cursor_t old_hold_cursor = text->hold_cursor;
+      
+      for (int i = min_cursor.y; i <= max_cursor.y; i++) {
+        if (event.key == IO_UNSHIFT(event.key)) {
+          text->cursor = text->hold_cursor = (bd_cursor_t){0, i};
+          __bd_text_write(text, '\t', 1);
+        } else {
+          bd_line_t *line = text->lines + i;
+          int space_count = 0;
+          
+          while (space_count < line->length && line->data[space_count] == ' ' && space_count < bd_config.indent_width) {
+            space_count++;
+          }
+          
+          text->cursor = text->hold_cursor = (bd_cursor_t){space_count, i};
+          
+          while (space_count--) {
+            __bd_text_backspace(text, 1);
+          }
+        }
+      }
+      
+      text->cursor = old_cursor;
+      text->hold_cursor = old_hold_cursor;
+      
+      if (event.key == IO_UNSHIFT(event.key)) {
+        text->cursor.x += bd_config.indent_width;
+        text->hold_cursor.x += bd_config.indent_width;
+      } else {
+        text->cursor.x -= bd_config.indent_width;
+        if (text->cursor.x < 0) text->cursor.x = 0;
+        
+        text->hold_cursor.x -= bd_config.indent_width;
+        if (text->hold_cursor.x < 0) text->hold_cursor.x = 0;
+      }
+      
+      return 1;
+    } else if ((event.key >= 32 && event.key < 127) || event.key == '\t') {
       __bd_text_write(text, event.key, 1);
       return 1;
     } else if (event.key == IO_CTRL('M')) {
@@ -410,12 +468,10 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       __bd_text_backspace(text, 1);
       return 1;
     } else if (event.key == '\x7F') {
-      if (text->cursor.x && text->cursor.y) {
-        __bd_text_left(text, 0);
-        __bd_text_backspace(text, 1);
-        
-        return 1;
-      }
+      __bd_text_right(text, 0);
+      __bd_text_backspace(text, 1);
+      
+      return 1;
     } else if (IO_UNSHIFT(event.key) == IO_ARROW_UP) {
       __bd_text_up(text, event.key != IO_UNSHIFT(event.key));
       return 1;

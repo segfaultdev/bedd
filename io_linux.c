@@ -228,6 +228,8 @@ io_event_t io_get_event(void) {
         key = IO_HOME;
       } else if (ansi_buffer[1] == 'F') {
         key = IO_END;
+      } else if (ansi_buffer[1] == 'Z') {
+        key = IO_SHIFT('\t');
       } else if (ansi_buffer[1] == '<') {
         int mouse_type = 0, mouse_x = 0, mouse_y = 0;
         int offset = 2;
