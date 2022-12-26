@@ -35,6 +35,7 @@ static void __bd_text_end(bd_text_t *text, int hold);
 static void __bd_text_full_home(bd_text_t *text, int hold);
 static void __bd_text_full_end(bd_text_t *text, int hold);
 static void __bd_text_follow(bd_text_t *text);
+static void __bd_text_output(bd_text_t *text, io_file_t file, bd_cursor_t start, bd_cursor_t end);
 
 static int __bd_text_cursor(bd_text_t *text) {
   // cursor.x must not exceed the length of the line, but *can* be equal to it
@@ -308,6 +309,47 @@ static void __bd_text_follow(bd_text_t *text) {
   }
 }
 
+static void __bd_text_output(bd_text_t *text, io_file_t file, bd_cursor_t start, bd_cursor_t end) {
+  if (start.x > text->lines[start.y].length) {
+    start.x = text->lines[start.y].length;
+  }
+  
+  if (end.x > text->lines[end.y].length) {
+    end.x = text->lines[end.y].length;
+  }
+  
+  int space_count = 0;
+  
+  while (space_count < text->lines[start.y].length && text->lines[start.y].data[space_count] == ' ') {
+    space_count++;
+  }
+  
+  while (start.y < end.y || (start.y == end.y && start.x < end.x)) {
+    char chr;
+    
+    if (start.x >= text->lines[start.y].length) {
+      chr = '\n';
+      
+      start.x = 0;
+      start.y++;
+      
+      space_count = 0;
+      
+      while (space_count < text->lines[start.y].length && text->lines[start.y].data[space_count] == ' ') {
+        space_count++;
+      }
+    } else if (!bd_config.indent_spaces && start.x < space_count && !(start.x % bd_config.indent_width)) {
+      chr = '\t';
+      start.x += bd_config.indent_width;
+    } else {
+      chr = text->lines[start.y].data[start.x];
+      start.x++;
+    }
+    
+    io_fwrite(file, &chr, 1);
+  }
+}
+
 // public functions
 
 void bd_text_draw(bd_view_t *view) {
@@ -514,6 +556,9 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       
       text->scroll = scroll;
       return 1;
+    } else if (event.key == IO_CTRL('S')) {
+      bd_text_save(view, 0);
+      return 1;
     }
   } else if (event.type == IO_EVENT_MOUSE_DOWN || event.type == IO_EVENT_MOUSE_MOVE) {
     int lind_size = 1, lind_max = 10;
@@ -593,27 +638,38 @@ void bd_text_load(bd_view_t *view, const char *path) {
   io_fclose(file);
 }
 
-void bd_text_save(bd_view_t *view) {
+int bd_text_save(bd_view_t *view, int closing) {
   bd_text_t *text = view->data;
-  
-  if (text->path[0] && !text->dirty) return; // won't save if it has a path and isn't dirty
+  if (text->path[0] && !text->dirty) return 1; // won't write to disk if it has a path and isn't dirty
   
   for (;;) {
+    if (closing) {
+      int result = bd_dialog("Close file (Ctrl+Q to not close)", -16, "i[Path:]b[2;Save;Do not save]", text->path);
+      
+      if (result == 0) return 0;
+      else if (result == 2) return 1;
+    }
+    
     if (text->path[0]) {
       io_file_t file = io_fopen(text->path, 1);
       
       if (io_fvalid(file)) {
         io_frewind(file);
         
-        io_fwrite(file, NULL, 0); // TODO: get data to be saved
+        bd_cursor_t end = (bd_cursor_t){0, text->count - 1};
+        end.x = text->lines[end.y].length;
+        
+        __bd_text_output(text, file, (bd_cursor_t){0, 0}, end);
         io_fclose(file);
         
         break;
       }
     }
     
-    if (!bd_dialog("Save file (Ctrl+Q to cancel)", -16, "i[Path:]b[1;Save]", text->path)) {
-      return;
+    if (!closing) {
+      if (!bd_dialog("Save file (Ctrl+Q to cancel)", -16, "i[Path:]b[1;Save]", text->path)) {
+        return 1;
+      }
     }
   }
   
@@ -621,4 +677,6 @@ void bd_text_save(bd_view_t *view) {
   
   view->title_dirty = 1;
   text->dirty = 0;
+  
+  return 1;
 }

@@ -38,8 +38,8 @@ int main(void) {
         view_draw = 1;
       } else if (event.type == IO_EVENT_KEY_PRESS) {
         if (event.key == IO_CTRL('Q')) {
-          if (bd_view_count <= 1) do_exit = 1;
-          else bd_view_remove(bd_views + bd_view);
+          bd_view_remove(bd_views + bd_view);
+          if (!bd_view_count) do_exit = 1;
           
           handled = 1;
           

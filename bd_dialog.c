@@ -21,18 +21,32 @@ int bd_dialog(const char *title, int __width, const char *format, ...) {
   
   while (*ptr) {
     char chr = *ptr;
-    while (*(ptr++) != ']');
     
-    if (chr == 'b' || chr == 'i') {
+    if (chr == 'i') {
+      while (*(ptr++) != ']');
+      
       select_buffers = realloc(select_buffers, (select_count + 1) * sizeof(char **));
       select_indexes = realloc(select_indexes, (select_count + 1) * sizeof(int));
       
-      if (chr == 'i') {
-        select_buffers[select_count] = va_arg(args, char *);
-        select_indexes[select_count] = 0;
-        
-        select_count++;
-      } else {
+      select_buffers[select_count] = va_arg(args, char *);
+      select_indexes[select_count] = 0;
+      
+      select_count++;
+      height++;
+    } else if (chr == 'b') {
+      int count = 0;
+      ptr += 2;
+      
+      while (isdigit(*ptr)) {
+        count = (count * 10) + (*(ptr++) - '0');
+      }
+      
+      while (*(ptr++) != ']');
+      
+      select_buffers = realloc(select_buffers, (select_count + count) * sizeof(char **));
+      select_indexes = realloc(select_indexes, (select_count + count) * sizeof(int));
+      
+      while (count--) {
         select_buffers[select_count] = NULL;
         select_indexes[select_count] = ++button_count;
         
@@ -151,7 +165,6 @@ int bd_dialog(const char *title, int __width, const char *format, ...) {
             }
             
             total_width += length_2 + 3;
-            
             index++;
           }
           

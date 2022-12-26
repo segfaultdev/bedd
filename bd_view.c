@@ -24,6 +24,10 @@ bd_view_t *bd_view_add(const char *title, int type, ...) {
 }
 
 void bd_view_remove(bd_view_t *view) {
+  if (view->type == bd_view_text) {
+    if (!bd_text_save(view, 1)) return;
+  }
+  
   if (view->data) free(view->data);
   int index = view - bd_views;
   
@@ -32,8 +36,9 @@ void bd_view_remove(bd_view_t *view) {
   }
   
   bd_view_count--;
-  bd_views = realloc(bd_views, bd_view_count * sizeof(bd_view_t));
+  if (!bd_view_count) return;
   
+  bd_views = realloc(bd_views, bd_view_count * sizeof(bd_view_t));
   if (bd_view >= bd_view_count) bd_view = bd_view_count - 1;
 }
 

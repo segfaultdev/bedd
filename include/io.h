@@ -9,7 +9,7 @@
 void io_init(void);
 void io_exit(void);
 
-// --- file functions ---
+// --- file/clipboard functions ---
 
 typedef struct io_file_t io_file_t;
 
@@ -24,6 +24,8 @@ size_t    io_fwrite(io_file_t file, void *buffer, size_t count);
 size_t    io_fread(io_file_t file, void *buffer, size_t count);
 void      io_frewind(io_file_t file);
 int       io_feof(io_file_t file);
+io_file_t io_clip_open(void);
+void      io_clip_close(void);
 
 // --- output functions ---
 

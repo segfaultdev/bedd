@@ -56,7 +56,7 @@ void bd_welcome_draw(bd_view_t *view);
 void bd_text_draw(bd_view_t *view);
 int  bd_text_event(bd_view_t *view, io_event_t event);
 void bd_text_load(bd_view_t *view, const char *path);
-void bd_text_save(bd_view_t *view);
+int  bd_text_save(bd_view_t *view, int closing); // returns 1 if should close (when closing)
 
 void bd_global_draw(void);
 int  bd_global_click(int x, int y);
