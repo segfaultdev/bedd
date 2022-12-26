@@ -1,10 +1,12 @@
 #!/usr/bin/sh
 
-CFLAGS="-Iinclude -Os -s -Wall -Wextra"
-LDFLAGS="-s"
+CFLAGS="-s -Iinclude -Os -Wall -Wextra"
 
-FINDFLAGS=
-if [ -f ./bedd ]; then FINDFLAGS="-newer ./bedd"; fi
+for FILE in $(find . -name "*.c"); do
+  if [ $FILE -nt ./bedd ]; then
+    echo $FILE
+    gcc $FILE $CFLAGS -c
+  fi
+done
 
-find -name "*.c" $FINDFLAGS | xargs -I{} sh -c "echo {}; gcc {} $CFLAGS -c"
-gcc $(find . -name "*.o") $LDFLAGS -o bedd
+gcc $(find . -name "*.o") -s -o ./bedd
