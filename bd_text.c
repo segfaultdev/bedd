@@ -134,7 +134,7 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
     text->lines = realloc(text->lines, (text->count + 1) * sizeof(bd_line_t));
     
     if (text->cursor.y < text->count - 1) {
-      memmove(text->lines + text->cursor.y + 1, text->lines + text->cursor.y, (text->count - 1) - text->cursor.y);
+      memmove(text->lines + text->cursor.y + 1, text->lines + text->cursor.y, ((text->count - 1) - text->cursor.y) * sizeof(bd_line_t));
     }
     
     text->count++;
