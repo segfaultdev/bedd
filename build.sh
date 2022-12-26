@@ -1,4 +1,13 @@
 #!/usr/bin/sh
 
-gcc $(find . -name "*.c") -Iinclude -o bedd -Os -s -Wall -Wextra
-# gcc $(find . -name "*.c") -Iinclude -o bedd -Og -g -fsanitize=address -Wall -Wextra
+CFLAGS="-Iinclude -Os -s -Wall -Wextra"
+LDFLAGS="-s"
+
+FINDFLAGS=
+
+if [ -f ./bedd ]; then
+  FINDFLAGS="-newer ./bedd"
+fi
+
+find -name "*.c" $FINDFLAGS | xargs -I{} sh -c "echo {}; gcc {} $CFLAGS -c"
+gcc $(find . -name "*.o") $LDFLAGS -o bedd
