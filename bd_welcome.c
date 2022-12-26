@@ -45,7 +45,7 @@ void bd_welcome_draw(bd_view_t *view) {
     IO_BOLD " Ctrl+Up " IO_NORMAL "Go top\n"
     IO_BOLD " Ctrl+Down " IO_NORMAL "Go bottom\n"
     IO_BOLD " [\u2190\u2191\u2192\u2193] " IO_NORMAL "Move\n"
-    IO_BOLD " Alt+[\u2190\u2191\u2192\u2193] " IO_NORMAL "Select\n"
+    IO_BOLD " Shift+[\u2190\u2191\u2192\u2193] " IO_NORMAL "Select\n"
   );
   
   io_printf_wrap(2 + ((2 * bd_width) / 3), bd_width, y,
