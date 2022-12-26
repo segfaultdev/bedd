@@ -1,11 +1,9 @@
 #!/usr/bin/sh
 
-CFLAGS="-s -Iinclude -Os -Wall -Wextra"
-
 for FILE in $(find . -name "*.c"); do
-  if [ $FILE -nt ./bedd ]; then
+  if [ $FILE -nt ${FILE}.o ]; then
     echo $FILE
-    gcc $FILE $CFLAGS -c
+    gcc -c $FILE -o ${FILE}.o -Iinclude -Os -s -Wall -Wextra
   fi
 done
 
