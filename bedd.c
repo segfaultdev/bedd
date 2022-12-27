@@ -1,3 +1,4 @@
+#include <string.h>
 #include <bedd.h>
 #include <io.h>
 
@@ -65,6 +66,17 @@ int main(void) {
             int result = bd_dialog("Open file (Ctrl+Q to cancel)", -16, "i[Path:]b[1;Open]", buffer);
             
             if (result) {
+              while (buffer[0] == '.' && buffer[1] == '/') {
+                memmove(buffer, buffer + 2, sizeof(buffer) - 2);
+              }
+              
+              if (buffer[0] == '.' && buffer[1] == '.' && (!buffer[2] || buffer[2] == '/')) {
+                char temp[256];
+                strcpy(temp, buffer);
+                
+                io_dsolve(temp, buffer);
+              }
+              
               io_file_t file = io_dopen(buffer);
               
               if (io_dvalid(file)) {
