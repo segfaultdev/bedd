@@ -8,11 +8,42 @@ int bd_view_count = 0, bd_view = 0;
 int bd_width, bd_height;
 time_t bd_time;
 
-int main(void) {
+int main(int argc, const char **argv) {
   io_init();
-  
   bd_view_add("Welcome", bd_view_welcome);
-  bd_view_add("bedd.c", bd_view_text, "bedd.c");
+  
+  for (int i = 1; i < argc; i++) {
+    char buffer[256];
+    strcpy(buffer, argv[i]);
+    
+    while (buffer[0] == '.' && buffer[1] == '/') {
+      memmove(buffer, buffer + 2, sizeof(buffer) - 2);
+    }
+    
+    if (buffer[0] == '.' && buffer[1] == '.' && (!buffer[2] || buffer[2] == '/')) {
+      io_dsolve(argv[i], buffer);
+    }
+    
+    io_file_t file = io_dopen(buffer);
+    
+    if (io_dvalid(file)) {
+      io_dclose(file);
+      bd_view_add(buffer, bd_view_explore, buffer);
+      
+      bd_view = 1;
+      continue;
+    }
+    
+    file = io_fopen(buffer, 0);
+    
+    if (io_fvalid(file)) {
+      io_fclose(file);
+      bd_view_add(buffer, bd_view_text, buffer);
+      
+      bd_view = 1;
+      continue;
+    }
+  }
   
   int global_draw = 1;
   int view_draw = 1;
