@@ -19,6 +19,8 @@ struct bd_text_t {
   
   bd_cursor_t cursor, hold_cursor, scroll;
   int dirty;
+  
+  int scroll_mouse_y;
 };
 
 // static functions
@@ -430,7 +432,16 @@ void bd_text_draw(bd_view_t *view) {
       io_printf(":");
     }
     
-    io_printf(IO_NORMAL IO_CLEAR_LINE);
+    int scroll_start_y = (text->scroll.y * (bd_height - 2)) / (text->count + (bd_height - 2));
+    int scroll_end_y = 1 + ((text->scroll.y + (bd_height - 2)) * (bd_height - 2)) / (text->count + (bd_height - 2));
+    
+    if (i >= scroll_start_y && i < scroll_end_y) {
+      io_printf(IO_SHADOW_2 " ");
+    } else {
+      io_printf(IO_NORMAL "\u2502");
+    }
+    
+    io_printf(IO_NORMAL);
   }
   
   io_flush();
@@ -561,36 +572,65 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       return 1;
     }
   } else if (event.type == IO_EVENT_MOUSE_DOWN || event.type == IO_EVENT_MOUSE_MOVE) {
-    int lind_size = 1, lind_max = 10;
-    
-    while (text->count >= lind_max) {
-      lind_size++;
-      lind_max *= 10;
+    if (text->scroll_mouse_y >= 0) {
+      text->scroll.y = ((event.mouse.y - (2 + text->scroll_mouse_y)) * (text->count + (bd_height - 2))) / (bd_height - 2);
+      
+      if (text->scroll.y < 0) {
+        text->scroll.y = 0;
+      } else if (text->scroll.y >= text->count) {
+        text->scroll.y = text->count - 1;
+      }
+    } else if (event.type == IO_EVENT_MOUSE_DOWN && event.mouse.x >= bd_width - 1) {
+      int scroll_start_y = 2 + (text->scroll.y * (bd_height - 2)) / (text->count + (bd_height - 2));
+      int scroll_end_y = 3 + ((text->scroll.y + (bd_height - 2)) * (bd_height - 2)) / (text->count + (bd_height - 2));
+      
+      if (event.mouse.y >= scroll_start_y && event.mouse.y < scroll_end_y) {
+        text->scroll_mouse_y = event.mouse.y - scroll_start_y;
+      } else {
+        text->scroll_mouse_y = (scroll_end_y - scroll_start_y) / 2;
+        text->scroll.y = ((event.mouse.y - (2 + text->scroll_mouse_y)) * (text->count + (bd_height - 2))) / (bd_height - 2);
+        
+        if (text->scroll.y < 0) {
+          text->scroll.y = 0;
+        } else if (text->scroll.y >= text->count) {
+          text->scroll.y = text->count - 1;
+        }
+      }
+    } else {
+      int lind_size = 1, lind_max = 10;
+      
+      while (text->count >= lind_max) {
+        lind_size++;
+        lind_max *= 10;
+      }
+      
+      int cursor_x = (event.mouse.x - (5 + lind_size)) + text->scroll.x;
+      int cursor_y = (event.mouse.y - 2) + text->scroll.y;
+      
+      if (cursor_y < 0) {
+        cursor_y = 0;
+      } else if (cursor_y >= text->count) {
+        cursor_y = text->count - 1;
+      }
+      
+      if (cursor_x < 0) {
+        cursor_x = 0;
+      } else if (cursor_x > text->lines[cursor_y].length) {
+        cursor_x = text->lines[cursor_y].length;
+      }
+      
+      text->cursor = (bd_cursor_t){cursor_x, cursor_y};
+      
+      if (event.type == IO_EVENT_MOUSE_DOWN) {
+        text->hold_cursor = text->cursor;
+      }
+      
+      __bd_text_follow(text);
     }
     
-    int cursor_x = (event.mouse.x - (5 + lind_size)) + text->scroll.x;
-    int cursor_y = (event.mouse.y - 2) + text->scroll.y;
-    
-    if (cursor_y < 0) {
-      cursor_y = 0;
-    } else if (cursor_y >= text->count) {
-      cursor_y = text->count - 1;
-    }
-    
-    if (cursor_x < 0) {
-      cursor_x = 0;
-    } else if (cursor_x > text->lines[cursor_y].length) {
-      cursor_x = text->lines[cursor_y].length;
-    }
-    
-    text->cursor = (bd_cursor_t){cursor_x, cursor_y};
-    
-    if (event.type == IO_EVENT_MOUSE_DOWN) {
-      text->hold_cursor = text->cursor;
-    }
-    
-    __bd_text_follow(text);
     return 1;
+  } else if (event.type == IO_EVENT_MOUSE_UP) {
+    text->scroll_mouse_y = -1;
   } else if (event.type == IO_EVENT_SCROLL) {
     text->scroll.y += event.scroll * bd_config.scroll_step;
     
@@ -618,6 +658,8 @@ void bd_text_load(bd_view_t *view, const char *path) {
   
   text->lines[0].data = NULL;
   text->lines[0].length = 0;
+  
+  text->scroll_mouse_y = -1; // not scrolling
   
   text->dirty = 0;
   if (!path) return;
