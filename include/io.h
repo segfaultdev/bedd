@@ -13,7 +13,14 @@ void io_exit(void);
 
 typedef struct io_file_t io_file_t;
 
+enum {
+  io_file_file,
+  io_file_directory,
+  io_file_clipboard,
+};
+
 struct io_file_t {
+  int type;
   void *data;
 };
 
@@ -24,8 +31,17 @@ size_t    io_fwrite(io_file_t file, void *buffer, size_t count);
 size_t    io_fread(io_file_t file, void *buffer, size_t count);
 void      io_frewind(io_file_t file);
 int       io_feof(io_file_t file);
-io_file_t io_clip_open(void);
-void      io_clip_close(void);
+
+void      io_dsolve(const char *path, char *buffer);
+io_file_t io_dopen(const char *path);
+int       io_dvalid(io_file_t file);
+void      io_dclose(io_file_t file);
+int       io_dread(io_file_t file, char *buffer);
+void      io_drewind(io_file_t file);
+
+io_file_t io_copen(void);
+void      io_cclose(void);
+
 
 // --- output functions ---
 
@@ -69,6 +85,7 @@ void      io_clip_close(void);
 #define IO_ALT(chr)   ((chr) | 1024)
 
 #define IO_UNSHIFT(chr) ((chr) & ~512)
+#define IO_UNALT(chr)   ((chr) & ~1024)
 
 void io_cursor(int x, int y);
 void io_printf(const char *format, ...);

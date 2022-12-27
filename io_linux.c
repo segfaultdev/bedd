@@ -3,8 +3,12 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <termios.h>
+#include <dirent.h>
+#include <limits.h>
 #include <locale.h>
 #include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -42,6 +46,7 @@ void io_exit(void) {
 io_file_t io_fopen(const char *path, int write_mode) {
   return (io_file_t){
     .data = fopen(path, write_mode ? "wb+" : "rb"),
+    .type = io_file_file,
   };
 }
 
@@ -67,6 +72,37 @@ void io_frewind(io_file_t file) {
 
 int io_feof(io_file_t file) {
   return feof(file.data);
+}
+
+void io_dsolve(const char *path, char *buffer) {
+  realpath(path, buffer);
+}
+
+io_file_t io_dopen(const char *path) {
+  return (io_file_t){
+    .data = opendir(path),
+    .type = io_file_directory,
+  };
+}
+
+int io_dvalid(io_file_t file) {
+  return !!file.data;
+}
+
+void io_dclose(io_file_t file) {
+  closedir(file.data);
+}
+
+int io_dread(io_file_t file, char *buffer) {
+  struct dirent *entry = readdir(file.data);
+  if (!entry) return 0;
+  
+  strcpy(buffer, entry->d_name);
+  return 1;
+}
+
+void io_drewind(io_file_t file) {
+  rewinddir(file.data);
 }
 
 void io_cursor(int x, int y) {
@@ -178,9 +214,15 @@ io_event_t io_get_event(void) {
     int key = chr;
     
     if (chr == '\x1B') {
-      read(STDIN_FILENO, ansi_buffer, 2);
+      read(STDIN_FILENO, ansi_buffer, 1);
       
-      if (ansi_buffer[1] == 'A') {
+      if (ansi_buffer[0] == '[') {
+        read(STDIN_FILENO, ansi_buffer + 1, 1);
+      }
+      
+      if (ansi_buffer[0] < 32) {
+        key = IO_ALT(ansi_buffer[0]);
+      } else if (ansi_buffer[1] == 'A') {
         key = IO_ARROW_UP;
       } else if (ansi_buffer[1] == 'B') {
         key = IO_ARROW_DOWN;

@@ -26,6 +26,7 @@ struct bd_cursor_t {
 enum {
   bd_view_welcome,
   bd_view_text,
+  bd_view_explore,
 };
 
 struct bd_view_t {
@@ -57,6 +58,10 @@ void bd_text_draw(bd_view_t *view);
 int  bd_text_event(bd_view_t *view, io_event_t event);
 void bd_text_load(bd_view_t *view, const char *path);
 int  bd_text_save(bd_view_t *view, int closing); // returns 1 if should close (when closing)
+
+void bd_explore_draw(bd_view_t *view);
+int  bd_explore_event(bd_view_t *view, io_event_t event);
+void bd_explore_load(bd_view_t *view, const char *path);
 
 void bd_global_draw(void);
 int  bd_global_click(int x, int y);

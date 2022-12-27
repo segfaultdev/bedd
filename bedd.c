@@ -65,7 +65,16 @@ int main(void) {
             int result = bd_dialog("Open file (Ctrl+Q to cancel)", -16, "i[Path:]b[1;Open]", buffer);
             
             if (result) {
-              io_file_t file = io_fopen(buffer, 0);
+              io_file_t file = io_dopen(buffer);
+              
+              if (io_dvalid(file)) {
+                io_dclose(file);
+                
+                bd_view = bd_view_add(buffer, bd_view_explore, buffer) - bd_views;
+                break;
+              }
+              
+              file = io_fopen(buffer, 0);
               
               if (io_fvalid(file)) {
                 io_fclose(file);
@@ -112,7 +121,14 @@ int main(void) {
         }
       }
       
+      int old_view = bd_view;
+      
       if (!handled && bd_view_event(bd_views + bd_view, event)) {
+        view_draw = 1;
+      }
+      
+      if (bd_view != old_view) {
+        global_draw = 1;
         view_draw = 1;
       }
     }
