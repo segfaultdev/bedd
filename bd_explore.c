@@ -20,6 +20,7 @@ struct bd_explore_t {
   int count;
   
   int cursor, scroll;
+  int scroll_mouse_y;
 };
 
 // static functions
@@ -117,6 +118,18 @@ void bd_explore_draw(bd_view_t *view) {
     }
     
     io_printf(IO_NORMAL IO_CLEAR_LINE);
+    io_cursor(bd_width - 1, i + 2);
+    
+    int scroll_start_y = (explore->scroll * (bd_height - 2)) / (explore->count + (bd_height - 2));
+    int scroll_end_y = 1 + ((explore->scroll + (bd_height - 2)) * (bd_height - 2)) / (explore->count + (bd_height - 2));
+    
+    if (i >= scroll_start_y && i < scroll_end_y) {
+      io_printf(IO_SHADOW_2 " ");
+    } else {
+      io_printf(IO_NORMAL "\u2502");
+    }
+    
+    io_printf(IO_NORMAL);
   }
   
   io_flush();
@@ -226,6 +239,49 @@ int bd_explore_event(bd_view_t *view, io_event_t event) {
       __bd_explore_follow(explore);
       return 1;
     }
+  } else if (event.type == IO_EVENT_MOUSE_DOWN || event.type == IO_EVENT_MOUSE_MOVE) {
+    if (explore->scroll_mouse_y >= 0) {
+      explore->scroll = ((event.mouse.y - (2 + explore->scroll_mouse_y)) * (explore->count + (bd_height - 2))) / (bd_height - 2);
+      
+      if (explore->scroll < 0) {
+        explore->scroll = 0;
+      } else if (explore->scroll >= explore->count) {
+        explore->scroll = explore->count - 1;
+      }
+    } else if (event.type == IO_EVENT_MOUSE_DOWN && event.mouse.x >= bd_width - 1) {
+      int scroll_start_y = 2 + (explore->scroll * (bd_height - 2)) / (explore->count + (bd_height - 2));
+      int scroll_end_y = 3 + ((explore->scroll + (bd_height - 2)) * (bd_height - 2)) / (explore->count + (bd_height - 2));
+      
+      if (event.mouse.y >= scroll_start_y && event.mouse.y < scroll_end_y) {
+        explore->scroll_mouse_y = event.mouse.y - scroll_start_y;
+      } else {
+        explore->scroll_mouse_y = (scroll_end_y - scroll_start_y) / 2;
+        explore->scroll = ((event.mouse.y - (2 + explore->scroll_mouse_y)) * (explore->count + (bd_height - 2))) / (bd_height - 2);
+        
+        if (explore->scroll < 0) {
+          explore->scroll = 0;
+        } else if (explore->scroll >= explore->count) {
+          explore->scroll = explore->count - 1;
+        }
+      }
+    } else if (event.type == IO_EVENT_MOUSE_DOWN) {
+      explore->cursor = explore->scroll + (event.mouse.y - 2);
+      __bd_explore_follow(explore);
+    }
+    
+    return 1;
+  } else if (event.type == IO_EVENT_MOUSE_UP) {
+    explore->scroll_mouse_y = -1;
+  } else if (event.type == IO_EVENT_SCROLL) {
+    explore->scroll += event.scroll * bd_config.scroll_step;
+    
+    if (explore->scroll < 0) {
+      explore->scroll = 0;
+    } else if (explore->scroll >= explore->count) {
+      explore->scroll = explore->count - 1;
+    }
+    
+    return 1;
   }
   
   return 0;
@@ -245,5 +301,7 @@ void bd_explore_load(bd_view_t *view, const char *path) {
   }
   
   explore->cursor = explore->scroll = 0;
+  explore->scroll_mouse_y = -1;
+  
   __bd_explore_update(explore);
 }
