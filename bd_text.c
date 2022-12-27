@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <syntax.h>
 #include <bedd.h>
 #include <io.h>
 
@@ -21,6 +22,8 @@ struct bd_text_t {
   int dirty;
   
   int scroll_mouse_y;
+  
+  syntax_t syntax;
 };
 
 // static functions
@@ -42,23 +45,22 @@ static void __bd_text_output(bd_text_t *text, io_file_t file, bd_cursor_t start,
 static int __bd_text_cursor(bd_text_t *text) {
   // cursor.x must not exceed the length of the line, but *can* be equal to it
   
+  if (text->cursor.x < 0) {
+    text->cursor.x = 0;
+  }
+  
   if (text->cursor.x > text->lines[text->cursor.y].length) {
     text->cursor.x = text->lines[text->cursor.y].length;
   }
   
   // same logic applies to hold_cursor.x
   
-  if (text->hold_cursor.x > text->lines[text->hold_cursor.y].length) {
-    text->hold_cursor.x = text->lines[text->hold_cursor.y].length;
+  if (text->hold_cursor.x < 0) {
+    text->hold_cursor.x = 0;
   }
   
-  // make sure hold_cursor is behind and not after cursor, to make the following code simpler
-  
-  if (text->hold_cursor.y > text->cursor.x || (text->hold_cursor.y == text->cursor.y && text->hold_cursor.x > text->cursor.x)) {
-    bd_cursor_t temp = text->cursor;
-    
-    text->cursor = text->hold_cursor;
-    text->hold_cursor = temp;
+  if (text->hold_cursor.x > text->lines[text->hold_cursor.y].length) {
+    text->hold_cursor.x = text->lines[text->hold_cursor.y].length;
   }
   
   // then, cursor must be equal to hold_cursor, so delete chars in between!
@@ -67,10 +69,20 @@ static int __bd_text_cursor(bd_text_t *text) {
     return 0;
   }
   
-  while (text->cursor.x != text->hold_cursor.x || text->cursor.y != text->hold_cursor.y) {
+  // make sure hold_cursor is behind and not after cursor, to make the following code simpler
+  
+  if (BD_CURSOR_GREAT(text->hold_cursor, text->cursor)) {
+    bd_cursor_t temp = text->cursor;
+    
+    text->cursor = text->hold_cursor;
+    text->hold_cursor = temp;
+  }
+  
+  while (BD_CURSOR_GREAT(text->cursor, text->hold_cursor)) {
     __bd_text_backspace(text, 0);
   }
   
+  __bd_text_follow(text);
   return 1;
 }
 
@@ -89,9 +101,7 @@ static void __bd_text_backspace(bd_text_t *text, int fix_cursor) {
     line->length--;
   } else {
     if (!text->cursor.y) {
-      if (fix_cursor) text->hold_cursor = text->cursor;
       __bd_text_follow(text);
-      
       return;
     }
     
@@ -99,7 +109,10 @@ static void __bd_text_backspace(bd_text_t *text, int fix_cursor) {
     bd_line_t *line = text->lines + text->cursor.y;
     
     prev_line->data = realloc(prev_line->data, prev_line->length + line->length);
-    memcpy(prev_line->data + prev_line->length, line->data, line->length);
+    
+    if (line->length) {
+      memcpy(prev_line->data + prev_line->length, line->data, line->length);
+    }
     
     text->cursor.x = prev_line->length;
     
@@ -136,7 +149,7 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
     text->lines = realloc(text->lines, (text->count + 1) * sizeof(bd_line_t));
     
     if (text->cursor.y < text->count - 1) {
-      memmove(text->lines + text->cursor.y + 1, text->lines + text->cursor.y, ((text->count - 1) - text->cursor.y) * sizeof(bd_line_t));
+      memmove(text->lines + text->cursor.y + 1, text->lines + text->cursor.y, (text->count - text->cursor.y) * sizeof(bd_line_t));
     }
     
     text->count++;
@@ -148,22 +161,49 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
       space_count++;
     }
     
-    line.length = space_count + (text->lines[text->cursor.y].length - text->cursor.x),
-    line.data = malloc(line.length);
+    int old_count = space_count;
+    char last = '\0', pair = '\0';
     
     if (by_user) {
+      space_count += !!text->syntax.f_depth(text->lines[text->cursor.y].data, text->cursor.x) * bd_config.indent_width;
+      
+      if (text->cursor.x) {
+        last = text->lines[text->cursor.y].data[text->cursor.x - 1];
+        pair = text->syntax.f_pair(text->lines[text->cursor.y].data, text->cursor.x - 1, last);
+      }
+    }
+    
+    line.length = space_count + (text->lines[text->cursor.y].length - text->cursor.x),
+    line.data = line.length ? malloc(line.length) : NULL;
+    
+    if (by_user && space_count) {
       memset(line.data, ' ', space_count);
     }
     
-    memcpy(line.data + space_count, text->lines[text->cursor.y].data + text->cursor.x, line.length);
-    text->lines[text->cursor.y].data = realloc(text->lines[text->cursor.y].data, text->lines[text->cursor.y].length = text->cursor.x);
+    if (line.length - space_count) {
+      memcpy(line.data + space_count, text->lines[text->cursor.y].data + text->cursor.x, line.length - space_count);
+    }
     
+    text->lines[text->cursor.y].data = realloc(text->lines[text->cursor.y].data, text->lines[text->cursor.y].length = text->cursor.x);
     text->lines[text->cursor.y + 1] = line;
     
     text->cursor.x = space_count;
     text->cursor.y++;
     
     text->hold_cursor = text->cursor;
+    __bd_text_follow(text);
+    
+    if (!pair) return;
+    if (text->cursor.x < text->lines[text->cursor.y].length && text->lines[text->cursor.y].data[text->cursor.x] != pair) return;
+    
+    bd_cursor_t old_cursor = text->cursor;
+    __bd_text_write(text, '\n', 0);
+    
+    while (old_count--) {
+      __bd_text_write(text, ' ', 0);
+    }
+    
+    text->hold_cursor = text->cursor = old_cursor;
     __bd_text_follow(text);
     
     return;
@@ -181,6 +221,14 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
   
   text->hold_cursor = text->cursor;
   __bd_text_follow(text);
+  
+  if (!by_user) return;
+  
+  char pair = text->syntax.f_pair(line->data, text->cursor.x - 1, chr);
+  if (!pair) return;
+  
+  __bd_text_write(text, pair, 0);
+  __bd_text_left(text, 0);
 }
 
 static void __bd_text_up(bd_text_t *text, int hold) {
@@ -662,7 +710,13 @@ void bd_text_load(bd_view_t *view, const char *path) {
   text->scroll_mouse_y = -1; // not scrolling
   
   text->dirty = 0;
-  if (!path) return;
+  
+  if (path) {
+    text->syntax = st_init(path);
+  } else {
+    text->syntax = st_init("");
+    return;
+  }
   
   io_file_t file = io_fopen(path, 0);
   if (!io_fvalid(file)) return;
@@ -716,6 +770,7 @@ int bd_text_save(bd_view_t *view, int closing) {
   }
   
   strcpy(view->title, text->path);
+  text->syntax = st_init(text->path);
   
   view->title_dirty = 1;
   text->dirty = 0;
