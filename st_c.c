@@ -80,7 +80,9 @@ int st_c_color(int prev_state, int *state, const char *text, int length) {
   }
   
   if (prev_state == st_c_string) {
-    if (text[0] == '"') {
+    if (text[0] == '\\') {
+      *state = st_c_string_escape;
+    } else if (text[0] == '"') {
       *state = st_c_default;
     }
     
@@ -88,7 +90,9 @@ int st_c_color(int prev_state, int *state, const char *text, int length) {
   }
   
   if (prev_state == st_c_char) {
-    if (text[0] == '\'') {
+    if (text[0] == '\\') {
+      *state = st_c_char_escape;
+    } else if (text[0] == '\'') {
       *state = st_c_default;
     }
     
