@@ -7,6 +7,14 @@ int st_c_depth(const char *line, int length);
 char st_c_pair(const char *line, int length, char chr);
 int st_c_color(int prev_state, int *state, const char *text, int length);
 
+// JavaScript/JSON
+
+int st_js_color(int prev_state, int *state, const char *text, int length);
+
+// Markdown
+
+int st_md_color(int prev_state, int *state, const char *text, int length);
+
 // Default
 
 static int st_depth(const char *line, int length);
@@ -19,12 +27,41 @@ syntax_t st_init(const char *filename) {
   filename = strrchr(filename, '.');
   
   if (filename) {
-    if (strstr(".h.c.hpp.cpp", filename)) {
+    if (!strcmp(filename, ".h") || !strcmp(filename, ".c") ||
+        !strcmp(filename, ".hh") || !strcmp(filename, ".cc") ||
+        !strcmp(filename, ".hpp") || !strcmp(filename, ".cpp")) {
       return (syntax_t){
         .lang = "C/C++",
         .f_depth = st_c_depth,
         .f_pair = st_c_pair,
         .f_color = st_c_color,
+      };
+    }
+    
+    if (!strcmp(filename, ".js")) {
+      return (syntax_t){
+        .lang = "JavaScript",
+        .f_depth = st_c_depth,
+        .f_pair = st_c_pair,
+        .f_color = st_js_color,
+      };
+    }
+    
+    if (!strcmp(filename, ".json")) {
+      return (syntax_t){
+        .lang = "JSON",
+        .f_depth = st_c_depth,
+        .f_pair = st_c_pair,
+        .f_color = st_js_color,
+      };
+    }
+    
+    if (!strcmp(filename, ".md")) {
+      return (syntax_t){
+        .lang = "Markdown",
+        .f_depth = st_depth,
+        .f_pair = st_pair,
+        .f_color = st_md_color,
       };
     }
   }

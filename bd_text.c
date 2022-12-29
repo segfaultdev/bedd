@@ -484,12 +484,13 @@ void bd_text_draw(bd_view_t *view) {
         }
         
         if (x == line->length) {
+          text->syntax.f_color(state, &state, "\n", 1);
           io_printf(" ");
         } else if (x > line->length) {
           break;
         } else {
           if (x < space_count) {
-            text->syntax.f_color(state, &state, "\n", 1);
+            text->syntax.f_color(state, &state, " ", 1);
             io_printf("%s\u00B7" IO_WHITE, y == text->cursor.y ? IO_DARK_GRAY : IO_BLACK);
           } else {
             int color = text->syntax.f_color(state, &state, line->data + x, line->length - x);
