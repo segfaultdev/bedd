@@ -27,6 +27,7 @@ struct bd_explore_t {
 
 static void __bd_explore_update(bd_explore_t *explore);
 static void __bd_explore_follow(bd_explore_t *explore);
+static int  __bd_explore_enter(bd_view_t *view, int new_tab);
 
 static void __bd_explore_update(bd_explore_t *explore) {
   if (explore->entries) {
@@ -90,6 +91,48 @@ static void __bd_explore_follow(bd_explore_t *explore) {
     explore->scroll = explore->cursor;
   } else if (explore->scroll <= explore->cursor - view_height) {
     explore->scroll = (explore->cursor - view_height) + 1;
+  }
+}
+
+static int __bd_explore_enter(bd_view_t *view, int new_tab) {
+  bd_explore_t *explore = view->data;
+  
+  bd_entry_t entry = explore->entries[explore->cursor];
+  
+  char new_path[256];
+  strcpy(new_path, explore->path);
+  
+  int length = strlen(new_path);
+  
+  if (!strcmp(entry.name, "..")) {
+    if (!strcmp(new_path, ".")) {
+      io_dsolve(explore->path, new_path);
+    }
+    
+    char *ptr = strrchr(new_path, '/');
+    
+    if (!ptr) return 0;
+    if (ptr == new_path) ptr++;
+    
+    length = ptr - new_path;
+    new_path[length] = '\0';
+  } else {
+    if (new_path[length - 1] != '/') {
+      new_path[length++] = '/';
+    }
+    
+    strcpy(new_path + length, entry.name);
+  }
+  
+  if (entry.is_directory && !new_tab) {
+    strcpy(explore->path, new_path);
+    __bd_explore_update(explore);
+    
+    __bd_explore_follow(explore);
+    return 1;
+  } else {
+    bd_view = bd_view_add(new_path, entry.is_directory ? bd_view_explore : bd_view_text, new_path) - bd_views;
+    return 0;
   }
 }
 
@@ -164,43 +207,7 @@ int bd_explore_event(bd_view_t *view, io_event_t event) {
       __bd_explore_follow(explore);
       return 1;
     } else if (IO_UNALT(event.key) == IO_CTRL('M')) {
-      bd_entry_t entry = explore->entries[explore->cursor];
-      
-      char new_path[256];
-      strcpy(new_path, explore->path);
-      
-      int length = strlen(new_path);
-      
-      if (!strcmp(entry.name, "..")) {
-        if (!strcmp(new_path, ".")) {
-          io_dsolve(explore->path, new_path);
-        }
-        
-        char *ptr = strrchr(new_path, '/');
-        
-        if (!ptr) return 0;
-        if (ptr == new_path) ptr++;
-        
-        length = ptr - new_path;
-        new_path[length] = '\0';
-      } else {
-        if (new_path[length - 1] != '/') {
-          new_path[length++] = '/';
-        }
-        
-        strcpy(new_path + length, entry.name);
-      }
-      
-      if (entry.is_directory && event.key == IO_UNALT(event.key)) {
-        strcpy(explore->path, new_path);
-        __bd_explore_update(explore);
-        
-        __bd_explore_follow(explore);
-        return 1;
-      } else {
-        bd_view = bd_view_add(new_path, entry.is_directory ? bd_view_explore : bd_view_text, new_path) - bd_views;
-        return 0;
-      }
+      return __bd_explore_enter(view, event.key != IO_UNALT(event.key));
     } else if (event.key == IO_ARROW_UP) {
       explore->cursor--;
       
@@ -265,6 +272,10 @@ int bd_explore_event(bd_view_t *view, io_event_t event) {
         }
       }
     } else if (event.type == IO_EVENT_MOUSE_DOWN) {
+      if (explore->cursor == explore->scroll + (event.mouse.y - 2)) {
+        return __bd_explore_enter(view, 0);
+      }
+      
       explore->cursor = explore->scroll + (event.mouse.y - 2);
       __bd_explore_follow(explore);
     }
