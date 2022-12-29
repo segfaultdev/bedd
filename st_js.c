@@ -110,11 +110,6 @@ int st_js_color(int prev_state, int *state, const char *text, int length) {
     return st_color_string;
   }
   
-  if (text[0] == '#') {
-    *state = st_js_ident;
-    return st_color_keyword;
-  }
-  
   if (prev_state == st_js_default) {
     if (isdigit(text[0])) {
       *state = st_js_number;
