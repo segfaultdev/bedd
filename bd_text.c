@@ -665,6 +665,33 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
     } else if (event.key == IO_CTRL('S')) {
       bd_text_save(view, 0);
       return 1;
+    } else if (event.key == IO_CTRL('C') || event.key == IO_CTRL('X')) {
+      if (!memcmp(&(text->cursor), &(text->hold_cursor), sizeof(bd_cursor_t))) return 0;
+      
+      io_file_t clipboard = io_copen(1);
+      if (!io_fvalid(clipboard)) return 0;
+      
+      __bd_text_output(text, clipboard, BD_CURSOR_MIN(text->cursor, text->hold_cursor), BD_CURSOR_MAX(text->cursor, text->hold_cursor));
+      io_cclose(clipboard);
+      
+      if (event.key == IO_CTRL('X')) {
+        __bd_text_cursor(text);
+      }
+      
+      return 1;
+    } else if (event.key == IO_CTRL('V')) {
+      io_file_t clipboard = io_copen(0);
+      if (!io_fvalid(clipboard)) return 0;
+      
+      __bd_text_cursor(text);
+      char chr;
+      
+      while (io_fread(clipboard, &chr, 1)) {
+        __bd_text_write(text, chr, 0);
+      }
+      
+      io_cclose(clipboard);
+      return 1;
     }
   } else if (event.type == IO_EVENT_MOUSE_DOWN || event.type == IO_EVENT_MOUSE_MOVE) {
     if (text->scroll_mouse_y >= 0) {

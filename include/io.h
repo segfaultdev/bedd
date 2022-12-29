@@ -39,8 +39,8 @@ void      io_dclose(io_file_t file);
 int       io_dread(io_file_t file, char *buffer);
 void      io_drewind(io_file_t file);
 
-io_file_t io_copen(void);
-void      io_cclose(void);
+io_file_t io_copen(int write_mode);
+void      io_cclose(io_file_t file);
 
 
 // --- output functions ---

@@ -105,6 +105,24 @@ void io_drewind(io_file_t file) {
   rewinddir(file.data);
 }
 
+io_file_t io_copen(int write_mode) {
+  if (write_mode) {
+    return (io_file_t){
+      .data = popen("xclip -selection clipboard -i", "w"),
+      .type = io_file_clipboard,
+    };
+  } else {
+    return (io_file_t){
+      .data = popen("xclip -selection clipboard -o", "r"),
+      .type = io_file_clipboard,
+    };
+  }
+}
+
+void io_cclose(io_file_t file) {
+  pclose(file.data);
+}
+
 void io_cursor(int x, int y) {
   if (x < 0 || y < 0) {
     printf("\x1B[?25l");
