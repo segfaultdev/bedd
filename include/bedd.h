@@ -1,6 +1,7 @@
 #ifndef __BEDD_H__
 #define __BEDD_H__
 
+#include <syntax.h>
 #include <time.h>
 #include <io.h>
 
@@ -12,6 +13,8 @@ struct bd_config_t {
   int indent_width;  // anything other than 2 or 4 would be cringe af, but we must still provide room for customization and blah blah blah :p
   int indent_spaces; // afects saving/loading, as in editing they're still shown as spaces no matter what
   int scroll_step;   // lines to move per scroll step
+  
+  const char *syntax_colors[st_color_count];
 };
 
 struct bd_cursor_t {
