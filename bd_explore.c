@@ -129,6 +129,8 @@ static int __bd_explore_enter(bd_view_t *view, int new_tab) {
     __bd_explore_update(explore);
     
     __bd_explore_follow(explore);
+    explore->cursor = 0;
+    
     return 1;
   } else {
     bd_view = bd_view_add(new_path, entry.is_directory ? bd_view_explore : bd_view_text, new_path) - bd_views;
