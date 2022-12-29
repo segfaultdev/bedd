@@ -140,7 +140,7 @@ int st_c_color(int prev_state, int *state, const char *text, int length) {
     }
   }
   
-  if (strchr("+-*/%=&|^!?:.,;><\\", text[0])) {
+  if (strchr("+-*/%=&|^!?:.,;><\\~", text[0])) {
     *state = st_c_default;
     return st_color_symbol;
   }

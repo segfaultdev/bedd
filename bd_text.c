@@ -508,6 +508,14 @@ void bd_text_draw(bd_view_t *view) {
       io_printf(IO_NORMAL IO_CLEAR_LINE IO_SHADOW_1);
       io_cursor(bd_width - 2, 2 + i);
       
+      for (int j = view_width + text->scroll.x; j < line->length; j++) {
+        text->syntax.f_color(state, &state, line->data + j, line->length - j);
+      }
+      
+      if (text->scroll.x + view_width < line->length) {
+        text->syntax.f_color(state, &state, "\n", 1);
+      }
+      
       io_printf((text->scroll.x + view_width < line->length) ? ">" : " ");
       line->syntax_state = state;
     } else {
