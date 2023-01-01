@@ -12,7 +12,7 @@ void bd_welcome_draw(bd_view_t *view) {
   io_printf(IO_UNDERLINE "%s" IO_NORMAL, title);
   
   int y = io_printf_wrap(2, bd_width - 4, 5,
-    "bedd is an open source, multifunctional editor and enviroment, with purposes ranging from file exploring to coding and note taking. "
+    "bedd is an open source, multifunctional editor and environment, with purposes ranging from file exploring to coding and note taking. "
     "Its name comes from 'bar editor', as everything revolves around the tabbed bar.\n\n"
   );
   
