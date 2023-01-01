@@ -29,6 +29,10 @@ struct bd_text_t {
   syntax_t syntax;
 };
 
+struct bd_diff_t {
+  
+};
+
 // static functions
 
 static int  __bd_text_cursor(bd_text_t *text);
@@ -198,8 +202,10 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
     text->cursor.x = space_count;
     text->cursor.y++;
     
+    text->hold_cursor = text->cursor;
+    
     if (pair) {
-      if (!(text->cursor.x < text->lines[text->cursor.y].length && text->lines[text->cursor.y].data[text->cursor.x] != pair)) {
+      if (text->cursor.x < text->lines[text->cursor.y].length && text->lines[text->cursor.y].data[text->cursor.x] == pair) {
         bd_cursor_t old_cursor = text->cursor;
         __bd_text_write(text, '\n', 0);
         
