@@ -10,7 +10,6 @@ time_t bd_time;
 
 int main(int argc, const char **argv) {
   io_init();
-  bd_view_add("Welcome", bd_view_welcome);
   
   for (int i = 1; i < argc; i++) {
     char buffer[256];
@@ -30,7 +29,6 @@ int main(int argc, const char **argv) {
       io_dclose(file);
       bd_view_add(buffer, bd_view_explore, buffer);
       
-      bd_view = 1;
       continue;
     }
     
@@ -40,9 +38,12 @@ int main(int argc, const char **argv) {
       io_fclose(file);
       bd_view_add(buffer, bd_view_text, buffer);
       
-      bd_view = 1;
       continue;
     }
+  }
+  
+  if (!bd_view_count) {
+    bd_view_add("Welcome", bd_view_welcome);
   }
   
   int global_draw = 1;
