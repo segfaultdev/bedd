@@ -253,6 +253,8 @@ int bd_dialog(const char *title, int __width, const char *format, ...) {
           
           if (select_buffers[select_index]) {
             select_offset = strlen(select_buffers[select_index]);
+          } else {
+            select_offset = 0;
           }
           
           dialog_draw = 1;
@@ -261,6 +263,8 @@ int bd_dialog(const char *title, int __width, const char *format, ...) {
           
           if (select_buffers[select_index]) {
             select_offset = strlen(select_buffers[select_index]);
+          } else {
+            select_offset = 0;
           }
           
           dialog_draw = 1;
