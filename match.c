@@ -13,7 +13,7 @@ int mt_match(const char *text, int length, const char *query, const char *replac
   
   #define return_free(value) ({while (match_count--) free(matches + match_count); if (matches) free(matches); return value;})
   
-  while (offset < length && (chr = *(query++))) {
+  while ((chr = *(query++)) && offset < length) {
     if (chr == '[') {
       int is_format = 0;
       chr = *(query++);
@@ -26,7 +26,7 @@ int mt_match(const char *text, int length, const char *query, const char *replac
       if (*query == '/') {
         query++;
       } else {
-        return_free(0);
+        return_free(-1);
       }
       
       if (chr == 'l') {
@@ -53,7 +53,7 @@ int mt_match(const char *text, int length, const char *query, const char *replac
             
             int match_length = mt_match(text + offset, length - offset, new_query, NULL, NULL);
             
-            if (match_length) {
+            if (match_length >= 0) {
               offset += match_length;
               done = 1;
             }
@@ -67,7 +67,7 @@ int mt_match(const char *text, int length, const char *query, const char *replac
         }
         
         if (!done) {
-          return_free(0);
+          return_free(-1);
         }
       } else if (chr == 'g') {
         char char_set[512] = {0};
@@ -119,18 +119,18 @@ int mt_match(const char *text, int length, const char *query, const char *replac
           }
         }
         
-        if (chr != ']') return_free(0);
+        if (chr != ']') return_free(-1);
         int best_match = 0;
         
         for (int i = offset; i < length && i - offset <= max_count; i++) {
           if (!strchr(char_set, text[i])) break;
           
-          if (mt_match(text + i, length - i, query, NULL, NULL)) {
-            best_match = i - offset;
+          if (mt_match(text + (i + 1), length - (i + 1), query, NULL, NULL) >= 0) {
+            best_match = (i + 1) - offset;
           }
         }
         
-        if (best_match < min_count) return_free(0);
+        if (best_match < min_count) return_free(-1);
         
         if (is_format) {
           char *match_str = calloc(best_match + 1, 1);
@@ -160,7 +160,7 @@ int mt_match(const char *text, int length, const char *query, const char *replac
           if (text[offset] == *(prev_match++)) {
             offset++;
           } else {
-            return_free(0);
+            return_free(-1);
           }
         }
       }
@@ -173,11 +173,11 @@ int mt_match(const char *text, int length, const char *query, const char *replac
     if (text[offset] == chr) {
       offset++;
     } else {
-      return_free(0);
+      return_free(-1);
     }
   }
   
-  if (chr) return_free(0);
+  if (chr) return_free(-1);
   
   while (replace_input && *replace_input) {
     if (*replace_input == '\\') {
@@ -197,9 +197,13 @@ int mt_match(const char *text, int length, const char *query, const char *replac
       *(replace_output++) = *replace_input;
     }
     
-    *replace_output = '\0';
     replace_input++;
   }
   
+  if (replace_input) {
+    *replace_output = '\0';
+  }
+  
   return_free(offset);
+  #undef return_free
 }

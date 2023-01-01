@@ -713,11 +713,13 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
             char replace_copy[256];
             int match_length = mt_match(text->lines[cursor.y].data + cursor.x, text->lines[cursor.y].length - cursor.x, query, replace, replace_copy);
             
-            if (match_length) {
+            if (match_length >= 0) {
               text->hold_cursor = cursor;
               text->cursor = (bd_cursor_t){cursor.x + match_length, cursor.y};
               
               if (result >= 2) {
+                __bd_text_cursor(text);
+                
                 for (int i = 0; replace_copy[i]; i++) {
                   __bd_text_write(text, replace_copy[i], 0);
                 }
@@ -725,7 +727,7 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
                 text->hold_cursor = cursor;
               }
               
-              if (result < 3) {
+              if (result <= 2) {
                 done = 1;
               }
             } else {
