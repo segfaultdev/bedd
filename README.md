@@ -1,6 +1,6 @@
 # bedd: the bar editor
 
-bedd is an open source, multifunctional editor and enviroment, with purposes ranging from file exploring to coding and note taking. Its
+bedd is an open source, multifunctional editor and environment, with purposes ranging from file exploring to coding and note taking. Its
 name comes from 'bar editor', due to the tab bar present on the top of the terminal, while also being a word play on the word "bed". It
 uses keybindings and shortcuts commonly found in grafical text editors, in order to provide the flattest learning curve as possible. The
 terminal UI is also optimized for simple terminals with limited color support, while being able to provide a "modern" interface. It also
