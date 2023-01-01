@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syntax.h>
+#include <match.h>
 #include <bedd.h>
 #include <io.h>
 
@@ -691,6 +692,55 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       }
       
       io_cclose(clipboard);
+      return 1;
+    } else if (event.key == IO_CTRL('F')) {
+      char query[256] = {0}, replace[256] = {0};
+      
+      for (;;) {
+        int result = bd_dialog("Find/Replace in text (Ctrl+Q to exit)", -16, "i[Query:]i[Replace with:]b[3;Find next;Replace next;Replace all]", query, replace);
+        if (!result) break; // Ctrl+Q
+        
+        bd_cursor_t cursor = BD_CURSOR_MAX(text->cursor, text->hold_cursor);
+        
+        if (result == 3) {
+          cursor = (bd_cursor_t){0, 0};
+        }
+        
+        int done = 0;
+        
+        while (!done && cursor.y < text->count) {
+          while (!done && cursor.x <= text->lines[cursor.y].length) {
+            char replace_copy[256];
+            int match_length = mt_match(text->lines[cursor.y].data + cursor.x, text->lines[cursor.y].length - cursor.x, query, replace, replace_copy);
+            
+            if (match_length) {
+              text->hold_cursor = cursor;
+              text->cursor = (bd_cursor_t){cursor.x + match_length, cursor.y};
+              
+              if (result >= 2) {
+                for (int i = 0; replace_copy[i]; i++) {
+                  __bd_text_write(text, replace_copy[i], 0);
+                }
+                
+                text->hold_cursor = cursor;
+              }
+              
+              if (result < 3) {
+                done = 1;
+              }
+            } else {
+              cursor.x++;
+            }
+          }
+          
+          cursor.x = 0;
+          cursor.y++;
+        }
+        
+        __bd_text_follow(text);
+        bd_text_draw(view);
+      }
+      
       return 1;
     }
   } else if (event.type == IO_EVENT_MOUSE_DOWN || event.type == IO_EVENT_MOUSE_MOVE) {
