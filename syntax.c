@@ -1,6 +1,12 @@
 #include <string.h>
 #include <syntax.h>
 
+// COBOL
+
+int st_cbl_depth(const char *line, int length);
+char st_cbl_pair(const char *line, int length, char chr);
+int st_cbl_color(int prev_state, int *state, const char *text, int length);
+
 // C/C++
 
 int st_c_depth(const char *line, int length);
@@ -35,6 +41,17 @@ syntax_t st_init(const char *filename) {
         .f_depth = st_c_depth,
         .f_pair = st_c_pair,
         .f_color = st_c_color,
+      };
+    }
+
+    if (!strcmp(filename, ".cbl") || !strcmp(filename, ".CBL") ||
+        !strcmp(filename, ".cob") || !strcmp(filename, ".COB") ||
+        !strcmp(filename, ".cobol") || !strcmp(filename, ".COBOL")) {
+      return (syntax_t){
+        .lang = "COBOL",
+        .f_depth = st_cbl_depth,
+        .f_pair = st_cbl_pair,
+        .f_color = st_cbl_color,
       };
     }
     
