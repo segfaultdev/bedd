@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 
 CFLAGS="-Os -s"
-# CFLAGS="-fsanitize=undefined,address -Og -g"
+# CFLAGS="-Og -g -fsanitize=undefined,address"
 
 for FILE in $(find . -name "*.c"); do
   if [ $FILE -nt ${FILE}.o ]; then

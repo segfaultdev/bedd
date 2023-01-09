@@ -11,7 +11,7 @@ int mt_match(const char *text, int length, const char *query, const char *replac
   char **matches = NULL;
   int match_count = 0;
   
-  #define return_free(value) ({while (match_count--) free(matches + match_count); if (matches) free(matches); return value;})
+  #define return_free(value) ({while (match_count--) free(matches[match_count]); if (matches) free(matches); return value;})
   
   while ((chr = *(query++)) && offset < length) {
     if (chr == '[') {
