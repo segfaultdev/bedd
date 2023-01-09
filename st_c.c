@@ -20,9 +20,10 @@ int st_c_depth(const char *line, int length) {
     } else if (strchr(")]}", line[i])) {
       depth--;
     }
+    
+    if (depth < 0) depth = 0;
   }
   
-  if (depth < 0) depth = 0;
   return depth;
 }
 
