@@ -29,26 +29,22 @@ struct bd_text_t {
   syntax_t syntax;
 };
 
-struct bd_diff_t {
-  
-};
-
 // static functions
 
-static int  __bd_text_cursor(bd_text_t *text);
-static void __bd_text_backspace(bd_text_t *text, int fix_cursor);
-static void __bd_text_write(bd_text_t *text, char chr, int by_user);
-static void __bd_text_up(bd_text_t *text, int hold);
-static void __bd_text_down(bd_text_t *text, int hold);
-static void __bd_text_right(bd_text_t *text, int hold);
-static void __bd_text_left(bd_text_t *text, int hold);
-static void __bd_text_home(bd_text_t *text, int hold);
-static void __bd_text_end(bd_text_t *text, int hold);
-static void __bd_text_full_home(bd_text_t *text, int hold);
-static void __bd_text_full_end(bd_text_t *text, int hold);
-static void __bd_text_follow(bd_text_t *text);
-static void __bd_text_output(bd_text_t *text, io_file_t file, bd_cursor_t start, bd_cursor_t end);
-static void __bd_text_syntax(bd_text_t *text, int start_line);
+static int   __bd_text_cursor(bd_text_t *text);
+static void  __bd_text_backspace(bd_text_t *text, int fix_cursor);
+static void  __bd_text_write(bd_text_t *text, char chr, int by_user);
+static void  __bd_text_up(bd_text_t *text, int hold);
+static void  __bd_text_down(bd_text_t *text, int hold);
+static void  __bd_text_right(bd_text_t *text, int hold);
+static void  __bd_text_left(bd_text_t *text, int hold);
+static void  __bd_text_home(bd_text_t *text, int hold);
+static void  __bd_text_end(bd_text_t *text, int hold);
+static void  __bd_text_full_home(bd_text_t *text, int hold);
+static void  __bd_text_full_end(bd_text_t *text, int hold);
+static void  __bd_text_follow(bd_text_t *text);
+static char *__bd_text_output(bd_text_t *text, int to_file, io_file_t file, bd_cursor_t start, bd_cursor_t end);
+static void  __bd_text_syntax(bd_text_t *text, int start_line);
 
 static int __bd_text_cursor(bd_text_t *text) {
   // cursor.x must not exceed the length of the line, but *can* be equal to it
@@ -376,7 +372,10 @@ static void __bd_text_follow(bd_text_t *text) {
   }
 }
 
-static void __bd_text_output(bd_text_t *text, io_file_t file, bd_cursor_t start, bd_cursor_t end) {
+static char *__bd_text_output(bd_text_t *text, int to_file, io_file_t file, bd_cursor_t start, bd_cursor_t end) {
+  char *buffer = NULL;
+  int buffer_length = 0;
+  
   if (start.x > text->lines[start.y].length) {
     start.x = text->lines[start.y].length;
   }
@@ -413,8 +412,20 @@ static void __bd_text_output(bd_text_t *text, io_file_t file, bd_cursor_t start,
       start.x++;
     }
     
-    io_fwrite(file, &chr, 1);
+    if (to_file) {
+      io_fwrite(file, &chr, 1);
+    } else {
+      buffer = realloc(buffer, buffer_length + 1);
+      buffer[buffer_length++] = chr;
+    }
   }
+  
+  if (!to_file) {
+    buffer = realloc(buffer, buffer_length + 1);
+    buffer[buffer_length] = '\0';
+  }
+  
+  return buffer;
 }
 
 static void __bd_text_syntax(bd_text_t *text, int start_line) {
@@ -678,7 +689,7 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       io_file_t clipboard = io_copen(1);
       if (!io_fvalid(clipboard)) return 0;
       
-      __bd_text_output(text, clipboard, BD_CURSOR_MIN(text->cursor, text->hold_cursor), BD_CURSOR_MAX(text->cursor, text->hold_cursor));
+      __bd_text_output(text, 1, clipboard, BD_CURSOR_MIN(text->cursor, text->hold_cursor), BD_CURSOR_MAX(text->cursor, text->hold_cursor));
       io_cclose(clipboard);
       
       if (event.key == IO_CTRL('X')) {
@@ -893,7 +904,7 @@ int bd_text_save(bd_view_t *view, int closing) {
         bd_cursor_t end = (bd_cursor_t){0, text->count - 1};
         end.x = text->lines[end.y].length;
         
-        __bd_text_output(text, file, (bd_cursor_t){0, 0}, end);
+        __bd_text_output(text, 1, file, (bd_cursor_t){0, 0}, end);
         io_fclose(file);
         
         break;

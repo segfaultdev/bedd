@@ -3,9 +3,9 @@
 
 // COBOL
 
-int st_cbl_depth(const char *line, int length);
-char st_cbl_pair(const char *line, int length, char chr);
-int st_cbl_color(int prev_state, int *state, const char *text, int length);
+int st_cobol_depth(const char *line, int length);
+char st_cobol_pair(const char *line, int length, char chr);
+int st_cobol_color(int prev_state, int *state, const char *text, int length);
 
 // C/C++
 
@@ -33,9 +33,9 @@ syntax_t st_init(const char *filename) {
   filename = strrchr(filename, '.');
   
   if (filename) {
-    if (!strcmp(filename, ".h") || !strcmp(filename, ".c") ||
-        !strcmp(filename, ".hh") || !strcmp(filename, ".cc") ||
-        !strcmp(filename, ".hpp") || !strcmp(filename, ".cpp")) {
+    if (!strcasecmp(filename, ".h") || !strcasecmp(filename, ".c") ||
+        !strcasecmp(filename, ".hh") || !strcasecmp(filename, ".cc") ||
+        !strcasecmp(filename, ".hpp") || !strcasecmp(filename, ".cpp")) {
       return (syntax_t){
         .lang = "C/C++",
         .f_depth = st_c_depth,
@@ -44,18 +44,16 @@ syntax_t st_init(const char *filename) {
       };
     }
 
-    if (!strcmp(filename, ".cbl") || !strcmp(filename, ".CBL") ||
-        !strcmp(filename, ".cob") || !strcmp(filename, ".COB") ||
-        !strcmp(filename, ".cobol") || !strcmp(filename, ".COBOL")) {
+    if (!strcasecmp(filename, ".cbl") || !strcasecmp(filename, ".cob") || !strcasecmp(filename, ".cobol")) {
       return (syntax_t){
         .lang = "COBOL",
-        .f_depth = st_cbl_depth,
-        .f_pair = st_cbl_pair,
-        .f_color = st_cbl_color,
+        .f_depth = st_cobol_depth,
+        .f_pair = st_cobol_pair,
+        .f_color = st_cobol_color,
       };
     }
     
-    if (!strcmp(filename, ".js")) {
+    if (!strcasecmp(filename, ".js")) {
       return (syntax_t){
         .lang = "JavaScript",
         .f_depth = st_c_depth,
@@ -64,7 +62,7 @@ syntax_t st_init(const char *filename) {
       };
     }
     
-    if (!strcmp(filename, ".json")) {
+    if (!strcasecmp(filename, ".json")) {
       return (syntax_t){
         .lang = "JSON",
         .f_depth = st_c_depth,
@@ -73,7 +71,7 @@ syntax_t st_init(const char *filename) {
       };
     }
     
-    if (!strcmp(filename, ".md")) {
+    if (!strcasecmp(filename, ".md")) {
       return (syntax_t){
         .lang = "Markdown",
         .f_depth = st_depth,
