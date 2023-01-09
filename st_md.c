@@ -52,7 +52,7 @@ int st_md_color(int prev_state, int *state, const char *text, int length) {
         *state = st_md_middle;
       }
       
-      return st_color_symbol;
+      return st_color_default;
     }
     
     return st_color_comment;
@@ -60,10 +60,10 @@ int st_md_color(int prev_state, int *state, const char *text, int length) {
   
   if (prev_state == st_md_tag_second) {
     if (text[0] == '(') {
-      return st_color_symbol;
+      return st_color_default;
     } else if (text[0] == ')') {
       *state = st_md_middle;
-      return st_color_symbol;
+      return st_color_default;
     }
     
     return st_color_function;
@@ -93,11 +93,7 @@ int st_md_color(int prev_state, int *state, const char *text, int length) {
   
   if (text[0] == '[') {
     *state = st_md_tag_first;
-    return st_color_symbol;
-  }
-  
-  if (length >= 2 && text[0] == '!' && (text[1] == '[' || text[1] == '(')) {
-    return st_color_symbol;
+    return st_color_default;
   }
   
   if (prev_state == st_md_middle && isspace(text[0])) {
