@@ -22,14 +22,23 @@ struct bd_text_t {
   int count;
   
   bd_cursor_t cursor, hold_cursor, scroll;
-  int dirty;
+  int edit_count, dirty;
   
   int scroll_mouse_y;
   
   syntax_t syntax;
+  
+  bd_text_t *prev, *next;
 };
 
 // static functions
+
+static bd_text_t __bd_text_clone(bd_text_t *text);
+static void      __bd_text_free(bd_text_t *text, int recursive_prev, int recursive_next);
+
+static void __bd_text_undo_save(bd_text_t *text);
+static void __bd_text_undo(bd_text_t *text);
+static void __bd_text_redo(bd_text_t *text);
 
 static int   __bd_text_cursor(bd_text_t *text);
 static void  __bd_text_backspace(bd_text_t *text, int fix_cursor);
@@ -45,6 +54,89 @@ static void  __bd_text_full_end(bd_text_t *text, int hold);
 static void  __bd_text_follow(bd_text_t *text);
 static char *__bd_text_output(bd_text_t *text, int to_file, io_file_t file, bd_cursor_t start, bd_cursor_t end);
 static void  __bd_text_syntax(bd_text_t *text, int start_line);
+
+static bd_text_t __bd_text_clone(bd_text_t *text) {
+  bd_text_t text_clone = *text;
+  
+  text_clone.lines = malloc(text_clone.count * sizeof(bd_line_t));
+  memcpy(text_clone.lines, text->lines, text_clone.count * sizeof(bd_line_t));
+  
+  for (int i = 0; i < text_clone.count; i++) {
+    text_clone.lines[i].data = malloc(text_clone.lines[i].length);
+    memcpy(text_clone.lines[i].data, text->lines[i].data, text_clone.lines[i].length);
+  }
+  
+  return text_clone;
+}
+
+static void __bd_text_free(bd_text_t *text, int recursive_prev, int recursive_next) {
+  for (int i = 0; i < text->count; i++) {
+    free(text->lines[i].data);
+  }
+  
+  free(text->lines);
+  
+  if (text->prev && recursive_prev) {
+    __bd_text_free(text->prev, 1, 0);
+    free(text->prev);
+  }
+  
+  if (text->next && recursive_next) {
+    __bd_text_free(text->next, 0, 1);
+    free(text->next);
+  }
+}
+
+static void __bd_text_undo_save(bd_text_t *text) {
+  if (!text->edit_count) return;
+  text->edit_count = 0;
+  
+  if (text->next) {
+    __bd_text_free(text->next, 0, 1);
+    free(text->next);
+    
+    text->next = NULL;
+  }
+  
+  bd_text_t *temp = text;
+  
+  for (int i = 0; i < bd_config.undo_depth; i++) {
+    if (!temp) break;
+    
+    if (temp->prev && i == bd_config.undo_depth - 1) {
+      __bd_text_free(temp->prev, 1, 0);
+      free(temp->prev);
+      
+      temp->prev = NULL;
+    }
+    
+    temp = temp->prev;
+  }
+  
+  bd_text_t text_clone = __bd_text_clone(text);
+  
+  text->prev = malloc(sizeof(bd_text_t));
+  *(text->prev) = text_clone;
+}
+
+static void __bd_text_undo(bd_text_t *text) {
+  if (!text->prev) return;
+  
+  bd_text_t *text_clone = malloc(sizeof(bd_text_t));
+  memcpy(text_clone, text, sizeof(bd_text_t));
+  
+  memcpy(text, text->prev, sizeof(bd_text_t));
+  text->next = text_clone;
+}
+
+static void __bd_text_redo(bd_text_t *text) {
+  if (!text->next) return;
+  
+  bd_text_t *next = text->next;
+  memcpy(text, next, sizeof(bd_text_t));
+  
+  free(next);
+}
 
 static int __bd_text_cursor(bd_text_t *text) {
   // cursor.x must not exceed the length of the line, but *can* be equal to it
@@ -137,7 +229,7 @@ static void __bd_text_backspace(bd_text_t *text, int fix_cursor) {
   }
   
   if (fix_cursor) text->hold_cursor = text->cursor;
-  text->dirty = 1;
+  text->edit_count++, text->dirty = 1;
   
   __bd_text_syntax(text, text->cursor.y);
   __bd_text_follow(text);
@@ -145,7 +237,7 @@ static void __bd_text_backspace(bd_text_t *text, int fix_cursor) {
 
 static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
   __bd_text_cursor(text);
-  text->dirty = 1;
+  text->edit_count++, text->dirty = 1;
   
   if (chr == '\t') {
     do {
@@ -581,6 +673,8 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
   
   if (event.type == IO_EVENT_KEY_PRESS) {
     if (IO_UNSHIFT(event.key) == '\t' && memcmp(&(text->cursor), &(text->hold_cursor), sizeof(bd_cursor_t))) {
+      __bd_text_undo_save(text);
+      
       bd_cursor_t min_cursor = BD_CURSOR_MIN(text->cursor, text->hold_cursor);
       bd_cursor_t max_cursor = BD_CURSOR_MAX(text->cursor, text->hold_cursor);
       
@@ -621,19 +715,39 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
         if (text->hold_cursor.x < 0) text->hold_cursor.x = 0;
       }
       
+      __bd_text_undo_save(text);
       return 1;
     } else if ((event.key >= 32 && event.key < 127) || event.key == '\t') {
       __bd_text_write(text, event.key, 1);
+      
+      if (text->edit_count >= bd_config.undo_edit_count) {
+        __bd_text_undo_save(text);
+      }
+      
       return 1;
     } else if (event.key == IO_CTRL('M')) {
       __bd_text_write(text, '\n', 1);
+      
+      if (text->edit_count >= bd_config.undo_edit_count) {
+        __bd_text_undo_save(text);
+      }
+      
       return 1;
     } else if (event.key == IO_CTRL('H')) {
       __bd_text_backspace(text, 1);
+      
+      if (text->edit_count >= bd_config.undo_edit_count) {
+        __bd_text_undo_save(text);
+      }
+      
       return 1;
     } else if (event.key == '\x7F') {
       __bd_text_right(text, 0);
       __bd_text_backspace(text, 1);
+      
+      if (text->edit_count >= bd_config.undo_edit_count) {
+        __bd_text_undo_save(text);
+      }
       
       return 1;
     } else if (IO_UNSHIFT(event.key) == IO_ARROW_UP) {
@@ -693,7 +807,10 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       io_cclose(clipboard);
       
       if (event.key == IO_CTRL('X')) {
+        __bd_text_undo_save(text);
         __bd_text_cursor(text);
+        
+        __bd_text_undo_save(text);
       }
       
       return 1;
@@ -701,7 +818,9 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       io_file_t clipboard = io_copen(0);
       if (!io_fvalid(clipboard)) return 0;
       
+      __bd_text_undo_save(text);
       __bd_text_cursor(text);
+      
       char chr;
       
       while (io_fread(clipboard, &chr, 1)) {
@@ -709,9 +828,12 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       }
       
       io_cclose(clipboard);
+      
+      __bd_text_undo_save(text);
       return 1;
     } else if (event.key == IO_CTRL('F')) {
       char query[256] = {0}, replace[256] = {0};
+      __bd_text_undo_save(text);
       
       for (;;) {
         int result = bd_dialog("Find/Replace in text (Ctrl+Q to exit)", -16, "i[Query:]i[Replace with:]b[3;Find next;Replace next;Replace all]", query, replace);
@@ -756,10 +878,18 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
           cursor.y++;
         }
         
+        __bd_text_undo_save(text);
         __bd_text_follow(text);
+        
         bd_text_draw(view);
       }
       
+      return 1;
+    } else if (event.key == IO_CTRL('Z')) {
+      __bd_text_undo(text);
+      return 1;
+    } else if (event.key == IO_CTRL('Y')) {
+      __bd_text_redo(text);
       return 1;
     }
   } else if (event.type == IO_EVENT_MOUSE_DOWN || event.type == IO_EVENT_MOUSE_MOVE) {
@@ -853,15 +983,25 @@ void bd_text_load(bd_view_t *view, const char *path) {
   
   text->scroll_mouse_y = -1; // not scrolling
   
+  text->prev = text->next = NULL;
+  
+  text->edit_count = 1;
   text->dirty = 0;
   
   text->syntax = st_init("");
   __bd_text_syntax(text, 0);
   
-  if (!path) return;
+  if (!path) {
+    __bd_text_undo_save(text);
+    return;
+  }
   
   io_file_t file = io_fopen(path, 0);
-  if (!io_fvalid(file)) return;
+  
+  if (!io_fvalid(file)) {
+    __bd_text_undo_save(text);
+    return;
+  }
   
   text->syntax = st_init(path);
   
@@ -881,6 +1021,8 @@ void bd_text_load(bd_view_t *view, const char *path) {
   
   __bd_text_syntax(text, 0);
   io_fclose(file);
+  
+  __bd_text_undo_save(text);
 }
 
 int bd_text_save(bd_view_t *view, int closing) {

@@ -5,6 +5,8 @@ bd_config_t bd_config = (bd_config_t){
   .indent_width = 2,
   .indent_spaces = 1,
   .scroll_step = 2,
+  .undo_edit_count = 48,
+  .undo_depth = 64,
   
   .syntax_colors = {
     "",             // st_color_none

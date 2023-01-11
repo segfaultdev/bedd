@@ -10,9 +10,11 @@ typedef struct bd_cursor_t bd_cursor_t;
 typedef struct bd_view_t bd_view_t;
 
 struct bd_config_t {
-  int indent_width;  // anything other than 2 or 4 would be cringe af, but we must still provide room for customization and blah blah blah :p
-  int indent_spaces; // afects saving/loading, as in editing they're still shown as spaces no matter what
-  int scroll_step;   // lines to move per scroll step
+  int indent_width;    // anything other than 2 or 4 would be cringe af, but we must still provide room for customization and blah blah blah :p
+  int indent_spaces;   // afects saving/loading, as in editing they're still shown as spaces no matter what
+  int scroll_step;     // lines to move per scroll step
+  int undo_edit_count; // character insertions/deletions per undo save
+  int undo_depth;      // maximum amount of undoable steps
   
   const char *syntax_colors[st_color_count];
 };
