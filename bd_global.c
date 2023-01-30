@@ -58,8 +58,6 @@ void bd_global_draw(void) {
   
   io_printf(IO_NORMAL);
   io_cursor(0, 2);
-  
-  io_flush();
 }
 
 int bd_global_click(int x, int y) {

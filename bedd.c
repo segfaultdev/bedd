@@ -186,6 +186,8 @@ int main(int argc, const char **argv) {
       global_draw = 0;
       
       io_cursor(bd_views[bd_view].cursor.x, bd_views[bd_view].cursor.y);
+
+      io_flush();
     }
     
     if (view_draw) {
@@ -193,6 +195,8 @@ int main(int argc, const char **argv) {
       view_draw = 0;
       
       io_cursor(bd_views[bd_view].cursor.x, bd_views[bd_view].cursor.y);
+      
+      io_flush();
     }
   }
   

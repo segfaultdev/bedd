@@ -1,4 +1,4 @@
-#ifdef __linux__
+#ifdef __new_proj__
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
