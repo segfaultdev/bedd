@@ -21,6 +21,10 @@ int st_js_color(int prev_state, int *state, const char *text, int length);
 
 int st_md_color(int prev_state, int *state, const char *text, int length);
 
+// sh/bash
+
+int st_sh_color(int prev_state, int *state, const char *text, int length);
+
 // Default
 
 static int st_depth(const char *line, int length);

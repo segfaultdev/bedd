@@ -19,6 +19,8 @@ bd_view_t *bd_view_add(const char *title, int type, ...) {
     bd_text_load(bd_views + bd_view_count, va_arg(args, const char *));
   } else if (type == bd_view_explore) {
     bd_explore_load(bd_views + bd_view_count, va_arg(args, const char *));
+  } else if (byte == bd_view_terminal) {
+    bd_terminal_load(bd_views + bd_view_count);
   } else {
     bd_views[bd_view_count].data = NULL;
   }
