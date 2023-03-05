@@ -71,6 +71,7 @@ void bd_explore_load(bd_view_t *view, const char *path);
 
 void bd_terminal_draw(bd_view_t *view);
 int  bd_terminal_event(bd_view_t *view, io_event_t event);
+void bd_terminal_load(bd_view_t *view);
 
 void bd_global_draw(void);
 int  bd_global_click(int x, int y);
@@ -79,7 +80,7 @@ int  bd_global_click(int x, int y);
 // - "(1-9)[...]" -> Informational text (with number specifying length)
 // - "i[...]" -> Text input (with prompt inside) -> Expects (char *)
 // - "b[count;button_1;button_2;...]" -> Button line (with button count and titles inside, returned number corresponds to button index)
-// 
+//
 // NOTE: Ctrl+Q returns 0, while Enter returns the index of the selected button
 
 int bd_dialog(const char *title, int width, const char *format, ...);

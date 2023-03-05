@@ -119,7 +119,9 @@ int st_js_color(int prev_state, int *state, const char *text, int length) {
       int ident_length = 1;
       
       for (int i = 1; i < length; i++) {
-        if (text[i] == '(') break;
+        if (text[i] == '(') {
+          break;
+        }
         
         if (!is_ident(text[i])) {
           is_func = 0;
@@ -129,31 +131,66 @@ int st_js_color(int prev_state, int *state, const char *text, int length) {
         ident_length++;
       }
       
-      if (ident_length < 2) is_type = 0;
-      else if (text[ident_length - 1] != 't') is_type = 0;
-      else if (text[ident_length - 2] != '_') is_type = 0;
+      if (ident_length < 2) {
+        is_type = 0;
+      } else if (text[ident_length - 1] != 't') {
+        is_type = 0;
+      } else if (text[ident_length - 2] != '_') {
+        is_type = 0;
+      }
       
       char buffer[ident_length + 1];
       
       memcpy(buffer, text, ident_length);
       buffer[ident_length] = '\0';
       
-      if (ident_length == 2 && strstr("do,if,in,of", buffer)) is_keyword = 1;
-      if (ident_length == 3 && strstr("for,let,new,try,var", buffer)) is_keyword = 1;
-      if (ident_length == 4 && strstr("case,else,enum,null,this,true,void,with", buffer)) is_keyword = 1;
-      if (ident_length == 5 && strstr("async,await,break,catch,class,const,false,super,throw,while,yield", buffer)) is_keyword = 1;
-      if (ident_length == 6 && strstr("delete,export,import,public,return,static,switch,typeof", buffer)) is_keyword = 1;
-      if (ident_length == 7 && strstr("default,extends,finally,package,private", buffer)) is_keyword = 1;
-      if (ident_length == 8 && strstr("continue,debugger,function", buffer)) is_keyword = 1;
-      if (ident_length == 9 && strstr("interface,protected", buffer)) is_keyword = 1;
-      if (ident_length == 10 && strstr("implements,instanceof", buffer)) is_keyword = 1;
+      if (ident_length == 2 && strstr("do,if,in,of", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 3 && strstr("for,let,new,try,var", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 4 && strstr("case,else,enum,null,this,true,void,with", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 5 && strstr("async,await,break,catch,class,const,false,super,throw,while,yield", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 6 && strstr("delete,export,import,public,return,static,switch,typeof", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 7 && strstr("default,extends,finally,package,private", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 8 && strstr("continue,debugger,function", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 9 && strstr("interface,protected", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 10 && strstr("implements,instanceof", buffer)) {
+        is_keyword = 1;
+      }
       
       *state = st_js_ident;
       
-      if (is_type) return st_color_type;
-      else if (is_keyword) return st_color_keyword;
-      else if (is_func) return st_color_function;
-      else return st_color_default;
+      if (is_type) {
+        return st_color_type;
+      } else if (is_keyword) {
+        return st_color_keyword;
+      } else if (is_func) {
+        return st_color_function;
+      } else {
+        return st_color_default;
+      }
     }
   }
   

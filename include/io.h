@@ -9,7 +9,7 @@
 void io_init(void);
 void io_exit(void);
 
-// --- file/clipboard functions ---
+// --- file/device functions ---
 
 typedef struct io_file_t io_file_t;
 
@@ -17,6 +17,7 @@ enum {
   io_file_file,
   io_file_directory,
   io_file_clipboard,
+  io_file_terminal,
 };
 
 struct io_file_t {
@@ -42,6 +43,7 @@ void      io_drewind(io_file_t file);
 io_file_t io_copen(int write_mode);
 void      io_cclose(io_file_t file);
 
+io_file_t io_topen(void); // TODO
 
 // --- output functions ---
 

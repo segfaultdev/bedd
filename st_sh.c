@@ -106,7 +106,10 @@ int st_sh_color(int prev_state, int *state, const char *text, int length) {
     int start_length = 1;
     
     for (int i = 1; i < length; i++) {
-      if (!isalpha(text[i])) break;
+      if (!isalpha(text[i])) {
+        break;
+      }
+      
       start_length++;
     }
     

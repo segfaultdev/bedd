@@ -17,7 +17,11 @@ int st_cobol_depth(const char *line, int length) {
       in_string = line[i];
     }
   }
-  if (depth < 0) depth = 0;
+  
+  if (depth < 0) {
+    depth = 0;
+  }
+  
   return depth;
 }
 
@@ -36,9 +40,18 @@ char st_cobol_pair(const char *line, int length, char chr) {
     }
   }
   
-  if (in_string) return '\0';
-  if (chr == '"') return '"';
-  if (chr == '\'') return '\'';
+  if (in_string) {
+    return '\0';
+  }
+  
+  if (chr == '"') {
+    return '"';
+  }
+  
+  if (chr == '\'') {
+    return '\'';
+  }
+  
   return '\0';
 }
 
@@ -94,13 +107,15 @@ int st_cobol_color(int prev_state, int *state, const char *text, int length) {
       *state = st_cobol_default;
       return st_color_default;
     }
+    
     return st_color_comment;
   }
-
+  
   if (prev_state == st_cobol_string) {
     if (text[0] == '"') {
       *state = st_cobol_default;
     }
+    
     return st_color_string;
   }
   
@@ -108,6 +123,7 @@ int st_cobol_color(int prev_state, int *state, const char *text, int length) {
     if (text[0] == '\'') {
       *state = st_cobol_default;
     }
+    
     return st_color_string;
   }
   
@@ -123,7 +139,10 @@ int st_cobol_color(int prev_state, int *state, const char *text, int length) {
       int ident_length = 1;
       
       for (int i = 1; i < length; i++) {
-        if (!is_ident(text[i])) break;
+        if (!is_ident(text[i])) {
+          break;
+        }
+        
         ident_length++;
       }
       
@@ -142,11 +161,14 @@ int st_cobol_color(int prev_state, int *state, const char *text, int length) {
       
       *state = st_cobol_ident;
       
-      if (is_keyword) return st_color_keyword;
-      else return st_color_default;
+      if (is_keyword) {
+        return st_color_keyword;
+      } else {
+        return st_color_default;
+      }
     }
   }
-
+  
   if (strchr("+*/%=&|^!?:.,;><\\~", text[0])) {
     *state = st_cobol_default;
     return st_color_symbol;
@@ -161,9 +183,11 @@ int st_cobol_color(int prev_state, int *state, const char *text, int length) {
     *state = st_cobol_string;
     return st_color_string;
   }
+  
   if (text[0] == '\'') {
     *state = st_cobol_char;
     return st_color_string;
   }
+  
   return st_color_none;
 }

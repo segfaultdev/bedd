@@ -40,16 +40,16 @@ syntax_t st_init(const char *filename) {
     if (!strcasecmp(filename, ".h") || !strcasecmp(filename, ".c") ||
         !strcasecmp(filename, ".hh") || !strcasecmp(filename, ".cc") ||
         !strcasecmp(filename, ".hpp") || !strcasecmp(filename, ".cpp")) {
-      return (syntax_t){
+      return (syntax_t) {
         .lang = "C/C++",
         .f_depth = st_c_depth,
         .f_pair = st_c_pair,
         .f_color = st_c_color,
       };
     }
-
+    
     if (!strcasecmp(filename, ".cbl") || !strcasecmp(filename, ".cob") || !strcasecmp(filename, ".cobol")) {
-      return (syntax_t){
+      return (syntax_t) {
         .lang = "COBOL",
         .f_depth = st_cobol_depth,
         .f_pair = st_cobol_pair,
@@ -58,7 +58,7 @@ syntax_t st_init(const char *filename) {
     }
     
     if (!strcasecmp(filename, ".js")) {
-      return (syntax_t){
+      return (syntax_t) {
         .lang = "JavaScript",
         .f_depth = st_c_depth,
         .f_pair = st_c_pair,
@@ -67,7 +67,7 @@ syntax_t st_init(const char *filename) {
     }
     
     if (!strcasecmp(filename, ".json")) {
-      return (syntax_t){
+      return (syntax_t) {
         .lang = "JSON",
         .f_depth = st_c_depth,
         .f_pair = st_c_pair,
@@ -76,7 +76,7 @@ syntax_t st_init(const char *filename) {
     }
     
     if (!strcasecmp(filename, ".md")) {
-      return (syntax_t){
+      return (syntax_t) {
         .lang = "Markdown",
         .f_depth = st_depth,
         .f_pair = st_pair,
@@ -85,7 +85,7 @@ syntax_t st_init(const char *filename) {
     }
   }
   
-  return (syntax_t){
+  return (syntax_t) {
     .lang = "Text/Unknown",
     .f_depth = st_depth,
     .f_pair = st_pair,
@@ -94,17 +94,22 @@ syntax_t st_init(const char *filename) {
 }
 
 static int st_depth(const char *line, int length) {
-  line; length;
+  line;
+  length;
   return 0;
 }
 
 static char st_pair(const char *line, int length, char chr) {
-  line; length; chr;
+  line;
+  length;
+  chr;
   return '\0';
 }
 
 static int st_color(int prev_state, int *state, const char *text, int length) {
-  prev_state; text; length;
+  prev_state;
+  text;
+  length;
   *state = 0;
   
   return st_color_default;

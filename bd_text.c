@@ -88,7 +88,10 @@ static void __bd_text_free(bd_text_t *text, int recursive_prev, int recursive_ne
 }
 
 static void __bd_text_undo_save(bd_text_t *text) {
-  if (!text->edit_count) return;
+  if (!text->edit_count) {
+    return;
+  }
+  
   text->edit_count = 0;
   
   if (text->next) {
@@ -101,7 +104,9 @@ static void __bd_text_undo_save(bd_text_t *text) {
   bd_text_t *temp = text;
   
   for (int i = 0; i < bd_config.undo_depth; i++) {
-    if (!temp) break;
+    if (!temp) {
+      break;
+    }
     
     if (temp->prev && i == bd_config.undo_depth - 1) {
       __bd_text_free(temp->prev, 1, 0);
@@ -120,7 +125,9 @@ static void __bd_text_undo_save(bd_text_t *text) {
 }
 
 static void __bd_text_undo(bd_text_t *text) {
-  if (!text->prev) return;
+  if (!text->prev) {
+    return;
+  }
   
   bd_text_t *text_clone = malloc(sizeof(bd_text_t));
   memcpy(text_clone, text, sizeof(bd_text_t));
@@ -130,7 +137,9 @@ static void __bd_text_undo(bd_text_t *text) {
 }
 
 static void __bd_text_redo(bd_text_t *text) {
-  if (!text->next) return;
+  if (!text->next) {
+    return;
+  }
   
   bd_text_t *next = text->next;
   memcpy(text, next, sizeof(bd_text_t));
@@ -228,7 +237,10 @@ static void __bd_text_backspace(bd_text_t *text, int fix_cursor) {
     text->count--;
   }
   
-  if (fix_cursor) text->hold_cursor = text->cursor;
+  if (fix_cursor) {
+    text->hold_cursor = text->cursor;
+  }
+  
   text->edit_count++, text->dirty = 1;
   
   __bd_text_syntax(text, text->cursor.y);
@@ -325,7 +337,10 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
   text->hold_cursor = text->cursor;
   __bd_text_follow(text);
   
-  if (!by_user) return;
+  if (!by_user) {
+    return;
+  }
+  
   char pair = text->syntax.f_pair(line->data, text->cursor.x - 1, chr);
   
   if (pair) {
@@ -528,10 +543,16 @@ static void __bd_text_syntax(bd_text_t *text, int start_line) {
   }
   
   text->syntax.f_color(state, &state, "\n", 1);
-  if (state == text->lines[start_line].syntax_state) return;
+  
+  if (state == text->lines[start_line].syntax_state) {
+    return;
+  }
   
   text->lines[start_line++].syntax_state = state;
-  if (start_line >= text->count) return;
+  
+  if (start_line >= text->count) {
+    return;
+  }
   
   __bd_text_syntax(text, start_line);
 }
@@ -579,7 +600,9 @@ void bd_text_draw(bd_view_t *view) {
       
       for (int j = 0; j < view_width; j++) {
         int x = j + text->scroll.x;
-        bd_cursor_t cursor = (bd_cursor_t){x, y};
+        bd_cursor_t cursor = (bd_cursor_t) {
+          x, y
+        };
         
         if (!BD_CURSOR_LESS(cursor, min_cursor) && BD_CURSOR_LESS(cursor, max_cursor)) {
           if (!is_selected) {
@@ -604,10 +627,16 @@ void bd_text_draw(bd_view_t *view) {
             io_printf("%s\u00B7" IO_WHITE, y == text->cursor.y ? IO_DARK_GRAY : IO_BLACK);
           } else {
             int color = text->syntax.f_color(state, &state, line->data + x, line->length - x);
-            if (color == st_color_none) color = last_color;
+            
+            if (color == st_color_none) {
+              color = last_color;
+            }
             
             int temp_color = color;
-            if (color == last_color) temp_color = st_color_none;
+            
+            if (color == last_color) {
+              temp_color = st_color_none;
+            }
             
             io_printf("%s%c", bd_config.syntax_colors[temp_color], line->data[x]);
             last_color = color;
@@ -656,8 +685,13 @@ void bd_text_draw(bd_view_t *view) {
   int cursor_x = (temp_x - text->scroll.x) + (lind_size + 5);
   int cursor_y = (text->cursor.y - text->scroll.y) + 2;
   
-  if (cursor_x < lind_size + 5 || cursor_x >= bd_width - 2) cursor_x = -1;
-  if (cursor_y < 2 || cursor_y >= bd_height) cursor_y = -1;
+  if (cursor_x < lind_size + 5 || cursor_x >= bd_width - 2) {
+    cursor_x = -1;
+  }
+  
+  if (cursor_y < 2 || cursor_y >= bd_height) {
+    cursor_y = -1;
+  }
   
   char new_title[257];
   sprintf(new_title, "%s%s", text->path[0] ? text->path : "(no name)", text->dirty ? "*" : "");
@@ -665,7 +699,9 @@ void bd_text_draw(bd_view_t *view) {
   view->title_dirty = strcmp(view->title, new_title);
   strcpy(view->title, new_title);
   
-  view->cursor = (bd_cursor_t){cursor_x, cursor_y};
+  view->cursor = (bd_cursor_t) {
+    cursor_x, cursor_y
+  };
 }
 
 int bd_text_event(bd_view_t *view, io_event_t event) {
@@ -683,7 +719,9 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       
       for (int i = min_cursor.y; i <= max_cursor.y; i++) {
         if (event.key == IO_UNSHIFT(event.key)) {
-          text->cursor = text->hold_cursor = (bd_cursor_t){0, i};
+          text->cursor = text->hold_cursor = (bd_cursor_t) {
+            0, i
+          };
           __bd_text_write(text, '\t', 1);
         } else {
           bd_line_t *line = text->lines + i;
@@ -693,7 +731,9 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
             space_count++;
           }
           
-          text->cursor = text->hold_cursor = (bd_cursor_t){space_count, i};
+          text->cursor = text->hold_cursor = (bd_cursor_t) {
+            space_count, i
+          };
           
           while (space_count--) {
             __bd_text_backspace(text, 1);
@@ -709,10 +749,16 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
         text->hold_cursor.x += bd_config.indent_width;
       } else {
         text->cursor.x -= bd_config.indent_width;
-        if (text->cursor.x < 0) text->cursor.x = 0;
+        
+        if (text->cursor.x < 0) {
+          text->cursor.x = 0;
+        }
         
         text->hold_cursor.x -= bd_config.indent_width;
-        if (text->hold_cursor.x < 0) text->hold_cursor.x = 0;
+        
+        if (text->hold_cursor.x < 0) {
+          text->hold_cursor.x = 0;
+        }
       }
       
       __bd_text_undo_save(text);
@@ -798,10 +844,15 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       bd_text_save(view, 0);
       return 1;
     } else if (event.key == IO_CTRL('C') || event.key == IO_CTRL('X')) {
-      if (!memcmp(&(text->cursor), &(text->hold_cursor), sizeof(bd_cursor_t))) return 0;
+      if (!memcmp(&(text->cursor), &(text->hold_cursor), sizeof(bd_cursor_t))) {
+        return 0;
+      }
       
       io_file_t clipboard = io_copen(1);
-      if (!io_fvalid(clipboard)) return 0;
+      
+      if (!io_fvalid(clipboard)) {
+        return 0;
+      }
       
       __bd_text_output(text, 1, clipboard, BD_CURSOR_MIN(text->cursor, text->hold_cursor), BD_CURSOR_MAX(text->cursor, text->hold_cursor));
       io_cclose(clipboard);
@@ -816,7 +867,10 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       return 1;
     } else if (event.key == IO_CTRL('V')) {
       io_file_t clipboard = io_copen(0);
-      if (!io_fvalid(clipboard)) return 0;
+      
+      if (!io_fvalid(clipboard)) {
+        return 0;
+      }
       
       __bd_text_undo_save(text);
       __bd_text_cursor(text);
@@ -837,12 +891,17 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       
       for (;;) {
         int result = bd_dialog("Find/Replace in text (Ctrl+Q to exit)", -16, "i[Query:]i[Replace with:]b[3;Find next;Replace next;Replace all]", query, replace);
-        if (!result) break; // Ctrl+Q
+        
+        if (!result) {
+          break;  // Ctrl+Q
+        }
         
         bd_cursor_t cursor = BD_CURSOR_MAX(text->cursor, text->hold_cursor);
         
         if (result == 3) {
-          cursor = (bd_cursor_t){0, 0};
+          cursor = (bd_cursor_t) {
+            0, 0
+          };
         }
         
         int done = 0;
@@ -854,7 +913,9 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
             
             if (match_length >= 0) {
               text->hold_cursor = cursor;
-              text->cursor = (bd_cursor_t){cursor.x + match_length, cursor.y};
+              text->cursor = (bd_cursor_t) {
+                cursor.x + match_length, cursor.y
+              };
               
               if (result >= 2) {
                 __bd_text_cursor(text);
@@ -940,7 +1001,9 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
         cursor_x = text->lines[cursor_y].length;
       }
       
-      text->cursor = (bd_cursor_t){cursor_x, cursor_y};
+      text->cursor = (bd_cursor_t) {
+        cursor_x, cursor_y
+      };
       
       if (event.type == IO_EVENT_MOUSE_DOWN) {
         text->hold_cursor = text->cursor;
@@ -974,7 +1037,9 @@ void bd_text_load(bd_view_t *view, const char *path) {
   text->lines = malloc(sizeof(bd_line_t));
   text->count = 1;
   
-  text->cursor = text->hold_cursor = text->scroll = (bd_cursor_t){0, 0};
+  text->cursor = text->hold_cursor = text->scroll = (bd_cursor_t) {
+    0, 0
+  };
   text->path[0] = '\0';
   
   text->lines[0].data = NULL;
@@ -1012,7 +1077,9 @@ void bd_text_load(bd_view_t *view, const char *path) {
     __bd_text_write(text, chr, 0);
   }
   
-  text->cursor = text->hold_cursor = text->scroll = (bd_cursor_t){0, 0};
+  text->cursor = text->hold_cursor = text->scroll = (bd_cursor_t) {
+    0, 0
+  };
   text->dirty = 0;
   
   for (int i = 0; i < text->count; i++) {
@@ -1027,14 +1094,20 @@ void bd_text_load(bd_view_t *view, const char *path) {
 
 int bd_text_save(bd_view_t *view, int closing) {
   bd_text_t *text = view->data;
-  if (text->path[0] && !text->dirty) return 1; // won't write to disk if it has a path and isn't dirty
+  
+  if (text->path[0] && !text->dirty) {
+    return 1;  // won't write to disk if it has a path and isn't dirty
+  }
   
   for (;;) {
     if (closing) {
       int result = bd_dialog("Close file (Ctrl+Q to not close)", -16, "i[Path:]b[2;Save;Do not save]", text->path);
       
-      if (result == 0) return 0;
-      else if (result == 2) return 1;
+      if (result == 0) {
+        return 0;
+      } else if (result == 2) {
+        return 1;
+      }
     }
     
     if (text->path[0]) {
@@ -1043,10 +1116,14 @@ int bd_text_save(bd_view_t *view, int closing) {
       if (io_fvalid(file)) {
         io_frewind(file);
         
-        bd_cursor_t end = (bd_cursor_t){0, text->count - 1};
+        bd_cursor_t end = (bd_cursor_t) {
+          0, text->count - 1
+        };
         end.x = text->lines[end.y].length;
         
-        __bd_text_output(text, 1, file, (bd_cursor_t){0, 0}, end);
+        __bd_text_output(text, 1, file, (bd_cursor_t) {
+          0, 0
+        }, end);
         io_fclose(file);
         
         break;

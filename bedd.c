@@ -72,7 +72,10 @@ int main(int argc, const char **argv) {
       } else if (event.type == IO_EVENT_KEY_PRESS) {
         if (event.key == IO_CTRL('Q')) {
           bd_view_remove(bd_views + bd_view);
-          if (!bd_view_count) do_exit = 1;
+          
+          if (!bd_view_count) {
+            do_exit = 1;
+          }
           
           handled = 1;
           
@@ -178,7 +181,9 @@ int main(int argc, const char **argv) {
     }
     
     for (int i = 0; !global_draw && i < bd_view_count; i++) {
-      if (bd_views[i].title_dirty) global_draw = 1;
+      if (bd_views[i].title_dirty) {
+        global_draw = 1;
+      }
     }
     
     if (global_draw) {
@@ -186,7 +191,6 @@ int main(int argc, const char **argv) {
       global_draw = 0;
       
       io_cursor(bd_views[bd_view].cursor.x, bd_views[bd_view].cursor.y);
-
       io_flush();
     }
     
@@ -195,7 +199,6 @@ int main(int argc, const char **argv) {
       view_draw = 0;
       
       io_cursor(bd_views[bd_view].cursor.x, bd_views[bd_view].cursor.y);
-      
       io_flush();
     }
   }

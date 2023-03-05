@@ -74,8 +74,11 @@ int bd_dialog(const char *title, int __width, const char *format, ...) {
     if (dialog_draw) {
       int width = __width;
       
-      if (__width > bd_width) width = bd_width;
-      else if (__width <= 0) width = bd_width + __width;
+      if (__width > bd_width) {
+        width = bd_width;
+      } else if (__width <= 0) {
+        width = bd_width + __width;
+      }
       
       int start_x = (bd_width - width) / 2;
       int cursor_x = -1, cursor_y = -1;

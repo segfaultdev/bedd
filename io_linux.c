@@ -20,14 +20,14 @@ static int mouse_down = 0;
 void io_init(void) {
   tcgetattr(STDIN_FILENO, &old_termios);
   struct termios new_termios = old_termios;
-
+  
   new_termios.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
   new_termios.c_oflag &= ~(OPOST);
   new_termios.c_cflag |= (CS8);
   new_termios.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
   new_termios.c_cc[VMIN] = 0;
   new_termios.c_cc[VTIME] = 1;
-
+  
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_termios);
   
   setlocale(LC_ALL, "");
@@ -44,7 +44,7 @@ void io_exit(void) {
 }
 
 io_file_t io_fopen(const char *path, int write_mode) {
-  return (io_file_t){
+  return (io_file_t) {
     .data = fopen(path, write_mode ? "wb+" : "rb"),
     .type = io_file_file,
   };
@@ -79,7 +79,7 @@ void io_dsolve(const char *path, char *buffer) {
 }
 
 io_file_t io_dopen(const char *path) {
-  return (io_file_t){
+  return (io_file_t) {
     .data = opendir(path),
     .type = io_file_directory,
   };
@@ -95,7 +95,10 @@ void io_dclose(io_file_t file) {
 
 int io_dread(io_file_t file, char *buffer) {
   struct dirent *entry = readdir(file.data);
-  if (!entry) return 0;
+  
+  if (!entry) {
+    return 0;
+  }
   
   strcpy(buffer, entry->d_name);
   return 1;
@@ -107,12 +110,12 @@ void io_drewind(io_file_t file) {
 
 io_file_t io_copen(int write_mode) {
   if (write_mode) {
-    return (io_file_t){
+    return (io_file_t) {
       .data = popen("xclip -selection clipboard -i", "w"),
       .type = io_file_clipboard,
     };
   } else {
-    return (io_file_t){
+    return (io_file_t) {
       .data = popen("xclip -selection clipboard -o", "r"),
       .type = io_file_clipboard,
     };
@@ -196,7 +199,7 @@ io_event_t io_get_event(void) {
   static int old_width = 0, old_height = 0;
   
   struct winsize ws;
-
+  
   if (!(ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)) {
     int width = ws.ws_col;
     int height = ws.ws_row;
@@ -205,7 +208,7 @@ io_event_t io_get_event(void) {
       old_width = width;
       old_height = height;
       
-      return (io_event_t){
+      return (io_event_t) {
         .type = IO_EVENT_RESIZE,
         .size = {width, height},
       };
@@ -217,7 +220,7 @@ io_event_t io_get_event(void) {
   if (new_time != old_time) {
     old_time = new_time;
     
-    return (io_event_t){
+    return (io_event_t) {
       .type = IO_EVENT_TIME_SECOND,
       .time = new_time,
     };
@@ -294,7 +297,10 @@ io_event_t io_get_event(void) {
         
         for (;;) {
           read(STDIN_FILENO, ansi_buffer + offset++, 1);
-          if (isalpha(ansi_buffer[offset - 1])) break;
+          
+          if (isalpha(ansi_buffer[offset - 1])) {
+            break;
+          }
         }
         
         int mouse_state = isupper(ansi_buffer[offset - 1]);
@@ -320,13 +326,14 @@ io_event_t io_get_event(void) {
           offset++;
         }
         
-        mouse_x--; mouse_y--;
+        mouse_x--;
+        mouse_y--;
         
         // 0 = left click, 1 = middle click, 2 = right click
         
         if (mouse_type == 0) {
           if (mouse_state) {
-            io_event_t event = (io_event_t){
+            io_event_t event = (io_event_t) {
               .type = mouse_down ? IO_EVENT_MOUSE_MOVE : IO_EVENT_MOUSE_DOWN,
               .mouse = {.x = mouse_x, .y = mouse_y},
             };
@@ -336,18 +343,18 @@ io_event_t io_get_event(void) {
           } else {
             mouse_down = 0;
             
-            return (io_event_t){
+            return (io_event_t) {
               .type = IO_EVENT_MOUSE_UP,
               .mouse = {.x = mouse_x, .y = mouse_y},
             };
           }
         } else if (mouse_type == 64) {
-          return (io_event_t){
+          return (io_event_t) {
             .type = IO_EVENT_SCROLL,
             .scroll = -1,
           };
         } else if (mouse_type == 65) {
-          return (io_event_t){
+          return (io_event_t) {
             .type = IO_EVENT_SCROLL,
             .scroll = 1,
           };
@@ -357,13 +364,13 @@ io_event_t io_get_event(void) {
       key = IO_CTRL('H');
     }
     
-    return (io_event_t){
+    return (io_event_t) {
       .type = IO_EVENT_KEY_PRESS,
       .key = key,
     };
   }
   
-  return (io_event_t){
+  return (io_event_t) {
     .type = 0,
   };
 }

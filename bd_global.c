@@ -61,7 +61,10 @@ void bd_global_draw(void) {
 }
 
 int bd_global_click(int x, int y) {
-  if (y < 1) return 0;
+  if (y < 1) {
+    return 0;
+  }
+  
   int start_x = 0;
   
   for (int i = 0; i < bd_view_count; i++) {

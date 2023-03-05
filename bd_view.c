@@ -19,7 +19,7 @@ bd_view_t *bd_view_add(const char *title, int type, ...) {
     bd_text_load(bd_views + bd_view_count, va_arg(args, const char *));
   } else if (type == bd_view_explore) {
     bd_explore_load(bd_views + bd_view_count, va_arg(args, const char *));
-  } else if (byte == bd_view_terminal) {
+  } else if (type == bd_view_terminal) {
     bd_terminal_load(bd_views + bd_view_count);
   } else {
     bd_views[bd_view_count].data = NULL;
@@ -31,10 +31,15 @@ bd_view_t *bd_view_add(const char *title, int type, ...) {
 
 void bd_view_remove(bd_view_t *view) {
   if (view->type == bd_view_text) {
-    if (!bd_text_save(view, 1)) return;
+    if (!bd_text_save(view, 1)) {
+      return;
+    }
   }
   
-  if (view->data) free(view->data);
+  if (view->data) {
+    free(view->data);
+  }
+  
   int index = view - bd_views;
   
   for (int i = index; i < bd_view_count - 1; i++) {
@@ -42,10 +47,16 @@ void bd_view_remove(bd_view_t *view) {
   }
   
   bd_view_count--;
-  if (!bd_view_count) return;
+  
+  if (!bd_view_count) {
+    return;
+  }
   
   bd_views = realloc(bd_views, bd_view_count * sizeof(bd_view_t));
-  if (bd_view >= bd_view_count) bd_view = bd_view_count - 1;
+  
+  if (bd_view >= bd_view_count) {
+    bd_view = bd_view_count - 1;
+  }
 }
 
 void bd_view_draw(bd_view_t *view) {
@@ -55,6 +66,8 @@ void bd_view_draw(bd_view_t *view) {
     bd_text_draw(view);
   } else if (view->type == bd_view_explore) {
     bd_explore_draw(view);
+  } else if (view->type == bd_view_terminal) {
+    bd_terminal_draw(view);
   }
 }
 
@@ -63,6 +76,8 @@ int bd_view_event(bd_view_t *view, io_event_t event) {
     return bd_text_event(view, event);
   } else if (view->type == bd_view_explore) {
     return bd_explore_event(view, event);
+  } else if (view->type == bd_view_terminal) {
+    return bd_terminal_event(view, event);
   }
   
   return 0;

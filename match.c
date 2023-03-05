@@ -11,8 +11,8 @@ int mt_match(const char *text, int length, const char *query, const char *replac
   char **matches = NULL;
   int match_count = 0;
   
-  #define return_free(value) ({while (match_count--) free(matches[match_count]); if (matches) free(matches); return value;})
-  
+#define return_free(value) ({while (match_count--) free(matches[match_count]); if (matches) free(matches); return value;})
+
   while ((chr = *(query++)) && offset < length) {
     if (chr == '[') {
       int is_format = 0;
@@ -78,12 +78,29 @@ int mt_match(const char *text, int length, const char *query, const char *replac
         for (;;) {
           chr = *(query++);
           
-          if (chr == '/' || chr == ']') break;
-          if (chr == 'A' || chr == '*') strcat(char_set, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-          if (chr == 'a' || chr == '*') strcat(char_set, "abcdefghijklmnopqrstuvwxyz");
-          if (chr == '0' || chr == '*') strcat(char_set, "0123456789");
-          if (chr == '+' || chr == '*') strcat(char_set, "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}");
-          if (chr == '_' || chr == '*') strcat(char_set, " \t\r\n");
+          if (chr == '/' || chr == ']') {
+            break;
+          }
+          
+          if (chr == 'A' || chr == '*') {
+            strcat(char_set, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+          }
+          
+          if (chr == 'a' || chr == '*') {
+            strcat(char_set, "abcdefghijklmnopqrstuvwxyz");
+          }
+          
+          if (chr == '0' || chr == '*') {
+            strcat(char_set, "0123456789");
+          }
+          
+          if (chr == '+' || chr == '*') {
+            strcat(char_set, "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}");
+          }
+          
+          if (chr == '_' || chr == '*') {
+            strcat(char_set, " \t\r\n");
+          }
           
           if (chr == '\\') {
             char temp[2] = {chr = *(query++), '\0'};
@@ -119,18 +136,25 @@ int mt_match(const char *text, int length, const char *query, const char *replac
           }
         }
         
-        if (chr != ']') return_free(-1);
+        if (chr != ']') {
+          return_free(-1);
+        }
+        
         int best_match = 0;
         
         for (int i = offset; i < length && i - offset <= max_count; i++) {
-          if (!strchr(char_set, text[i])) break;
+          if (!strchr(char_set, text[i])) {
+            break;
+          }
           
           if (mt_match(text + (i + 1), length - (i + 1), query, NULL, NULL) >= 0) {
             best_match = (i + 1) - offset;
           }
         }
         
-        if (best_match < min_count) return_free(-1);
+        if (best_match < min_count) {
+          return_free(-1);
+        }
         
         if (is_format) {
           char *match_str = calloc(best_match + 1, 1);
@@ -177,7 +201,9 @@ int mt_match(const char *text, int length, const char *query, const char *replac
     }
   }
   
-  if (chr) return_free(-1);
+  if (chr) {
+    return_free(-1);
+  }
   
   while (replace_input && *replace_input) {
     if (*replace_input == '\\') {
@@ -205,5 +231,5 @@ int mt_match(const char *text, int length, const char *query, const char *replac
   }
   
   return_free(offset);
-  #undef return_free
+#undef return_free
 }

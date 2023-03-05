@@ -41,7 +41,10 @@ static void __bd_explore_update(bd_explore_t *explore) {
   bd_entry_t entry;
   
   while (io_dread(directory, entry.name)) {
-    if (!strcmp(entry.name, ".")) continue;
+    if (!strcmp(entry.name, ".")) {
+      continue;
+    }
+    
     char merge_path[256];
     
     strcpy(merge_path, explore->path);
@@ -111,8 +114,13 @@ static int __bd_explore_enter(bd_view_t *view, int new_tab) {
     
     char *ptr = strrchr(new_path, '/');
     
-    if (!ptr) return 0;
-    if (ptr == new_path) ptr++;
+    if (!ptr) {
+      return 0;
+    }
+    
+    if (ptr == new_path) {
+      ptr++;
+    }
     
     length = ptr - new_path;
     new_path[length] = '\0';
@@ -181,7 +189,9 @@ void bd_explore_draw(bd_view_t *view) {
   
   strcpy(view->title, explore->path);
   
-  view->cursor = (bd_cursor_t){-1, -1};
+  view->cursor = (bd_cursor_t) {
+    -1, -1
+    };
 }
 
 int bd_explore_event(bd_view_t *view, io_event_t event) {
@@ -198,11 +208,16 @@ int bd_explore_event(bd_view_t *view, io_event_t event) {
       int select_count = 0;
       
       for (int i = 0; i < explore->count; i++) {
-        if (explore->entries[i].selected) select_count++;
+        if (explore->entries[i].selected) {
+          select_count++;
+        }
       }
       
       for (int i = 0; i < explore->count; i++) {
-        if (!strcmp(explore->entries[i].name, "..")) continue;
+        if (!strcmp(explore->entries[i].name, "..")) {
+          continue;
+        }
+        
         explore->entries[i].selected = (select_count < explore->count - 1);
       }
       
