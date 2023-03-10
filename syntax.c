@@ -25,6 +25,10 @@ int st_md_color(int prev_state, int *state, const char *text, int length);
 
 int st_sh_color(int prev_state, int *state, const char *text, int length);
 
+// Rust
+
+int st_rs_color(int prev_state, int *state, const char *text, int length);
+
 // Default
 
 static int st_depth(const char *line, int length);
@@ -81,6 +85,15 @@ syntax_t st_init(const char *filename) {
         .f_depth = st_depth,
         .f_pair = st_pair,
         .f_color = st_md_color,
+      };
+    }
+    
+    if (!strcasecmp(filename, ".rs")) {
+      return (syntax_t) {
+        .lang = "Rust",
+        .f_depth = st_c_depth,
+        .f_pair = st_c_pair,
+        .f_color = st_rs_color,
       };
     }
   }

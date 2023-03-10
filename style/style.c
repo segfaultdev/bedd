@@ -7,6 +7,7 @@
 #ifdef __STYLE_C__
 
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <stdio.h>
 
