@@ -4,8 +4,6 @@
 
 // TODO: Properly sort include headers too!
 
-#ifdef __STYLE_C__
-
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -91,5 +89,3 @@ int main(int argc, const char **argv) {
   
   return 0;
 }
-
-#endif
