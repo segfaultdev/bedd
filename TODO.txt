@@ -6,7 +6,6 @@
 - add config overrides in /home, and a built-in menu to change them
 - make bedd look ok in terminals with non-specific color palettes (even light-mode xterm) -> THEMES (maybe with 256-color mode???)
 - allow opening links with Alt+Enter in files
-- allow opening as read only websites (even .bdn)
 - add automatic horizontal scrolling
 - implement .sh, .html, .css, .js and .py syntax highlighting
 - possibly work towards bare-metal 32-bit build (;

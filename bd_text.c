@@ -576,8 +576,8 @@ void bd_text_draw(bd_view_t *view) {
   
   for (int i = 0; i < view_height; i++) {
     io_cursor(0, 2 + i);
-    int y = i + text->scroll.y;
     
+    int y = i + text->scroll.y;
     int is_selected = 0;
     
     if (y < text->count) {
@@ -600,6 +600,7 @@ void bd_text_draw(bd_view_t *view) {
       
       for (int j = 0; j < view_width; j++) {
         int x = j + text->scroll.x;
+        
         bd_cursor_t cursor = (bd_cursor_t) {
           x, y
         };
@@ -722,6 +723,7 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
           text->cursor = text->hold_cursor = (bd_cursor_t) {
             0, i
           };
+          
           __bd_text_write(text, '\t', 1);
         } else {
           bd_line_t *line = text->lines + i;
@@ -1040,6 +1042,7 @@ void bd_text_load(bd_view_t *view, const char *path) {
   text->cursor = text->hold_cursor = text->scroll = (bd_cursor_t) {
     0, 0
   };
+  
   text->path[0] = '\0';
   
   text->lines[0].data = NULL;
@@ -1069,8 +1072,12 @@ void bd_text_load(bd_view_t *view, const char *path) {
   }
   
   text->syntax = st_init(path);
-  
   strcpy(text->path, path);
+  
+  if (file.read_only) {
+    strcat(text->path, " (read only)");
+  }
+  
   char chr;
   
   while (io_fread(file, &chr, 1)) {
@@ -1080,6 +1087,7 @@ void bd_text_load(bd_view_t *view, const char *path) {
   text->cursor = text->hold_cursor = text->scroll = (bd_cursor_t) {
     0, 0
   };
+  
   text->dirty = 0;
   
   for (int i = 0; i < text->count; i++) {
@@ -1119,11 +1127,13 @@ int bd_text_save(bd_view_t *view, int closing) {
         bd_cursor_t end = (bd_cursor_t) {
           0, text->count - 1
         };
+        
         end.x = text->lines[end.y].length;
         
         __bd_text_output(text, 1, file, (bd_cursor_t) {
           0, 0
         }, end);
+        
         io_fclose(file);
         
         break;

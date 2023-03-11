@@ -65,7 +65,7 @@ io_file_t io_fopen(const char *path, int write_mode) {
   
   return (io_file_t) {
     .type = io_file_file,
-    .read_only = !write_mode,
+    .read_only = 0,
     .data = fopen(path, write_mode ? "wb+" : "rb"),
   };
 }
