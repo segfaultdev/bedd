@@ -478,6 +478,19 @@ static void __bd_text_follow(bd_text_t *text) {
   } else if (text->scroll.y <= text->cursor.y - view_height) {
     text->scroll.y = (text->cursor.y - view_height) + 1;
   }
+  
+  int lind_size = 1, lind_max = 10;
+  
+  while (text->count >= lind_max) {
+    lind_size++;
+    lind_max *= 10;
+  }
+  
+  text->scroll.x = text->cursor.x - (bd_width - 8 - lind_size - bd_config.scroll_width_margin);
+  
+  if (text->scroll.x < 0) {
+    text->scroll.x = 0;
+  }
 }
 
 static char *__bd_text_output(bd_text_t *text, int to_file, io_file_t file, bd_cursor_t start, bd_cursor_t end) {

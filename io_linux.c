@@ -83,12 +83,18 @@ void io_fclose(io_file_t file) {
 }
 
 size_t io_fwrite(io_file_t file, void *buffer, size_t count) {
-  if (file.read_only || !io_fvalid(file)) return 0;
+  if (file.read_only || !io_fvalid(file)) {
+    return 0;
+  }
+  
   return fwrite(buffer, 1, count, file.data);
 }
 
 size_t io_fread(io_file_t file, void *buffer, size_t count) {
-  if (!io_fvalid(file)) return 0;
+  if (!io_fvalid(file)) {
+    return 0;
+  }
+  
   return fread(buffer, 1, count, file.data);
 }
 
