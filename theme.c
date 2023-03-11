@@ -1,5 +1,5 @@
 #include <string.h>
-#include <themes.h>
+#include <theme.h>
 
 int theme = theme_17;
 

@@ -1,5 +1,5 @@
-#ifndef __THEMES_H__
-#define __THEMES_H__
+#ifndef __THEME_H__
+#define __THEME_H__
 
 enum {
   theme_17,

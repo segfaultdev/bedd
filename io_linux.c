@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <theme.h>
 #include <io.h>
 
 static struct termios old_termios;
