@@ -72,7 +72,10 @@ int bd_global_click(int x, int y) {
     int end_x = start_x + width;
     
     if (x >= start_x && x < end_x) {
-      // TODO: X close button
+      if (x == end_x - 2) {
+        bd_view_remove(bd_views + bd_view);
+        return 1;
+      }
       
       if (i == bd_view) {
         return 0;

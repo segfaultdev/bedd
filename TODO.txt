@@ -1,6 +1,5 @@
 - Terminal tab
 - Make file explorer cuter and with way more info
-- Make X button work
 - Allow alternative non-X11 clipboard (even if local)
 - Create .bdn format (bedd notes, allows for colored post-its with connections, links, images and todo lists)
 - Add config overrides in /home, and a built-in menu to change them
