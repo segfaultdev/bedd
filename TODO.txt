@@ -1,12 +1,11 @@
-- terminal tab
-- make file explorer cuter and with way more info
-- make X button work
-- allow alternative non-X11 clipboard (even if local)
-- create .bdn format (bedd notes, allows for colored post-its with connections, links, images and todo lists)
-- add config overrides in /home, and a built-in menu to change them
-- make bedd look ok in terminals with non-specific color palettes (even light-mode xterm) -> THEMES (maybe with 256-color mode???)
-- allow opening links with Alt+Enter in files
-- add automatic horizontal scrolling
-- implement .sh, .html, .css, .js and .py syntax highlighting
-- possibly work towards bare-metal 32-bit build (;
-- preview bold, underline and links in markdown (and hide *, **, _, ~, etc. if not editing that specific line)
+- Terminal tab
+- Make file explorer cuter and with way more info
+- Make X button work
+- Allow alternative non-X11 clipboard (even if local)
+- Create .bdn format (bedd notes, allows for colored post-its with connections, links, images and todo lists)
+- Add config overrides in /home, and a built-in menu to change them
+- Make bedd look ok in terminals with non-specific color palettes (even light-mode xterm) -> THEMES (maybe with 256-color mode???)
+- Add automatic horizontal scrolling
+- Implement .sh, .html, .css, .js and .py syntax highlighting
+- Possibly work towards bare-metal 32-bit build (;
+- Preview bold, underline and links in markdown (and hide *, **, _, ~, etc. if not editing that specific line)

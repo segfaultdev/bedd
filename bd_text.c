@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syntax.h>
+#include <ctype.h>
 #include <match.h>
 #include <bedd.h>
 #include <io.h>
@@ -953,6 +954,37 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       return 1;
     } else if (event.key == IO_CTRL('Y')) {
       __bd_text_redo(text);
+      return 1;
+    } else if (event.key == IO_ALT(IO_CTRL('M'))) {
+      const char *line = text->lines[text->cursor.y].data;
+      int start = text->cursor.x;
+      
+      if (start >= text->lines[text->cursor.y].length) {
+        start = text->lines[text->cursor.y].length - 1;
+      }
+      
+      while (start && (isalnum(line[start]) || strchr(".:/-_&+=?", line[start]))) {
+        start--;
+      }
+      
+      if (!isalnum(line[start])) {
+        start++;
+      }
+      
+      int end = start;
+      
+      while (end < text->lines[text->cursor.y].length && (isalnum(line[end]) || strchr(".:/-_&+=?", line[end]))) {
+        end++;
+      }
+      
+      char buffer[(end - start) + 1];
+      buffer[end - start] = '\0';
+      
+      memcpy(buffer, line + start, end - start);
+      bd_view = bd_view_add(buffer, bd_view_text, buffer) - bd_views;
+      
+      fprintf(stderr, "%s\n", buffer);
+      
       return 1;
     }
   } else if (event.type == IO_EVENT_MOUSE_DOWN || event.type == IO_EVENT_MOUSE_MOVE) {
