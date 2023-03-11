@@ -45,8 +45,9 @@ void io_exit(void) {
 
 io_file_t io_fopen(const char *path, int write_mode) {
   return (io_file_t) {
-    .data = fopen(path, write_mode ? "wb+" : "rb"),
     .type = io_file_file,
+    .read_only = !write_mode,
+    .data = fopen(path, write_mode ? "wb+" : "rb"),
   };
 }
 
@@ -80,8 +81,9 @@ void io_dsolve(const char *path, char *buffer) {
 
 io_file_t io_dopen(const char *path) {
   return (io_file_t) {
-    .data = opendir(path),
     .type = io_file_directory,
+    .read_only = 1,
+    .data = opendir(path),
   };
 }
 
@@ -109,21 +111,15 @@ void io_drewind(io_file_t file) {
 }
 
 io_file_t io_copen(int write_mode) {
-  if (write_mode) {
-    return (io_file_t) {
-      .data = popen("xclip -selection clipboard -i", "w"),
-      .type = io_file_clipboard,
-    };
-  } else {
-    return (io_file_t) {
-      .data = popen("xclip -selection clipboard -o", "r"),
-      .type = io_file_clipboard,
-    };
-  }
+  return (io_file_t) {
+    .type = io_file_clipboard,
+    .read_only = 1,
+    .data = NULL,
+  };
 }
 
 void io_cclose(io_file_t file) {
-  pclose(file.data);
+  file;
 }
 
 void io_cursor(int x, int y) {

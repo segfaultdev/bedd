@@ -21,7 +21,7 @@ enum {
 };
 
 struct io_file_t {
-  int type;
+  int type, read_only;
   void *data;
 };
 
