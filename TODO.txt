@@ -3,7 +3,6 @@
 - Allow alternative non-X11 clipboard (even if local)
 - Create .bdn format (bedd notes, allows for colored post-its with connections, links, images and todo lists)
 - Add config overrides in /home, and a built-in menu to change them
-- Make bedd look ok in terminals with non-specific color palettes (even light-mode xterm) -> THEMES (maybe with 256-color mode???)
 - Implement .sh, .html, .css, .js and .py syntax highlighting
 - Possibly work towards bare-metal 32-bit build (;
 - Preview bold, underline and links in markdown (and hide *, **, _, ~, etc. if not editing that specific line)

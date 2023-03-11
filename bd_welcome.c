@@ -16,7 +16,7 @@ void bd_welcome_draw(bd_view_t *view) {
                          "Its name comes from 'bar editor', as everything revolves around the tabbed bar.\n\n"
                         );
                         
-  io_printf_wrap(2, bd_width, y,
+  io_printf_wrap(2, bd_width * 100, y,
                  IO_UNDERLINE "General:" IO_NORMAL "\n"
                  IO_BOLD " Ctrl+Q " IO_NORMAL "Close tab/Exit\n"
                  IO_BOLD " Ctrl+W " IO_NORMAL "Welcome tab\n"
@@ -33,7 +33,7 @@ void bd_welcome_draw(bd_view_t *view) {
                  IO_BOLD " Enter " IO_NORMAL "Accept\n"
                 );
                 
-  io_printf_wrap(2 + (bd_width / 3), bd_width, y,
+  io_printf_wrap(2 + (bd_width / 3), bd_width * 100, y,
                  IO_UNDERLINE "Text tab:" IO_NORMAL "\n"
                  IO_BOLD " Ctrl+S " IO_NORMAL "Save file\n"
                  IO_BOLD " Ctrl+C " IO_NORMAL "Copy\n"
@@ -50,7 +50,7 @@ void bd_welcome_draw(bd_view_t *view) {
                  IO_BOLD " Ctrl+Shift+V " IO_NORMAL "Paste\n"
                 );
                 
-  io_printf_wrap(2 + ((2 * bd_width) / 3), bd_width, y,
+  io_printf_wrap(2 + ((2 * bd_width) / 3), bd_width * 100, y,
                  IO_UNDERLINE "File explorer tab:" IO_NORMAL "\n"
                  IO_BOLD " Enter " IO_NORMAL "Open\n"
                  IO_BOLD " Alt+Enter " IO_NORMAL "Open new tab\n"

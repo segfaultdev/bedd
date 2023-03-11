@@ -169,12 +169,18 @@ void io_cursor(int x, int y) {
   }
 }
 
+
 void io_printf(const char *format, ...) {
+  char buffer[32768];
+  
   va_list args;
   va_start(args, format);
   
-  vprintf(format, args);
+  vsprintf(buffer, format, args);
   va_end(args);
+  
+  theme_apply(buffer);
+  printf("%s", buffer);
 }
 
 int io_printf_wrap(int x, int width, int y, const char *format, ...) {
@@ -185,6 +191,8 @@ int io_printf_wrap(int x, int width, int y, const char *format, ...) {
   
   vsprintf(buffer, format, args);
   va_end(args);
+  
+  theme_apply(buffer);
   
   int width_left = width;
   io_cursor(x, y);
