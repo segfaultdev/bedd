@@ -45,6 +45,8 @@ void      io_cclose(io_file_t file);
 
 io_file_t io_topen(void); // TODO
 
+extern const char *io_config;
+
 // --- output functions ---
 
 #define IO_NORMAL        "\x1B[0m\x0E"

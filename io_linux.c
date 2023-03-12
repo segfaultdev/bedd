@@ -18,6 +18,8 @@
 static struct termios old_termios;
 static int mouse_down = 0;
 
+const char *io_config = "~/.beddcfg";
+
 void io_init(void) {
   tcgetattr(STDIN_FILENO, &old_termios);
   struct termios new_termios = old_termios;
@@ -64,10 +66,13 @@ io_file_t io_fopen(const char *path, int write_mode) {
     }
   }
   
+  char buffer[8192];
+  io_dsolve(path, buffer);
+  
   return (io_file_t) {
     .type = io_file_file,
     .read_only = 0,
-    .data = fopen(path, write_mode ? "wb+" : "rb"),
+    .data = fopen(buffer, write_mode ? "wb+" : "rb"),
   };
 }
 
@@ -108,7 +113,14 @@ int io_feof(io_file_t file) {
 }
 
 void io_dsolve(const char *path, char *buffer) {
-  realpath(path, buffer);
+  if (path[0] == '~') {
+    const char *home = getenv("HOME");
+    strcpy(buffer, home);
+    
+    io_dsolve(path + 1, buffer + strlen(home));
+  } else {
+    realpath(path, buffer);
+  }
 }
 
 io_file_t io_dopen(const char *path) {

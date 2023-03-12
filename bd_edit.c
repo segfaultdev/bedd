@@ -51,7 +51,7 @@ void bd_edit_draw(bd_view_t *view) {
   
   view->cursor = (bd_cursor_t) {
     -1, -1
-  };
+    };
 }
 
 int bd_edit_event(bd_view_t *view, io_event_t event) {
@@ -70,6 +70,7 @@ int bd_edit_event(bd_view_t *view, io_event_t event) {
       bd_config.raw_data[index] %= (__edit_limits[index * 2 + 1] - __edit_limits[index * 2]) + 1;
       bd_config.raw_data[index] += __edit_limits[index * 2];
       
+      strcpy(view->title, "Edit configuration*");
       return 1;
     } else if (event.key == IO_ARROW_RIGHT) {
       int index = (int)(view->data);
@@ -78,6 +79,18 @@ int bd_edit_event(bd_view_t *view, io_event_t event) {
       bd_config.raw_data[index]++;
       bd_config.raw_data[index] %= (__edit_limits[index * 2 + 1] - __edit_limits[index * 2]) + 1;
       bd_config.raw_data[index] += __edit_limits[index * 2];
+      
+      strcpy(view->title, "Edit configuration*");
+      return 1;
+    } else if (event.key == IO_CTRL('S')) {
+      io_file_t config = io_fopen(io_config, 1);
+      
+      if (io_fvalid(config)) {
+        io_fwrite(config, (void *)(&bd_config), sizeof(bd_config_t));
+        io_fclose(config);
+        
+        strcpy(view->title, "Edit configuration");
+      }
       
       return 1;
     }
