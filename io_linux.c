@@ -76,6 +76,13 @@ io_file_t io_fopen(const char *path, int write_mode) {
   };
 }
 
+time_t io_ftime(const char *path) {
+  struct stat attrib;
+  stat(path, &attrib);
+  
+  return attrib.st_mtime;
+}
+
 int io_fvalid(io_file_t file) {
   return !!file.data;
 }

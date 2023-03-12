@@ -1,7 +1,7 @@
 - Terminal tab
-- Make file explorer cuter and with way more info
 - Allow alternative non-X11 clipboard (even if local)
 - Create .bdn format (bedd notes, allows for colored post-its with connections, links, images and todo lists)
 - Implement .sh, .html, .css, .js and .py syntax highlighting
 - Possibly work towards bare-metal 32-bit build (;
 - Preview bold, underline and links in markdown (and hide *, **, _, ~, etc. if not editing that specific line)
+- Use text-based format for config. file instead of binary

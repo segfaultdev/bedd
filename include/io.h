@@ -4,12 +4,12 @@
 #include <stdio.h>
 #include <time.h>
 
-// --- general functions ---
+// --- General functions ---
 
 void io_init(void);
 void io_exit(void);
 
-// --- file/device functions ---
+// --- File/device functions ---
 
 typedef struct io_file_t io_file_t;
 
@@ -26,6 +26,7 @@ struct io_file_t {
 };
 
 io_file_t io_fopen(const char *path, int write_mode);
+time_t    io_ftime(const char *path);
 int       io_fvalid(io_file_t file);
 void      io_fclose(io_file_t file);
 size_t    io_fwrite(io_file_t file, void *buffer, size_t count);
@@ -47,7 +48,7 @@ io_file_t io_topen(void); // TODO
 
 extern const char *io_config;
 
-// --- output functions ---
+// --- Output functions ---
 
 #define IO_NORMAL        "\x1B[0m\x0E"
 #define IO_INVERT        "\x1B[0m\x1B[1m\x1C"

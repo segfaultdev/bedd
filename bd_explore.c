@@ -8,7 +8,9 @@ typedef struct bd_explore_t bd_explore_t;
 
 struct bd_entry_t {
   char name[256];
+  
   int is_directory;
+  time_t mtime;
   
   int selected;
 };
@@ -23,7 +25,7 @@ struct bd_explore_t {
   int scroll_mouse_y;
 };
 
-// static functions
+// Static functions
 
 static void __bd_explore_update(bd_explore_t *explore);
 static void __bd_explore_follow(bd_explore_t *explore);
@@ -61,6 +63,7 @@ static void __bd_explore_update(bd_explore_t *explore) {
       io_dclose(test);
     }
     
+    entry.mtime = io_ftime(merge_path);
     entry.selected = 0;
     
     explore->entries = realloc(explore->entries, (explore->count + 1) * sizeof(bd_entry_t));
@@ -146,7 +149,7 @@ static int __bd_explore_enter(bd_view_t *view, int new_tab) {
   }
 }
 
-// public functions
+// Public functions
 
 void bd_explore_draw(bd_view_t *view) {
   bd_explore_t *explore = view->data;
@@ -158,6 +161,10 @@ void bd_explore_draw(bd_view_t *view) {
     
     if (index < explore->count) {
       bd_entry_t entry = explore->entries[index];
+      struct tm *tm_time = localtime(&entry.mtime);
+      
+      char buffer[100];
+      strftime(buffer, 100, "%d %b %Y, %H:%M:%S", tm_time);
       
       if (index == explore->cursor) {
         io_printf(IO_INVERT "  >  ");
@@ -165,12 +172,16 @@ void bd_explore_draw(bd_view_t *view) {
         io_printf(IO_SHADOW_1 "  -  ");
       }
       
-      io_printf(IO_NORMAL " %s(%s) %s", entry.selected ? IO_SHADOW_1 : "", entry.is_directory ? "DIR." : "FILE", entry.name);
+      if (entry.is_directory) {
+        io_printf(IO_NORMAL " %s(%s) " IO_BOLD_GREEN "%s/", entry.selected ? IO_SHADOW_1 : "", buffer, entry.name);
+      } else {
+        io_printf(IO_NORMAL " %s(%s) %s%s", entry.selected ? IO_SHADOW_1 : "", buffer, entry.name[0] == '.' ? IO_BOLD_BLUE : IO_BOLD_WHITE, entry.name);
+      }
     } else {
       io_printf(IO_NORMAL "    :");
     }
     
-    io_printf(IO_NORMAL IO_CLEAR_LINE);
+    io_printf(IO_CLEAR_LINE IO_NORMAL);
     io_cursor(bd_width - 1, i + 2);
     
     int scroll_start_y = (explore->scroll * (bd_height - 2)) / (explore->count + (bd_height - 2));
@@ -261,6 +272,51 @@ int bd_explore_event(bd_view_t *view, io_event_t event) {
       }
       
       __bd_explore_follow(explore);
+      return 1;
+    } else if (event.key == IO_CTRL('C') || event.key == IO_CTRL('X')) {
+      io_file_t clip = io_copen(1);
+      
+      char buffer[8192];
+      strcpy(buffer, (event.key == IO_CTRL('C')) ? "Copy" : "Move");
+      
+      for (int i = 0; i < explore->count; i++) {
+        if (explore->entries[i].selected) {
+          char merge_path[256];
+          strcat(buffer, " ");
+          
+          strcpy(merge_path, explore->path);
+          int length = strlen(merge_path);
+          
+          if (merge_path[length - 1] != '/') {
+            merge_path[length++] = '/';
+          }
+          
+          strcpy(merge_path + length, explore->entries[i].name);
+          strcat(buffer, merge_path);
+        }
+      }
+      
+      io_fwrite(clip, buffer, strlen(buffer));
+      io_cclose(clip);
+      
+      return 1;
+    } else if (event.key == IO_CTRL('V')) {
+      io_file_t clip = io_copen(0);
+      
+      char buffer[8192];
+      int length = 0;
+      
+      while (!io_feof(clip)) {
+        if (io_fread(clip, buffer + length, 1) <= 0) {
+          break;
+        }
+        
+        length++;
+      }
+      
+      io_cclose(clip);
+      
+      // TODO: Copy and cut
       return 1;
     }
   } else if (event.type == IO_EVENT_MOUSE_DOWN || event.type == IO_EVENT_MOUSE_MOVE) {
