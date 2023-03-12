@@ -73,7 +73,12 @@ int bd_global_click(int x, int y) {
     
     if (x >= start_x && x < end_x) {
       if (x == end_x - 2) {
-        bd_view_remove(bd_views + bd_view);
+        bd_view_remove(bd_views + i);
+        
+        if (bd_view && bd_view >= i) {
+          bd_view--;
+        }
+        
         return 1;
       }
       
