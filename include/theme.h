@@ -9,6 +9,8 @@ enum {
   theme_crt_green,
   theme_crt_amber,
   theme_solarized_dark,
+  
+  theme_count,
 };
 
 enum {
@@ -30,7 +32,7 @@ enum {
   theme_back_3, // "\x1C" (jump)
 };
 
-extern int theme;
+extern const char *theme_names[];
 
 void theme_apply(char *buffer);
 

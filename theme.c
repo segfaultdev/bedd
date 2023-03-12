@@ -1,7 +1,6 @@
 #include <string.h>
 #include <theme.h>
-
-int theme = theme_17;
+#include <bedd.h>
 
 static const char *__format_theme_17[] = {
   "\x1B[49m",
@@ -136,6 +135,16 @@ static const char *__format_theme_solarized_dark[] = {
   "\x1B[38;5;234m\x1B[48;5;230m",
 };
 
+const char *theme_names[] = {
+  "16 colors + background (terminal)",
+  "16 colors (terminal)",
+  "CGA black (256-color)",
+  "CGA blue (256-color)",
+  "Monochromatic green (256-color)",
+  "Monochromatic amber (256-color)",
+  "Solarized dark (256-color)",
+};
+
 static const char **__format_themes[] = {
   __format_theme_17,
   __format_theme_16,
@@ -155,7 +164,7 @@ void theme_apply(char *buffer) {
         buffer[i]--;
       }
       
-      const char *str = __format_themes[theme][buffer[i] - 0x0E];
+      const char *str = __format_themes[bd_config.theme][buffer[i] - 0x0E];
       int str_length = strlen(str);
       
       for (int j = length; j >= i + 1; j--) {

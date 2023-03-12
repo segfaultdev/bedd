@@ -10,12 +10,19 @@ typedef struct bd_cursor_t bd_cursor_t;
 typedef struct bd_view_t bd_view_t;
 
 struct bd_config_t {
-  int indent_width;        // Anything other than 2 or 4 would be cringe af, but we must still provide room for customization and blah blah blah :p
-  int indent_spaces;       // Afects saving/loading, as in editing they're still shown as spaces no matter what
-  int scroll_step;         // Lines to move per scroll step
-  int scroll_width_margin; // When scrolling sideways, how much margin to left to the right
-  int undo_edit_count;     // Character insertions/deletions per undo save
-  int undo_depth;          // Maximum amount of undoable steps
+  union {
+    struct {
+      int indent_width;        // Anything other than 2 or 4 would be cringe af, but we must still provide room for customization and blah blah blah :p
+      int indent_spaces;       // Afects saving/loading, as in editing they're still shown as spaces no matter what
+      int scroll_step;         // Lines to move per scroll step
+      int scroll_width_margin; // When scrolling sideways, how much margin to left to the right
+      int undo_edit_count;     // Character insertions/deletions per undo save
+      int undo_depth;          // Maximum amount of undoable steps
+      int theme;               // Selected theme
+    };
+    
+    int raw_data[7];
+  };
   
   const char *syntax_colors[st_color_count];
 };
@@ -31,6 +38,7 @@ struct bd_cursor_t {
 
 enum {
   bd_view_welcome,
+  bd_view_edit,
   bd_view_text,
   bd_view_explore,
   bd_view_terminal,
@@ -60,6 +68,9 @@ void       bd_view_draw(bd_view_t *view);
 int        bd_view_event(bd_view_t *view, io_event_t event);
 
 void bd_welcome_draw(bd_view_t *view);
+
+void bd_edit_draw(bd_view_t *view);
+int  bd_edit_event(bd_view_t *view, io_event_t event);
 
 void bd_text_draw(bd_view_t *view);
 int  bd_text_event(bd_view_t *view, io_event_t event);

@@ -87,6 +87,12 @@ int main(int argc, const char **argv) {
           
           global_draw = 1;
           view_draw = 1;
+        } else if (event.key == IO_CTRL('E')) {
+          bd_view = bd_view_add("Edit configuration", bd_view_edit) - bd_views;
+          handled = 1;
+          
+          global_draw = 1;
+          view_draw = 1;
         } else if (event.key == IO_CTRL('N')) {
           bd_view = bd_view_add("", bd_view_text, NULL) - bd_views;
           handled = 1;

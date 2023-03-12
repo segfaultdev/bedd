@@ -1,3 +1,4 @@
+#include <theme.h>
 #include <bedd.h>
 #include <io.h>
 
@@ -8,6 +9,8 @@ bd_config_t bd_config = (bd_config_t) {
   .scroll_width_margin = 0,
   .undo_edit_count = 48,
   .undo_depth = 64,
+  
+  .theme = theme_17,
   
   .syntax_colors = {
     "",             // st_color_none

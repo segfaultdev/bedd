@@ -36,7 +36,7 @@ void bd_view_remove(bd_view_t *view) {
     }
   }
   
-  if (view->data) {
+  if (view->data && view->type != bd_view_edit) {
     free(view->data);
   }
   
@@ -62,6 +62,8 @@ void bd_view_remove(bd_view_t *view) {
 void bd_view_draw(bd_view_t *view) {
   if (view->type == bd_view_welcome) {
     bd_welcome_draw(view);
+  } else if (view->type == bd_view_edit) {
+    bd_edit_draw(view);
   } else if (view->type == bd_view_text) {
     bd_text_draw(view);
   } else if (view->type == bd_view_explore) {
@@ -72,7 +74,9 @@ void bd_view_draw(bd_view_t *view) {
 }
 
 int bd_view_event(bd_view_t *view, io_event_t event) {
-  if (view->type == bd_view_text) {
+  if (view->type == bd_view_edit) {
+    return bd_edit_event(view, event);
+  } else if (view->type == bd_view_text) {
     return bd_text_event(view, event);
   } else if (view->type == bd_view_explore) {
     return bd_explore_event(view, event);
