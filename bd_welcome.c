@@ -20,6 +20,7 @@ void bd_welcome_draw(bd_view_t *view) {
                  IO_UNDERLINE "General:" IO_NORMAL "\n"
                  IO_BOLD " Ctrl+Q " IO_NORMAL "Close tab/Exit\n"
                  IO_BOLD " Ctrl+W " IO_NORMAL "Welcome tab\n"
+                 IO_BOLD " Ctrl+E " IO_NORMAL "Config. tab\n"
                  IO_BOLD " Ctrl+T " IO_NORMAL "Terminal tab\n"
                  IO_BOLD " Ctrl+N " IO_NORMAL "Empty tab\n"
                  IO_BOLD " Ctrl+O " IO_NORMAL "Open file/dir.\n"
@@ -28,9 +29,7 @@ void bd_welcome_draw(bd_view_t *view) {
                  IO_BOLD " Ctrl+Down " IO_NORMAL "Go bottom\n"
                  IO_BOLD " Ctrl+Left " IO_NORMAL "Prev. tab\n"
                  IO_BOLD " Ctrl+Right " IO_NORMAL "Next tab\n"
-                 IO_BOLD " [\u2190\u2191\u2192\u2193] " IO_NORMAL "Move\n\n"
-                 IO_UNDERLINE "Dialog box:" IO_NORMAL "\n"
-                 IO_BOLD " Enter " IO_NORMAL "Accept\n"
+                 IO_BOLD " [\u2190\u2191\u2192\u2193] " IO_NORMAL "Move\n"
                 );
                 
   io_printf_wrap(2 + (bd_width / 3), bd_width * 100, y,
@@ -62,7 +61,9 @@ void bd_welcome_draw(bd_view_t *view) {
                  IO_BOLD " Ctrl+V " IO_NORMAL "Paste\n"
                  IO_BOLD " Ctrl+R " IO_NORMAL "Rename\n"
                  IO_BOLD " Ctrl+K " IO_NORMAL "New directory\n"
-                 IO_BOLD " Ctrl+L " IO_NORMAL "New file\n"
+                 IO_BOLD " Ctrl+L " IO_NORMAL "New file\n\n"
+                 IO_UNDERLINE "Dialog box:" IO_NORMAL "\n"
+                 IO_BOLD " Enter " IO_NORMAL "Accept\n"
                 );
                 
   io_flush();
