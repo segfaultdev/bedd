@@ -14,6 +14,7 @@ struct bd_config_t {
     struct {
       int indent_width;        // Anything other than 2 or 4 would be cringe af, but we must still provide room for customization and blah blah blah :p
       int indent_spaces;       // Afects saving/loading, as in editing they're still shown as spaces no matter what
+      int indent_guides;       // Show indentation guides
       int scroll_step;         // Lines to move per scroll step
       int scroll_width_margin; // When scrolling sideways, how much margin to left to the right
       int undo_edit_count;     // Character insertions/deletions per undo save
@@ -21,7 +22,7 @@ struct bd_config_t {
       int theme;               // Selected theme
     };
     
-    int raw_data[7];
+    int raw_data[8];
   };
   
   const char *syntax_colors[st_color_count];

@@ -55,6 +55,7 @@ static void  __bd_text_full_end(bd_text_t *text, int hold);
 static void  __bd_text_follow(bd_text_t *text);
 static char *__bd_text_output(bd_text_t *text, int to_file, io_file_t file, bd_cursor_t start, bd_cursor_t end);
 static void  __bd_text_syntax(bd_text_t *text, int start_line);
+static int   __bd_text_spaces(bd_text_t *text, int y);
 
 static bd_text_t __bd_text_clone(bd_text_t *text) {
   bd_text_t text_clone = *text;
@@ -571,6 +572,17 @@ static void __bd_text_syntax(bd_text_t *text, int start_line) {
   __bd_text_syntax(text, start_line);
 }
 
+static int __bd_text_spaces(bd_text_t *text, int y) {
+  bd_line_t *line = text->lines + y;
+  int space_count = 0;
+  
+  while (space_count < line->length && line->data[space_count] == ' ') {
+    space_count++;
+  }
+  
+  return space_count;
+}
+
 // public functions
 
 void bd_text_draw(bd_view_t *view) {
@@ -588,6 +600,39 @@ void bd_text_draw(bd_view_t *view) {
   bd_cursor_t min_cursor = BD_CURSOR_MIN(text->cursor, text->hold_cursor);
   bd_cursor_t max_cursor = BD_CURSOR_MAX(text->cursor, text->hold_cursor);
   
+  int high_count = __bd_text_spaces(text, text->cursor.y);
+  
+  int high_starts[high_count / bd_config.indent_width];
+  int high_ends[high_count / bd_config.indent_width];
+  
+  int high_start_y = text->cursor.y;
+  int high_end_y = text->cursor.y + 1;
+  
+  for (int i = high_count / bd_config.indent_width; i > 0; i--) {
+    while (high_start_y > 0) {
+      int space_count = __bd_text_spaces(text, high_start_y - 1);
+      
+      if (space_count >= i * bd_config.indent_width) {
+        high_start_y--;
+      } else {
+        break;
+      }
+    }
+    
+    while (high_end_y < text->count) {
+      int space_count = __bd_text_spaces(text, high_end_y);
+      
+      if (space_count >= i * bd_config.indent_width) {
+        high_end_y++;
+      } else {
+        break;
+      }
+    }
+    
+    high_starts[i - 1] = high_start_y;
+    high_ends[i - 1] = high_end_y;
+  }
+  
   for (int i = 0; i < view_height; i++) {
     io_cursor(0, 2 + i);
     
@@ -602,12 +647,7 @@ void bd_text_draw(bd_view_t *view) {
       }
       
       bd_line_t *line = text->lines + y;
-      
-      int space_count = 0;
-      
-      while (space_count < line->length && line->data[space_count] == ' ') {
-        space_count++;
-      }
+      int space_count = __bd_text_spaces(text, y);
       
       int state = y ? text->lines[y - 1].syntax_state : 0;
       int last_color = st_color_none;
@@ -639,7 +679,14 @@ void bd_text_draw(bd_view_t *view) {
         } else {
           if (x < space_count) {
             text->syntax.f_color(state, &state, " ", 1);
-            io_printf("%s\u00B7" IO_WHITE, y == text->cursor.y ? IO_DARK_GRAY : IO_BLACK);
+            
+            int high_index = x / bd_config.indent_width;
+            
+            if (bd_config.indent_guides && !(x % bd_config.indent_width) && x < high_count && y >= high_starts[high_index] && y < high_ends[high_index]) {
+              io_printf("%s\u2502" IO_WHITE, (is_selected || y == text->cursor.y) ? IO_DARK_GRAY : IO_BLACK);
+            } else {
+              io_printf("%s\u00B7" IO_WHITE, (is_selected || y == text->cursor.y) ? IO_DARK_GRAY : IO_BLACK);
+            }
           } else {
             int color = text->syntax.f_color(state, &state, line->data + x, line->length - x);
             

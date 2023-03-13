@@ -6,6 +6,7 @@
 static const int __edit_limits[] = {
   1, 16,
   0, 1,
+  0, 1,
   1, 32,
   0, 40,
   16, 256,
@@ -13,7 +14,7 @@ static const int __edit_limits[] = {
   0, theme_count - 1,
 };
 
-static const int __edit_count = 7;
+static const int __edit_count = 8;
 
 void bd_edit_draw(bd_view_t *view) {
   io_cursor(0, 2);
@@ -32,20 +33,23 @@ void bd_edit_draw(bd_view_t *view) {
   io_cursor(2, 6);
   io_printf(IO_BOLD "%sTabs or spaces:" IO_NORMAL " %s", (index == 1 ? IO_INVERT : ""), bd_config.indent_spaces ? "Spaces" : "Tabs");
   
-  io_cursor(2, 8);
-  io_printf(IO_BOLD "%sScroll step (with mouse wheel, default 2):" IO_NORMAL " %d", (index == 2 ? IO_INVERT : ""), bd_config.scroll_step);
+  io_cursor(2, 7);
+  io_printf(IO_BOLD "%sShow guides:" IO_NORMAL " %s", (index == 2 ? IO_INVERT : ""), bd_config.indent_guides ? "Yes" : "No");
   
   io_cursor(2, 9);
-  io_printf(IO_BOLD "%sHorizontal scroll margin (default 0):" IO_NORMAL " %d", (index == 3 ? IO_INVERT : ""), bd_config.scroll_width_margin);
+  io_printf(IO_BOLD "%sScroll step (with mouse wheel, default 2):" IO_NORMAL " %d", (index == 3 ? IO_INVERT : ""), bd_config.scroll_step);
   
-  io_cursor(2, 11);
-  io_printf(IO_BOLD "%sCharacters per undo entry (default 48):" IO_NORMAL " %d", (index == 4 ? IO_INVERT : ""), bd_config.undo_edit_count);
+  io_cursor(2, 10);
+  io_printf(IO_BOLD "%sHorizontal scroll margin (default 0):" IO_NORMAL " %d", (index == 4 ? IO_INVERT : ""), bd_config.scroll_width_margin);
   
   io_cursor(2, 12);
-  io_printf(IO_BOLD "%sMaximum undo entries (default 64):" IO_NORMAL " %d", (index == 5 ? IO_INVERT : ""), bd_config.undo_depth);
+  io_printf(IO_BOLD "%sCharacters per undo entry (default 48):" IO_NORMAL " %d", (index == 5 ? IO_INVERT : ""), bd_config.undo_edit_count);
   
-  io_cursor(2, 14);
-  io_printf(IO_BOLD "%sTheme:" IO_NORMAL " \"%s\" (%d/%d)", (index == 6 ? IO_INVERT : ""), theme_names[bd_config.theme], bd_config.theme + 1, theme_count);
+  io_cursor(2, 13);
+  io_printf(IO_BOLD "%sMaximum undo entries (default 64):" IO_NORMAL " %d", (index == 6 ? IO_INVERT : ""), bd_config.undo_depth);
+  
+  io_cursor(2, 15);
+  io_printf(IO_BOLD "%sTheme:" IO_NORMAL " \"%s\" (%d/%d)", (index == 7 ? IO_INVERT : ""), theme_names[bd_config.theme], bd_config.theme + 1, theme_count);
   
   io_flush();
   

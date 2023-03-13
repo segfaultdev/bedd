@@ -5,6 +5,7 @@
 bd_config_t bd_config = (bd_config_t) {
   .indent_width = 2,
   .indent_spaces = 1,
+  .indent_guides = 1,
   .scroll_step = 2,
   .scroll_width_margin = 0,
   .undo_edit_count = 48,
