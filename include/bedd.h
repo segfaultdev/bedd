@@ -43,6 +43,7 @@ enum {
   bd_view_text,
   bd_view_explore,
   bd_view_terminal,
+  bd_view_image,
 };
 
 struct bd_view_t {
@@ -85,6 +86,10 @@ void bd_explore_load(bd_view_t *view, const char *path);
 void bd_terminal_draw(bd_view_t *view);
 int  bd_terminal_event(bd_view_t *view, io_event_t event);
 void bd_terminal_load(bd_view_t *view);
+
+void bd_image_draw(bd_view_t *view);
+int  bd_image_event(bd_view_t *view, io_event_t event);
+void bd_image_load(bd_view_t *view, const char *path);
 
 void bd_global_draw(void);
 int  bd_global_click(int x, int y);

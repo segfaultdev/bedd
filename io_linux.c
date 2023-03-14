@@ -444,8 +444,6 @@ io_event_t io_get_event(void) {
       for (int i = 0; i < utf_8_size - 1; i++) {
         key |= ((unsigned int)(ansi_buffer[i]) << (i * 8 + 8));
       }
-      
-      fprintf(stderr, "0x%08X\n", key);
     }
     
     return (io_event_t) {
