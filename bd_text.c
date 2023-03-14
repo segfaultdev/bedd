@@ -110,8 +110,12 @@ static bd_text_t __bd_text_clone(bd_text_t *text) {
   memcpy(text_clone.lines, text->lines, text_clone.count * sizeof(bd_line_t));
   
   for (int i = 0; i < text_clone.count; i++) {
-    text_clone.lines[i].data = malloc(text_clone.lines[i].size);
-    memcpy(text_clone.lines[i].data, text->lines[i].data, text_clone.lines[i].size);
+    if (text_clone.lines[i].size) {
+      text_clone.lines[i].data = malloc(text_clone.lines[i].size);
+      memcpy(text_clone.lines[i].data, text->lines[i].data, text_clone.lines[i].size);
+    } else {
+      text_clone.lines[i].data = NULL;
+    }
   }
   
   return text_clone;
@@ -673,9 +677,9 @@ void bd_text_draw(bd_view_t *view) {
   bd_cursor_t max_cursor = BD_CURSOR_MAX(text->cursor, text->hold_cursor);
   
   int high_count = __bd_text_spaces(text, text->cursor.y);
+  int high_tabs = high_count / bd_config.indent_width;
   
-  int high_starts[high_count / bd_config.indent_width];
-  int high_ends[high_count / bd_config.indent_width];
+  int high_starts[high_tabs], high_ends[high_tabs];
   
   int high_start_y = text->cursor.y;
   int high_end_y = text->cursor.y + 1;
@@ -754,7 +758,7 @@ void bd_text_draw(bd_view_t *view) {
             
             int high_index = x / bd_config.indent_width;
             
-            if (bd_config.indent_guides && !(x % bd_config.indent_width) && x < high_count &&
+            if (bd_config.indent_guides && !(x % bd_config.indent_width) && x < high_count && high_index < high_tabs &&
                 (!(space_count % bd_config.indent_width) || high_index < space_count / bd_config.indent_width - 2) &&
                 y >= high_starts[high_index] && y < high_ends[high_index]) {
               io_printf("%s\u2502" IO_WHITE, (is_selected || y == text->cursor.y) ? IO_DARK_GRAY : IO_BLACK);

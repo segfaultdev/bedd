@@ -56,9 +56,7 @@ int main(int argc, const char **argv) {
   int global_draw = 1;
   int view_draw = 1;
   
-  int do_exit = 0;
-  
-  while (!do_exit) {
+  for (;;) {
     io_event_t event;
     int handled = 0;
     
@@ -81,7 +79,7 @@ int main(int argc, const char **argv) {
           bd_view_remove(bd_views + bd_view);
           
           if (!bd_view_count) {
-            do_exit = 1;
+            break;
           }
           
           handled = 1;
