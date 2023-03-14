@@ -33,7 +33,7 @@ void io_init(void) {
   
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_termios);
   
-  setlocale(LC_ALL, "");
+  setlocale(LC_ALL, "C.UTF-8");
   printf(IO_CLEAR_SCREEN "\x1B[?1000;1002;1006;1015h");
   
   fflush(stdout);
@@ -289,11 +289,11 @@ io_event_t io_get_event(void) {
     };
   }
   
-  char ansi_buffer[256];
-  char chr;
+  unsigned char ansi_buffer[256];
+  unsigned char chr;
   
   if (read(STDIN_FILENO, &chr, 1) > 0) {
-    int key = chr;
+    unsigned int key = chr;
     
     if (chr == '\x1B') {
       read(STDIN_FILENO, ansi_buffer, 1);
@@ -425,6 +425,27 @@ io_event_t io_get_event(void) {
       }
     } else if (chr == '\x7F') {
       key = IO_CTRL('H');
+    }
+    
+    int utf_8_size = 1;
+    
+    if (chr >= 0xF0) {
+      utf_8_size = 4;
+    } else if (chr >= 0xE0) {
+      utf_8_size = 3;
+    } else if (chr >= 0xC0) {
+      utf_8_size = 2;
+    }
+    
+    if (utf_8_size > 1) {
+      read(STDIN_FILENO, ansi_buffer, utf_8_size);
+      key = chr | 0x80000000;
+      
+      for (int i = 0; i < utf_8_size - 1; i++) {
+        key |= ((unsigned int)(ansi_buffer[i]) << (i * 8 + 8));
+      }
+      
+      fprintf(stderr, "0x%08X\n", key);
     }
     
     return (io_event_t) {

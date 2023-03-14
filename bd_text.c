@@ -10,8 +10,8 @@ typedef struct bd_line_t bd_line_t;
 typedef struct bd_text_t bd_text_t;
 
 struct bd_line_t {
-  char *data;
-  int length;
+  unsigned char *data;
+  int size, length;
   
   int syntax_state; // State *after* including the newline
 };
@@ -34,6 +34,10 @@ struct bd_text_t {
 
 // static functions
 
+static int __bd_text_utf_8_size(unsigned char value);
+static int __bd_text_utf_8_to_byte(bd_text_t *text, int x, int y);
+static int __bd_text_utf_8_from_byte(bd_text_t *text, int byte_index, int y);
+
 static bd_text_t __bd_text_clone(bd_text_t *text);
 static void      __bd_text_free(bd_text_t *text, int recursive_prev, int recursive_next);
 
@@ -43,7 +47,7 @@ static void __bd_text_redo(bd_text_t *text);
 
 static int   __bd_text_cursor(bd_text_t *text);
 static void  __bd_text_backspace(bd_text_t *text, int fix_cursor);
-static void  __bd_text_write(bd_text_t *text, char chr, int by_user);
+static void  __bd_text_write(bd_text_t *text, unsigned int chr, int by_user);
 static void  __bd_text_up(bd_text_t *text, int hold);
 static void  __bd_text_down(bd_text_t *text, int hold);
 static void  __bd_text_right(bd_text_t *text, int hold);
@@ -57,6 +61,48 @@ static char *__bd_text_output(bd_text_t *text, int to_file, io_file_t file, bd_c
 static void  __bd_text_syntax(bd_text_t *text, int start_line);
 static int   __bd_text_spaces(bd_text_t *text, int y);
 
+static int __bd_text_utf_8_size(unsigned char value) {
+  if (value >= 0xF0) {
+    return 4;
+  } else if (value >= 0xE0) {
+    return 3;
+  } else if (value >= 0xC0) {
+    return 2;
+  }
+  
+  return 1;
+}
+
+static int __bd_text_utf_8_to_byte(bd_text_t *text, int x, int y) {
+  bd_line_t *line = text->lines + y;
+  
+  for (int i = 0; i < line->size;) {
+    if (!x) {
+      return i;
+    }
+    
+    i += __bd_text_utf_8_size(line->data[i]);
+    x--;
+  }
+  
+  return line->size;
+}
+
+static int __bd_text_utf_8_from_byte(bd_text_t *text, int byte_index, int y) {
+  bd_line_t *line = text->lines + y;
+  int temp_index = 0;
+  
+  for (int i = 0; i < line->length; i++) {
+    if (temp_index >= byte_index) {
+      return i;
+    }
+    
+    temp_index += __bd_text_utf_8_size(line->data[temp_index]);
+  }
+  
+  return line->length;
+}
+
 static bd_text_t __bd_text_clone(bd_text_t *text) {
   bd_text_t text_clone = *text;
   
@@ -64,8 +110,8 @@ static bd_text_t __bd_text_clone(bd_text_t *text) {
   memcpy(text_clone.lines, text->lines, text_clone.count * sizeof(bd_line_t));
   
   for (int i = 0; i < text_clone.count; i++) {
-    text_clone.lines[i].data = malloc(text_clone.lines[i].length);
-    memcpy(text_clone.lines[i].data, text->lines[i].data, text_clone.lines[i].length);
+    text_clone.lines[i].data = malloc(text_clone.lines[i].size);
+    memcpy(text_clone.lines[i].data, text->lines[i].data, text_clone.lines[i].size);
   }
   
   return text_clone;
@@ -202,9 +248,15 @@ static void __bd_text_backspace(bd_text_t *text, int fix_cursor) {
   
   if (text->cursor.x) {
     bd_line_t *line = text->lines + text->cursor.y;
-    memmove(line->data + (text->cursor.x - 1), line->data + text->cursor.x, line->length - text->cursor.x);
+    int byte_index = __bd_text_utf_8_to_byte(text, text->cursor.x - 1, text->cursor.y);
     
+    unsigned char value = line->data[byte_index];
+    int utf_8_size = __bd_text_utf_8_size(value);
+    
+    memmove(line->data + byte_index, line->data + byte_index + utf_8_size, line->size - (byte_index + utf_8_size));
     text->cursor.x--;
+    
+    line->size -= utf_8_size;
     line->length--;
     
     __bd_text_syntax(text, text->cursor.y);
@@ -218,15 +270,17 @@ static void __bd_text_backspace(bd_text_t *text, int fix_cursor) {
     bd_line_t *prev_line = text->lines + (text->cursor.y - 1);
     bd_line_t *line = text->lines + text->cursor.y;
     
-    prev_line->data = realloc(prev_line->data, prev_line->length + line->length);
+    prev_line->data = realloc(prev_line->data, prev_line->size + line->size);
     
-    if (line->length) {
-      memcpy(prev_line->data + prev_line->length, line->data, line->length);
+    if (line->size) {
+      memcpy(prev_line->data + prev_line->size, line->data, line->size);
     }
     
     text->cursor.x = prev_line->length;
     
     prev_line->length += line->length;
+    prev_line->size += line->size;
+    
     free(line->data);
     
     for (int i = text->cursor.y; i < text->count - 1; i++) {
@@ -249,7 +303,7 @@ static void __bd_text_backspace(bd_text_t *text, int fix_cursor) {
   __bd_text_follow(text);
 }
 
-static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
+static void __bd_text_write(bd_text_t *text, unsigned int chr, int by_user) {
   __bd_text_cursor(text);
   text->edit_count++, text->dirty = 1;
   
@@ -276,29 +330,38 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
     }
     
     int old_count = space_count;
-    char last = '\0', pair = '\0';
+    unsigned char last = '\0', pair = '\0';
+    
+    int byte_index = __bd_text_utf_8_to_byte(text, text->cursor.x, text->cursor.y);
     
     if (by_user) {
-      space_count += !!text->syntax.f_depth(text->lines[text->cursor.y].data, text->cursor.x) * bd_config.indent_width;
+      space_count += !!text->syntax.f_depth((const char *)(text->lines[text->cursor.y].data), byte_index) * bd_config.indent_width;
       
       if (text->cursor.x) {
-        last = text->lines[text->cursor.y].data[text->cursor.x - 1];
-        pair = text->syntax.f_pair(text->lines[text->cursor.y].data, text->cursor.x - 1, last);
+        int prev_index = __bd_text_utf_8_to_byte(text, text->cursor.x - 1, text->cursor.y);
+        
+        last = text->lines[text->cursor.y].data[prev_index];
+        pair = text->syntax.f_pair((const char *)(text->lines[text->cursor.y].data), prev_index, last);
       }
     }
     
     line.length = space_count + (text->lines[text->cursor.y].length - text->cursor.x),
-    line.data = line.length ? malloc(line.length) : NULL;
+    line.size = space_count + (text->lines[text->cursor.y].size - byte_index);
+    
+    line.data = line.size ? malloc(line.size) : NULL;
     
     if (by_user && space_count) {
       memset(line.data, ' ', space_count);
     }
     
-    if (line.length - space_count) {
-      memcpy(line.data + space_count, text->lines[text->cursor.y].data + text->cursor.x, line.length - space_count);
+    if (line.size - space_count) {
+      memcpy(line.data + space_count, text->lines[text->cursor.y].data + byte_index, line.size - space_count);
     }
     
-    text->lines[text->cursor.y].data = realloc(text->lines[text->cursor.y].data, text->lines[text->cursor.y].length = text->cursor.x);
+    text->lines[text->cursor.y].length = text->cursor.x;
+    text->lines[text->cursor.y].size = byte_index;
+    
+    text->lines[text->cursor.y].data = realloc(text->lines[text->cursor.y].data, byte_index);
     text->lines[text->cursor.y + 1] = line;
     
     text->cursor.x = space_count;
@@ -307,7 +370,9 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
     text->hold_cursor = text->cursor;
     
     if (pair) {
-      if (text->cursor.x < text->lines[text->cursor.y].length && text->lines[text->cursor.y].data[text->cursor.x] == pair) {
+      int byte_index = __bd_text_utf_8_to_byte(text, text->cursor.x, text->cursor.y);
+      
+      if (text->cursor.x < text->lines[text->cursor.y].length && text->lines[text->cursor.y].data[byte_index] == pair) {
         bd_cursor_t old_cursor = text->cursor;
         __bd_text_write(text, '\n', 0);
         
@@ -326,14 +391,20 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
     return;
   }
   
+  int byte_index = __bd_text_utf_8_to_byte(text, text->cursor.x, text->cursor.y);
+  int utf_8_size = __bd_text_utf_8_size(chr & 0xFF);
+  
   bd_line_t *line = text->lines + text->cursor.y;
-  line->data = realloc(line->data, line->length + 1);
+  line->data = realloc(line->data, line->size + utf_8_size);
   
   if (line->length - text->cursor.x) {
-    memmove(line->data + text->cursor.x + 1, line->data + text->cursor.x, line->length - text->cursor.x);
+    memmove(line->data + byte_index + utf_8_size, line->data + byte_index, line->size - byte_index);
   }
   
-  line->data[text->cursor.x++] = chr;
+  memcpy(line->data + byte_index, &chr, utf_8_size);
+  text->cursor.x++;
+  
+  line->size += utf_8_size;
   line->length++;
   
   text->hold_cursor = text->cursor;
@@ -343,7 +414,7 @@ static void __bd_text_write(bd_text_t *text, char chr, int by_user) {
     return;
   }
   
-  char pair = text->syntax.f_pair(line->data, text->cursor.x - 1, chr);
+  char pair = text->syntax.f_pair((const char *)(line->data), byte_index, (char)(chr));
   
   if (pair) {
     __bd_text_write(text, pair, 0);
@@ -506,39 +577,40 @@ static char *__bd_text_output(bd_text_t *text, int to_file, io_file_t file, bd_c
     end.x = text->lines[end.y].length;
   }
   
-  int space_count = 0;
-  
-  while (space_count < text->lines[start.y].length && text->lines[start.y].data[space_count] == ' ') {
-    space_count++;
-  }
+  int space_count = __bd_text_spaces(text, start.y);
   
   while (start.y < end.y || (start.y == end.y && start.x < end.x)) {
-    char chr;
+    unsigned char utf_8_buffer[4];
+    int utf_8_size;
     
     if (start.x >= text->lines[start.y].length) {
-      chr = '\n';
+      utf_8_buffer[0] = '\n';
+      utf_8_size = 1;
       
+      space_count = __bd_text_spaces(text, ++start.y);
       start.x = 0;
-      start.y++;
-      
-      space_count = 0;
-      
-      while (space_count < text->lines[start.y].length && text->lines[start.y].data[space_count] == ' ') {
-        space_count++;
-      }
     } else if (!bd_config.indent_spaces && start.x < space_count && !(start.x % bd_config.indent_width)) {
-      chr = '\t';
+      utf_8_buffer[0] = '\t';
+      utf_8_size = 1;
+      
       start.x += bd_config.indent_width;
     } else {
-      chr = text->lines[start.y].data[start.x];
+      int byte_index = __bd_text_utf_8_to_byte(text, start.x, start.y);
+      
+      utf_8_buffer[0] = text->lines[start.y].data[byte_index];
+      utf_8_size = __bd_text_utf_8_size(utf_8_buffer[0]);
+      
+      memcpy(utf_8_buffer + 1, text->lines[start.y].data + byte_index + 1, utf_8_size - 1);
       start.x++;
     }
     
     if (to_file) {
-      io_fwrite(file, &chr, 1);
+      io_fwrite(file, utf_8_buffer, utf_8_size);
     } else {
-      buffer = realloc(buffer, buffer_length + 1);
-      buffer[buffer_length++] = chr;
+      buffer = realloc(buffer, buffer_length + utf_8_size);
+      
+      memcpy(buffer + buffer_length, utf_8_buffer, utf_8_size);
+      buffer_length += utf_8_size;
     }
   }
   
@@ -553,8 +625,8 @@ static char *__bd_text_output(bd_text_t *text, int to_file, io_file_t file, bd_c
 static void __bd_text_syntax(bd_text_t *text, int start_line) {
   int state = start_line ? text->lines[start_line - 1].syntax_state : 0;
   
-  for (int i = 0; i < text->lines[start_line].length; i++) {
-    text->syntax.f_color(state, &state, text->lines[start_line].data + i, text->lines[start_line].length - i);
+  for (int i = 0; i < text->lines[start_line].size; i++) {
+    text->syntax.f_color(state, &state, (const char *)(text->lines[start_line].data + i), text->lines[start_line].size - i);
   }
   
   text->syntax.f_color(state, &state, "\n", 1);
@@ -576,7 +648,7 @@ static int __bd_text_spaces(bd_text_t *text, int y) {
   bd_line_t *line = text->lines + y;
   int space_count = 0;
   
-  while (space_count < line->length && line->data[space_count] == ' ') {
+  while (space_count < line->size && line->data[space_count] == ' ') {
     space_count++;
   }
   
@@ -682,13 +754,18 @@ void bd_text_draw(bd_view_t *view) {
             
             int high_index = x / bd_config.indent_width;
             
-            if (bd_config.indent_guides && !(x % bd_config.indent_width) && x < high_count && y >= high_starts[high_index] && y < high_ends[high_index]) {
+            if (bd_config.indent_guides && !(x % bd_config.indent_width) && x < high_count &&
+                (!(space_count % bd_config.indent_width) || high_index < space_count / bd_config.indent_width - 2) &&
+                y >= high_starts[high_index] && y < high_ends[high_index]) {
               io_printf("%s\u2502" IO_WHITE, (is_selected || y == text->cursor.y) ? IO_DARK_GRAY : IO_BLACK);
             } else {
               io_printf("%s\u00B7" IO_WHITE, (is_selected || y == text->cursor.y) ? IO_DARK_GRAY : IO_BLACK);
             }
           } else {
-            int color = text->syntax.f_color(state, &state, line->data + x, line->length - x);
+            int byte_index = __bd_text_utf_8_to_byte(text, x, y);
+            int utf_8_size = __bd_text_utf_8_size(line->data[byte_index]);
+            
+            int color = text->syntax.f_color(state, &state, (const char *)(line->data + byte_index), line->size - byte_index);
             
             if (color == st_color_none) {
               color = last_color;
@@ -700,7 +777,12 @@ void bd_text_draw(bd_view_t *view) {
               temp_color = st_color_none;
             }
             
-            io_printf("%s%c", bd_config.syntax_colors[temp_color], line->data[x]);
+            unsigned char utf_8_buffer[5];
+            
+            memcpy(utf_8_buffer, line->data + byte_index, utf_8_size);
+            utf_8_buffer[utf_8_size] = '\0';
+            
+            io_printf("%s%s", bd_config.syntax_colors[temp_color], utf_8_buffer);
             last_color = color;
           }
         }
@@ -710,7 +792,7 @@ void bd_text_draw(bd_view_t *view) {
       io_cursor(bd_width - 2, 2 + i);
       
       for (int j = view_width + text->scroll.x; j < line->length; j++) {
-        text->syntax.f_color(state, &state, line->data + j, line->length - j);
+        text->syntax.f_color(state, &state, (const char *)(line->data + j), line->length - j);
       }
       
       if (text->scroll.x + view_width < line->length) {
@@ -790,7 +872,7 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
           bd_line_t *line = text->lines + i;
           int space_count = 0;
           
-          while (space_count < line->length && line->data[space_count] == ' ' && space_count < bd_config.indent_width) {
+          while (space_count < line->size && line->data[space_count] == ' ' && space_count < bd_config.indent_width) {
             space_count++;
           }
           
@@ -826,8 +908,8 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       
       __bd_text_undo_save(text);
       return 1;
-    } else if ((event.key >= 32 && event.key < 127) || event.key == '\t') {
-      __bd_text_write(text, event.key, 1);
+    } else if ((event.key >= 32 && event.key < 127) || event.key == '\t' || event.key & 0x80000000) {
+      __bd_text_write(text, event.key & 0x7FFFFFFF, 1);
       
       if (text->edit_count >= bd_config.undo_edit_count) {
         __bd_text_undo_save(text);
@@ -938,10 +1020,19 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       __bd_text_undo_save(text);
       __bd_text_cursor(text);
       
-      char chr;
+      unsigned char buffer[4];
       
-      while (io_fread(clipboard, &chr, 1)) {
-        __bd_text_write(text, chr, 0);
+      while (io_fread(clipboard, buffer, 1)) {
+        int utf_8_size = __bd_text_utf_8_size(buffer[0]);
+        io_fread(clipboard, buffer + 1, utf_8_size - 1);
+        
+        unsigned int value = 0;
+        
+        for (int i = 0; i < utf_8_size; i++) {
+          value |= ((unsigned int)(buffer[i]) << (i * 8));
+        }
+        
+        __bd_text_write(text, value, 0);
       }
       
       io_cclose(clipboard);
@@ -956,7 +1047,7 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
         int result = bd_dialog("Find/Replace in text (Ctrl+Q to exit)", -16, "i[Query:]i[Replace with:]b[3;Find next;Replace next;Replace all]", query, replace);
         
         if (!result) {
-          break;  // Ctrl+Q
+          break; // Ctrl+Q
         }
         
         bd_cursor_t cursor = BD_CURSOR_MAX(text->cursor, text->hold_cursor);
@@ -972,12 +1063,15 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
         while (!done && cursor.y < text->count) {
           while (!done && cursor.x <= text->lines[cursor.y].length) {
             char replace_copy[256];
-            int match_length = mt_match(text->lines[cursor.y].data + cursor.x, text->lines[cursor.y].length - cursor.x, query, replace, replace_copy);
+            
+            int byte_index = __bd_text_utf_8_to_byte(text, cursor.x, cursor.y);
+            int match_length = mt_match((const char *)(text->lines[cursor.y].data + byte_index), text->lines[cursor.y].size - byte_index, query, replace, replace_copy);
             
             if (match_length >= 0) {
               text->hold_cursor = cursor;
+              
               text->cursor = (bd_cursor_t) {
-                cursor.x + match_length, cursor.y
+                cursor.x + __bd_text_utf_8_from_byte(text, match_length, cursor.y), cursor.y
               };
               
               if (result >= 2) {
@@ -1016,11 +1110,11 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       __bd_text_redo(text);
       return 1;
     } else if (event.key == IO_ALT(IO_CTRL('M'))) {
-      const char *line = text->lines[text->cursor.y].data;
-      int start = text->cursor.x;
+      const unsigned char *line = text->lines[text->cursor.y].data;
+      int start = __bd_text_utf_8_to_byte(text, text->cursor.x, text->cursor.y);
       
-      if (start >= text->lines[text->cursor.y].length) {
-        start = text->lines[text->cursor.y].length - 1;
+      if (start >= text->lines[text->cursor.y].size) {
+        start = text->lines[text->cursor.y].size - 1;
       }
       
       while (start && (isalnum(line[start]) || strchr(".:/-_&+=?", line[start]))) {
@@ -1033,7 +1127,7 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       
       int end = start;
       
-      while (end < text->lines[text->cursor.y].length && (isalnum(line[end]) || strchr(".:/-_&+=?", line[end]))) {
+      while (end < text->lines[text->cursor.y].size && (isalnum(line[end]) || strchr(".:/-_&+=?", line[end]))) {
         end++;
       }
       
@@ -1042,8 +1136,6 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
       
       memcpy(buffer, line + start, end - start);
       bd_view = bd_view_add(buffer, bd_view_text, buffer) - bd_views;
-      
-      fprintf(stderr, "%s\n", buffer);
       
       return 1;
     }
@@ -1138,7 +1230,7 @@ void bd_text_load(bd_view_t *view, const char *path) {
   text->path[0] = '\0';
   
   text->lines[0].data = NULL;
-  text->lines[0].length = 0;
+  text->lines[0].size = text->lines[0].length = 0;
   text->lines[0].syntax_state = -1;
   
   text->scroll_mouse_y = -1; // not scrolling
@@ -1170,10 +1262,19 @@ void bd_text_load(bd_view_t *view, const char *path) {
     strcat(text->path, " (read only)");
   }
   
-  char chr;
+  unsigned char buffer[4];
   
-  while (io_fread(file, &chr, 1)) {
-    __bd_text_write(text, chr, 0);
+  while (io_fread(file, buffer, 1)) {
+    int utf_8_size = __bd_text_utf_8_size(buffer[0]);
+    io_fread(file, buffer + 1, utf_8_size - 1);
+    
+    unsigned int value = 0;
+    
+    for (int i = 0; i < utf_8_size; i++) {
+      value |= ((unsigned int)(buffer[i]) << (i * 8));
+    }
+    
+    __bd_text_write(text, value, 0);
   }
   
   text->cursor = text->hold_cursor = text->scroll = (bd_cursor_t) {

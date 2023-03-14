@@ -125,7 +125,7 @@ struct io_event_t {
   int type;
   
   union {
-    int key;
+    unsigned int key;
     
     struct {
       int x, y;
