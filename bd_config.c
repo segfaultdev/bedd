@@ -12,6 +12,7 @@ bd_config_t bd_config = (bd_config_t) {
   .undo_depth = 64,
   
   .theme = theme_17,
+  .xterm_colors = 1,
   
   .syntax_colors = {
     "",             // st_color_none

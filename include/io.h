@@ -60,6 +60,9 @@ extern const char *io_config;
 #define IO_BOLD_SHADOW_1 "\x1B[0m\x1B[1m\x0F"
 #define IO_BOLD_SHADOW_2 "\x1B[0m\x1B[1m\x10"
 
+#define IO_XTERM_FORE(color) "\x1B[38;5;" color "m"
+#define IO_XTERM_BACK(color) "\x1B[48;5;" color "m"
+
 #define IO_WHITE     "\x1B[22m\x11"
 #define IO_BLACK     "\x1B[22m\x12"
 #define IO_RED       "\x1B[22m\x13"

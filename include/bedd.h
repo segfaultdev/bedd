@@ -20,9 +20,10 @@ struct bd_config_t {
       int undo_edit_count;     // Character insertions/deletions per undo save
       int undo_depth;          // Maximum amount of undoable steps
       int theme;               // Selected theme
+      int xterm_colors;        // Enable xterm-like 256-color mode
     };
     
-    int raw_data[8];
+    int raw_data[9];
   };
   
   const char *syntax_colors[st_color_count];
@@ -63,6 +64,8 @@ extern int bd_view_count, bd_view;
 
 extern int bd_width, bd_height;
 extern time_t bd_time;
+
+int bd_open(const char *path);
 
 bd_view_t *bd_view_add(const char *title, int type, ...);
 void       bd_view_remove(bd_view_t *view);

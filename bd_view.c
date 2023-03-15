@@ -21,6 +21,8 @@ bd_view_t *bd_view_add(const char *title, int type, ...) {
     bd_explore_load(bd_views + bd_view_count, va_arg(args, const char *));
   } else if (type == bd_view_terminal) {
     bd_terminal_load(bd_views + bd_view_count);
+  } else if (type == bd_view_image) {
+    bd_image_load(bd_views + bd_view_count, va_arg(args, const char *));
   } else {
     bd_views[bd_view_count].data = NULL;
   }
@@ -70,6 +72,8 @@ void bd_view_draw(bd_view_t *view) {
     bd_explore_draw(view);
   } else if (view->type == bd_view_terminal) {
     bd_terminal_draw(view);
+  } else if (view->type == bd_view_image) {
+    bd_image_draw(view);
   }
 }
 
@@ -82,6 +86,8 @@ int bd_view_event(bd_view_t *view, io_event_t event) {
     return bd_explore_event(view, event);
   } else if (view->type == bd_view_terminal) {
     return bd_terminal_event(view, event);
+  } else if (view->type == bd_view_image) {
+    return bd_image_event(view, event);
   }
   
   return 0;

@@ -8,6 +8,47 @@ int bd_view_count = 0, bd_view = 0;
 int bd_width, bd_height;
 time_t bd_time;
 
+int bd_open(const char *path) {
+  char buffer[256];
+  strcpy(buffer, path);
+  
+  while (buffer[0] == '.' && buffer[1] == '/') {
+    memmove(buffer, buffer + 2, sizeof(buffer) - 2);
+  }
+  
+  if (buffer[0] == '.' && buffer[1] == '.' && (!buffer[2] || buffer[2] == '/')) {
+    io_dsolve(path, buffer);
+  }
+  
+  io_file_t file = io_dopen(buffer);
+  
+  if (io_dvalid(file)) {
+    io_dclose(file);
+    bd_view_add(buffer, bd_view_explore, buffer);
+    
+    return 1;
+  }
+  
+  file = io_fopen(buffer, 0);
+  
+  if (io_fvalid(file)) {
+    io_fclose(file);
+    
+    const char *ext = strrchr(path, '.');
+    
+    if (ext && (!strcasecmp(ext, ".png") || !strcasecmp(ext, ".jpeg") || !strcasecmp(ext, ".jpg") ||
+        !strcasecmp(ext, ".bmp") || !strcasecmp(ext, ".tga") || !strcasecmp(ext, ".gif"))) {
+      bd_view_add(buffer, bd_view_image, buffer);
+    } else {
+      bd_view_add(buffer, bd_view_text, buffer);
+    }
+    
+    return 1;
+  }
+  
+  return 0;
+}
+
 int main(int argc, const char **argv) {
   io_init();
   
@@ -19,34 +60,7 @@ int main(int argc, const char **argv) {
   }
   
   for (int i = 1; i < argc; i++) {
-    char buffer[256];
-    strcpy(buffer, argv[i]);
-    
-    while (buffer[0] == '.' && buffer[1] == '/') {
-      memmove(buffer, buffer + 2, sizeof(buffer) - 2);
-    }
-    
-    if (buffer[0] == '.' && buffer[1] == '.' && (!buffer[2] || buffer[2] == '/')) {
-      io_dsolve(argv[i], buffer);
-    }
-    
-    io_file_t file = io_dopen(buffer);
-    
-    if (io_dvalid(file)) {
-      io_dclose(file);
-      bd_view_add(buffer, bd_view_explore, buffer);
-      
-      continue;
-    }
-    
-    file = io_fopen(buffer, 0);
-    
-    if (io_fvalid(file)) {
-      io_fclose(file);
-      bd_view_add(buffer, bd_view_text, buffer);
-      
-      continue;
-    }
+    bd_open(argv[i]);
   }
   
   if (!bd_view_count) {
@@ -112,32 +126,8 @@ int main(int argc, const char **argv) {
             int result = bd_dialog("Open file (Ctrl+Q to cancel)", -16, "i[Path:]b[1;Open]", buffer);
             
             if (result) {
-              while (buffer[0] == '.' && buffer[1] == '/') {
-                memmove(buffer, buffer + 2, sizeof(buffer) - 2);
-              }
-              
-              if (buffer[0] == '.' && buffer[1] == '.' && (!buffer[2] || buffer[2] == '/')) {
-                char temp[256];
-                strcpy(temp, buffer);
-                
-                io_dsolve(temp, buffer);
-              }
-              
-              io_file_t file = io_dopen(buffer);
-              
-              if (io_dvalid(file)) {
-                io_dclose(file);
-                
-                bd_view = bd_view_add(buffer, bd_view_explore, buffer) - bd_views;
-                break;
-              }
-              
-              file = io_fopen(buffer, 0);
-              
-              if (io_fvalid(file)) {
-                io_fclose(file);
-                
-                bd_view = bd_view_add(buffer, bd_view_text, buffer) - bd_views;
+              if (bd_open(buffer)) {
+                bd_view = bd_view_count - 1;
                 break;
               }
             } else {
