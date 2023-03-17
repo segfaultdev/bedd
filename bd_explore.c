@@ -144,7 +144,9 @@ static int __bd_explore_enter(bd_view_t *view, int new_tab) {
     
     return 1;
   } else {
-    bd_view = bd_view_add(new_path, entry.is_directory ? bd_view_explore : bd_view_text, new_path) - bd_views;
+    bd_open(new_path);
+    
+    bd_view = bd_view_count - 1;
     return 0;
   }
 }
