@@ -66,8 +66,6 @@ void bd_welcome_draw(bd_view_t *view) {
                  IO_BOLD " Enter " IO_NORMAL "Accept\n"
                 );
                 
-  io_flush();
-  
   view->cursor = (bd_cursor_t) {
     -1, -1
     };

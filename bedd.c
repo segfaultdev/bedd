@@ -37,7 +37,7 @@ int bd_open(const char *path) {
     const char *ext = strrchr(path, '.');
     
     if (ext && (!strcasecmp(ext, ".png") || !strcasecmp(ext, ".jpeg") || !strcasecmp(ext, ".jpg") ||
-        !strcasecmp(ext, ".bmp") || !strcasecmp(ext, ".tga") || !strcasecmp(ext, ".gif"))) {
+                !strcasecmp(ext, ".bmp") || !strcasecmp(ext, ".tga") || !strcasecmp(ext, ".gif"))) {
       bd_view_add(buffer, bd_view_image, buffer);
     } else {
       bd_view_add(buffer, bd_view_text, buffer);
@@ -189,18 +189,18 @@ int main(int argc, const char **argv) {
     
     if (global_draw) {
       bd_global_draw();
-      global_draw = 0;
-      
-      io_cursor(bd_views[bd_view].cursor.x, bd_views[bd_view].cursor.y);
-      io_flush();
     }
     
     if (view_draw) {
       bd_view_draw(bd_views + bd_view);
-      view_draw = 0;
-      
+    }
+    
+    if (global_draw || view_draw) {
       io_cursor(bd_views[bd_view].cursor.x, bd_views[bd_view].cursor.y);
       io_flush();
+      
+      global_draw = 0;
+      view_draw = 0;
     }
   }
   

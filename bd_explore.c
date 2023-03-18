@@ -198,8 +198,6 @@ void bd_explore_draw(bd_view_t *view) {
     io_printf(IO_NORMAL);
   }
   
-  io_flush();
-  
   strcpy(view->title, explore->path);
   
   view->cursor = (bd_cursor_t) {

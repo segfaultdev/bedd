@@ -36,6 +36,9 @@ void io_init(void) {
   setlocale(LC_ALL, "C.UTF-8");
   printf(IO_CLEAR_SCREEN "\x1B[?1000;1002;1006;1015h");
   
+  size_t buffer_size = 1048576;
+  setvbuf(stdout, malloc(buffer_size), _IOFBF, buffer_size);
+  
   fflush(stdout);
 }
 

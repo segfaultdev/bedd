@@ -59,8 +59,6 @@ void bd_edit_draw(bd_view_t *view) {
   io_cursor(2, 17);
   io_printf(IO_BOLD "%sxterm 256-color mode:" IO_NORMAL " %s", (index == 9 ? IO_INVERT : ""), bd_config.xterm_colors ? "Yes" : "No");
   
-  io_flush();
-  
   view->cursor = (bd_cursor_t) {
     -1, -1
     };
