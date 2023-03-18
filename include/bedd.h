@@ -16,6 +16,7 @@ struct bd_config_t {
       int indent_spaces;       // Afects saving/loading, as in editing they're still shown as spaces no matter what
       int indent_guides;       // Show indentation guides
       int scroll_step;         // Lines to move per scroll step
+      int scroll_image_step;   // Blocks to move per image scroll step
       int scroll_width_margin; // When scrolling sideways, how much margin to left to the right
       int undo_edit_count;     // Character insertions/deletions per undo save
       int undo_depth;          // Maximum amount of undoable steps
@@ -23,7 +24,7 @@ struct bd_config_t {
       int xterm_colors;        // Enable xterm-like 256-color mode
     };
     
-    int raw_data[9];
+    int raw_data[10];
   };
   
   const char *syntax_colors[st_color_count];
