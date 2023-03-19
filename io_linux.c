@@ -11,8 +11,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <theme.h>
+#include <pty.h>
 #include <io.h>
 
 static struct termios old_termios;
@@ -103,12 +105,20 @@ size_t io_fwrite(io_file_t file, void *buffer, size_t count) {
     return 0;
   }
   
+  if (file.type == io_file_terminal) {
+    return write((size_t)(file.data) / 1048576, buffer, count);
+  }
+  
   return fwrite(buffer, 1, count, file.data);
 }
 
 size_t io_fread(io_file_t file, void *buffer, size_t count) {
   if (!io_fvalid(file)) {
     return 0;
+  }
+  
+  if (file.type == io_file_terminal) {
+    return read((size_t)(file.data) / 1048576, buffer, count);
   }
   
   return fread(buffer, 1, count, file.data);
@@ -182,6 +192,32 @@ io_file_t io_copen(int write_mode) {
 
 void io_cclose(io_file_t file) {
   pclose(file.data);
+}
+
+io_file_t io_topen(void) {
+  int term_fd;
+  pid_t id = forkpty(&term_fd, NULL, NULL, NULL);
+  
+  if (id < 0) {
+    return (io_file_t) {
+      .type = io_file_file,
+      .read_only = 1,
+      .data = NULL,
+    };
+  }
+  
+  if (id) {
+    execl("/usr/bin/sh", "/usr/bin/sh", NULL);
+    exit(0);
+  }
+  
+  fcntl(term_fd, F_SETFL, FNDELAY);
+  
+  return (io_file_t) {
+    .type = io_file_terminal,
+    .read_only = 0,
+    .data = (void *)((size_t)(term_fd * 1048576 + id)),
+  };
 }
 
 void io_cursor(int x, int y) {

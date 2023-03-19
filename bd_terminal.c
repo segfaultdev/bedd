@@ -2,6 +2,11 @@
 
 typedef struct bd_terminal_t bd_terminal_t;
 
+struct bd_line_t {
+  unsigned char *data;
+  int size;
+};
+
 struct bd_terminal_t {
 
 };
