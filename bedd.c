@@ -118,6 +118,12 @@ int main(int argc, const char **argv) {
           
           global_draw = 1;
           view_draw = 1;
+        } else if (event.key == IO_CTRL('T')) {
+          bd_view = bd_view_add("", bd_view_terminal) - bd_views;
+          handled = 1;
+          
+          global_draw = 1;
+          view_draw = 1;
         } else if (event.key == IO_CTRL('O')) {
           char buffer[256];
           buffer[0] = '\0';
@@ -181,7 +187,11 @@ int main(int argc, const char **argv) {
       }
     }
     
-    for (int i = 0; !global_draw && i < bd_view_count; i++) {
+    for (int i = 0; i < bd_view_count; i++) {
+      if (bd_view_tick(bd_views + bd_view)) {
+        view_draw = 1;
+      }
+      
       if (bd_views[i].title_dirty) {
         global_draw = 1;
       }

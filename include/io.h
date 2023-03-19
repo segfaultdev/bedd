@@ -29,8 +29,8 @@ io_file_t io_fopen(const char *path, int write_mode);
 time_t    io_ftime(const char *path);
 int       io_fvalid(io_file_t file);
 void      io_fclose(io_file_t file);
-size_t    io_fwrite(io_file_t file, void *buffer, size_t count);
-size_t    io_fread(io_file_t file, void *buffer, size_t count);
+ssize_t   io_fwrite(io_file_t file, void *buffer, size_t count);
+ssize_t   io_fread(io_file_t file, void *buffer, size_t count);
 void      io_frewind(io_file_t file);
 int       io_feof(io_file_t file);
 
@@ -44,7 +44,8 @@ void      io_drewind(io_file_t file);
 io_file_t io_copen(int write_mode);
 void      io_cclose(io_file_t file);
 
-io_file_t io_topen(void); // TODO
+io_file_t io_topen(const char *path);
+void      io_tclose(io_file_t file);
 
 extern const char *io_config;
 

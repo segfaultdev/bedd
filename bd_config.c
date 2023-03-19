@@ -15,6 +15,8 @@ bd_config_t bd_config = (bd_config_t) {
   .theme = theme_17,
   .xterm_colors = 1,
   
+  .shell_path = "/usr/bin/sh",
+  
   .syntax_colors = {
     "",             // st_color_none
     IO_WHITE,       // st_color_default

@@ -846,7 +846,7 @@ void bd_text_draw(bd_view_t *view) {
   strcpy(view->title, new_title);
   
   view->cursor = (bd_cursor_t) {
-    cursor_x, cursor_y
+    cursor_x, cursor_y,
   };
 }
 

@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include <limits.h>
 #include <locale.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -100,7 +101,7 @@ void io_fclose(io_file_t file) {
   }
 }
 
-size_t io_fwrite(io_file_t file, void *buffer, size_t count) {
+ssize_t io_fwrite(io_file_t file, void *buffer, size_t count) {
   if (file.read_only || !io_fvalid(file)) {
     return 0;
   }
@@ -112,7 +113,7 @@ size_t io_fwrite(io_file_t file, void *buffer, size_t count) {
   return fwrite(buffer, 1, count, file.data);
 }
 
-size_t io_fread(io_file_t file, void *buffer, size_t count) {
+ssize_t io_fread(io_file_t file, void *buffer, size_t count) {
   if (!io_fvalid(file)) {
     return 0;
   }
@@ -194,11 +195,11 @@ void io_cclose(io_file_t file) {
   pclose(file.data);
 }
 
-io_file_t io_topen(void) {
+io_file_t io_topen(const char *path) {
   int term_fd;
-  pid_t id = forkpty(&term_fd, NULL, NULL, NULL);
+  pid_t pid = forkpty(&term_fd, NULL, NULL, NULL);
   
-  if (id < 0) {
+  if (pid < 0) {
     return (io_file_t) {
       .type = io_file_file,
       .read_only = 1,
@@ -206,8 +207,8 @@ io_file_t io_topen(void) {
     };
   }
   
-  if (id) {
-    execl("/usr/bin/sh", "/usr/bin/sh", NULL);
+  if (!pid) {
+    execl(path, path, NULL);
     exit(0);
   }
   
@@ -216,8 +217,13 @@ io_file_t io_topen(void) {
   return (io_file_t) {
     .type = io_file_terminal,
     .read_only = 0,
-    .data = (void *)((size_t)(term_fd * 1048576 + id)),
+    .data = (void *)((size_t)(term_fd * 1048576 + pid)),
   };
+}
+
+void io_tclose(io_file_t file) {
+  pid_t pid = (size_t)(file.data) % 1048576;
+  kill(pid, SIGKILL);
 }
 
 void io_cursor(int x, int y) {

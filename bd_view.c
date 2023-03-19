@@ -36,6 +36,8 @@ void bd_view_remove(bd_view_t *view) {
     if (!bd_text_save(view, 1)) {
       return;
     }
+  } else if (view->type == bd_view_terminal) {
+    bd_terminal_kill(view);
   }
   
   if (view->data && view->type != bd_view_edit) {
@@ -75,6 +77,14 @@ void bd_view_draw(bd_view_t *view) {
   } else if (view->type == bd_view_image) {
     bd_image_draw(view);
   }
+}
+
+int bd_view_tick(bd_view_t *view) {
+  if (view->type == bd_view_terminal) {
+    return bd_terminal_tick(view);
+  }
+  
+  return 0;
 }
 
 int bd_view_event(bd_view_t *view, io_event_t event) {

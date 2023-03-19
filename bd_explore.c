@@ -201,8 +201,8 @@ void bd_explore_draw(bd_view_t *view) {
   strcpy(view->title, explore->path);
   
   view->cursor = (bd_cursor_t) {
-    -1, -1
-    };
+    -1, -1,
+  };
 }
 
 int bd_explore_event(bd_view_t *view, io_event_t event) {

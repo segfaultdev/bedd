@@ -60,8 +60,8 @@ void bd_edit_draw(bd_view_t *view) {
   io_printf(IO_BOLD "%sxterm 256-color mode:" IO_NORMAL " %s", (index == 9 ? IO_INVERT : ""), bd_config.xterm_colors ? "Yes" : "No");
   
   view->cursor = (bd_cursor_t) {
-    -1, -1
-    };
+    -1, -1,
+  };
 }
 
 int bd_edit_event(bd_view_t *view, io_event_t event) {

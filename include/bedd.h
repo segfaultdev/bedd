@@ -27,6 +27,7 @@ struct bd_config_t {
     int raw_data[10];
   };
   
+  char shell_path[256];
   const char *syntax_colors[st_color_count];
 };
 
@@ -71,6 +72,7 @@ int bd_open(const char *path);
 bd_view_t *bd_view_add(const char *title, int type, ...);
 void       bd_view_remove(bd_view_t *view);
 void       bd_view_draw(bd_view_t *view);
+int        bd_view_tick(bd_view_t *view);
 int        bd_view_event(bd_view_t *view, io_event_t event);
 
 void bd_welcome_draw(bd_view_t *view);
@@ -81,15 +83,17 @@ int  bd_edit_event(bd_view_t *view, io_event_t event);
 void bd_text_draw(bd_view_t *view);
 int  bd_text_event(bd_view_t *view, io_event_t event);
 void bd_text_load(bd_view_t *view, const char *path);
-int  bd_text_save(bd_view_t *view, int closing); // returns 1 if should close (when closing)
+int  bd_text_save(bd_view_t *view, int closing); // Returns 1 if should close (when closing)
 
 void bd_explore_draw(bd_view_t *view);
 int  bd_explore_event(bd_view_t *view, io_event_t event);
 void bd_explore_load(bd_view_t *view, const char *path);
 
 void bd_terminal_draw(bd_view_t *view);
+int  bd_terminal_tick(bd_view_t *view);
 int  bd_terminal_event(bd_view_t *view, io_event_t event);
 void bd_terminal_load(bd_view_t *view);
+void bd_terminal_kill(bd_view_t *view);
 
 void bd_image_draw(bd_view_t *view);
 int  bd_image_event(bd_view_t *view, io_event_t event);
