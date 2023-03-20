@@ -11,9 +11,9 @@ bd_config_t bd_config = (bd_config_t) {
   .scroll_width_margin = 0,
   .undo_edit_count = 48,
   .undo_depth = 64,
-  
   .theme = theme_17,
   .xterm_colors = 1,
+  .terminal_count = 2048,
   
   .shell_path = "/usr/bin/sh",
   

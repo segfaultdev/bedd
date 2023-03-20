@@ -22,9 +22,10 @@ struct bd_config_t {
       int undo_depth;          // Maximum amount of undoable steps
       int theme;               // Selected theme
       int xterm_colors;        // Enable xterm-like 256-color mode
+      int terminal_count;      // Maximum terminal line count
     };
     
-    int raw_data[10];
+    int raw_data[11];
   };
   
   char shell_path[256];

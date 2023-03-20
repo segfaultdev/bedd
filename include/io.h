@@ -64,6 +64,9 @@ extern const char *io_config;
 #define IO_XTERM_FORE(color) "\x1B[38;5;" color "m"
 #define IO_XTERM_BACK(color) "\x1B[48;5;" color "m"
 
+#define IO_DEFAULT_FORE "\x1B[39m"
+#define IO_DEFAULT_BACK "\x1B[49m"
+
 #define IO_WHITE     "\x1B[22m\x11"
 #define IO_BLACK     "\x1B[22m\x12"
 #define IO_RED       "\x1B[22m\x13"
