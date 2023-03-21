@@ -26,6 +26,8 @@ struct bd_line_t {
 };
 
 struct bd_terminal_t {
+  char title[240];
+  
   bd_line_t *lines;
   int count;
   
@@ -200,6 +202,8 @@ void bd_terminal_draw(bd_view_t *view) {
     cursor_y = -1;
   }
   
+  sprintf(view->title, "%s (Terminal)", terminal->title);
+  
   view->cursor = (bd_cursor_t) {
     terminal->cursor.x, cursor_y,
   };
@@ -209,7 +213,7 @@ int bd_terminal_tick(bd_view_t *view) {
   bd_terminal_t *terminal = view->data;
   int do_draw = 0;
   
-  unsigned char buffer[256];
+  unsigned char buffer[240];
   int length;
   
   while (io_fread(terminal->file, buffer, 1) > 0) {
@@ -231,9 +235,19 @@ int bd_terminal_tick(bd_view_t *view) {
       while (io_fread(terminal->file, buffer + length, 1) > 0) {
         length++;
         
-        if (isalpha(buffer[length - 1])) {
+        if (isalpha(buffer[length - 1]) || buffer[length - 1] == '\x07') {
           break;
         }
+        
+        if (buffer[length - 1] == '\x1B') {
+          io_fread(terminal->file, buffer + length, 1);
+          break;
+        }
+      }
+      
+      if (buffer[1] == ']' && buffer[2] == '0' && buffer[3] == ';') {
+        buffer[length - 1] = '\0';
+        strcpy(terminal->title, (char *)(buffer) + 4);
       }
       
       if (buffer[1] != '[') {
@@ -549,6 +563,7 @@ int bd_terminal_event(bd_view_t *view, io_event_t event) {
 
 void bd_terminal_load(bd_view_t *view) {
   bd_terminal_t *terminal = (view->data = malloc(sizeof(bd_terminal_t)));
+  strcpy(terminal->title, bd_config.shell_path);
   
   terminal->lines = calloc(sizeof(bd_line_t), 1);
   terminal->count = 1;
