@@ -6,5 +6,4 @@
 - Use text-based format for config. file instead of binary
 - Binary hex-editor tab
 - Ctrl+U on every file tab type to reload file
-- Reduce RAM usage to a minimum by freeing blocks
 - Make terminal shell changeable in configuration

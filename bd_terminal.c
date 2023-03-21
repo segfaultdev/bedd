@@ -325,6 +325,10 @@ int bd_terminal_tick(bd_view_t *view) {
             terminal->lines[terminal->cursor.y].data = realloc(terminal->lines[terminal->cursor.y].data, terminal->cursor.x * sizeof(bd_char_t));
             terminal->lines[terminal->cursor.y].size = terminal->cursor.x;
             
+            for (int i = terminal->cursor.y + 1; i < terminal->count; i++) {
+              free(terminal->lines[i].data);
+            }
+            
             terminal->count = terminal->cursor.y + 1;
             terminal->lines = realloc(terminal->lines, terminal->count * sizeof(bd_line_t));
           }
@@ -344,6 +348,10 @@ int bd_terminal_tick(bd_view_t *view) {
             }
           }
         } else if (mode == 2) {
+          for (int i = 0; i < terminal->count; i++) {
+            free(terminal->lines[i].data);
+          }
+          
           terminal->count = 1;
           terminal->lines = realloc(terminal->lines, terminal->count * sizeof(bd_line_t));
           
@@ -374,6 +382,10 @@ int bd_terminal_tick(bd_view_t *view) {
               terminal->lines[terminal->cursor.y].data[i] = terminal->style;
             }
           } else if (mode == 2) {
+            if (terminal->lines[terminal->cursor.y].data != NULL) {
+              free(terminal->lines[terminal->cursor.y].data);
+            }
+            
             terminal->lines[terminal->cursor.y].data = NULL;
             terminal->lines[terminal->cursor.y].size = 0;
           }
