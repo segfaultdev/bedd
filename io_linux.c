@@ -226,6 +226,33 @@ void io_tclose(io_file_t file) {
   kill(pid, SIGKILL);
 }
 
+void io_tresize(io_file_t file, int width, int height) {
+  struct winsize ws;
+  
+  ws.ws_col = width;
+  ws.ws_row = height;
+  
+  ioctl((size_t)(file.data) / 1048576, TIOCSWINSZ, &ws);
+}
+
+void io_tsend(io_file_t file, unsigned int key) {
+  char buffer[256];
+  buffer[0] = '\0';
+  
+  if (key >= IO_ARROW_UP && key <= IO_ARROW_LEFT) {
+    sprintf(buffer, "\x1B[%c", 'A' + (key - IO_ARROW_UP));
+  }
+  
+  io_fwrite(file, buffer, strlen(buffer));
+}
+
+int io_techo(io_file_t file) {
+  struct termios pty_termios;
+  tcgetattr((size_t)(file.data) / 1048576, &pty_termios);
+  
+  return !!(pty_termios.c_lflag & ECHO);
+}
+
 void io_cursor(int x, int y) {
   if (x < 0 || y < 0) {
     printf("\x1B[?25l");
@@ -233,7 +260,6 @@ void io_cursor(int x, int y) {
     printf("\x1B[%d;%dH\x1B[?25h", y + 1, x + 1);
   }
 }
-
 
 void io_printf(const char *format, ...) {
   char buffer[32768];

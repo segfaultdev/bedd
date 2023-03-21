@@ -5,3 +5,5 @@
 - Possibly work towards bare-metal 32-bit build (;
 - Preview bold, underline and links in markdown (and hide *, **, _, ~, etc. if not editing that specific line)
 - Use text-based format for config. file instead of binary
+- Binary hex-editor tab
+- Ctrl+U on every file tab type to reload file

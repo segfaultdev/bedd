@@ -5,7 +5,7 @@
 bd_view_t *bd_views = NULL;
 int bd_view_count = 0, bd_view = 0;
 
-int bd_width, bd_height;
+int bd_width = 80, bd_height = 25;
 time_t bd_time;
 
 int bd_open(const char *path) {
@@ -83,8 +83,6 @@ int main(int argc, const char **argv) {
       } else if (event.type == IO_EVENT_RESIZE) {
         bd_width = event.size.width;
         bd_height = event.size.height;
-        
-        handled = 1;
         
         global_draw = 1;
         view_draw = 1;

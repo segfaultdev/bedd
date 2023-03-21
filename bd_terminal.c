@@ -21,6 +21,8 @@ struct bd_char_t {
 struct bd_line_t {
   bd_char_t *data;
   int size;
+  
+  int dirty;
 };
 
 struct bd_terminal_t {
@@ -32,6 +34,8 @@ struct bd_terminal_t {
   
   bd_char_t style;
   io_file_t file;
+  
+  int dirty;
 };
 
 static const bd_char_t __bd_empty = (bd_char_t) {
@@ -45,11 +49,74 @@ static const bd_char_t __bd_empty = (bd_char_t) {
   .underline = 0,
 };
 
+static void __bd_terminal_write(bd_terminal_t *terminal, int length, unsigned char buffer[length]);
+
+static void __bd_terminal_write(bd_terminal_t *terminal, int length, unsigned char buffer[length]) {
+  if (buffer[0] == '\b') {
+    if (terminal->cursor.x) {
+      terminal->cursor.x--;
+    } else if (terminal->cursor.y) {
+      terminal->cursor.y--;
+      terminal->cursor.x = terminal->lines[terminal->cursor.y].size;
+    }
+  } else if (buffer[0] == '\r') {
+    terminal->cursor.x = 0;
+  } else if (buffer[0] == '\n') {
+    terminal->cursor.x = 0;
+    terminal->cursor.y++;
+  } else {
+    unsigned int code_point = buffer[0];
+    
+    if (code_point >= 0xF0) {
+      code_point = ((unsigned int)(buffer[0] & 0x07) << 18) |
+                   ((unsigned int)(buffer[1] & 0x3F) << 12) |
+                   ((unsigned int)(buffer[2] & 0x3F) << 6) |
+                   ((unsigned int)(buffer[3] & 0x3F) << 0);
+    } else if (code_point >= 0xE0) {
+      code_point = ((unsigned int)(buffer[0] & 0x0F) << 12) |
+                   ((unsigned int)(buffer[1] & 0x3F) << 6) |
+                   ((unsigned int)(buffer[2] & 0x3F) << 0);
+    } else if (code_point >= 0xC0) {
+      code_point = ((unsigned int)(buffer[0] & 0x1F) << 6) |
+                   ((unsigned int)(buffer[1] & 0x3F) << 0);
+    }
+    
+    terminal->cursor.x++;
+    
+    if (terminal->cursor.y >= terminal->count) {
+      terminal->lines = realloc(terminal->lines, (terminal->cursor.y + 1) * sizeof(bd_line_t));
+      
+      for (int i = terminal->count; i <= terminal->cursor.y; i++) {
+        terminal->lines[i] = (bd_line_t) {
+          .data = NULL,
+          .size = 0,
+          
+          .dirty = 1,
+        };
+      }
+      
+      terminal->count = terminal->cursor.y + 1;
+    }
+    
+    if (terminal->lines[terminal->cursor.y].size < terminal->cursor.x) {
+      terminal->lines[terminal->cursor.y].data = realloc(terminal->lines[terminal->cursor.y].data, terminal->cursor.x * sizeof(bd_char_t));
+      
+      for (int i = terminal->lines[terminal->cursor.y].size; i < terminal->cursor.x; i++) {
+        terminal->lines[terminal->cursor.y].data[i] = __bd_empty;
+      }
+      
+      terminal->lines[terminal->cursor.y].size = terminal->cursor.x;
+    }
+    
+    terminal->lines[terminal->cursor.y].data[terminal->cursor.x - 1] = terminal->style;
+    terminal->lines[terminal->cursor.y].data[terminal->cursor.x - 1].code_point = code_point;
+    
+    terminal->lines[terminal->cursor.y].dirty = 1;
+  }
+}
+
 void bd_terminal_draw(bd_view_t *view) {
   bd_terminal_t *terminal = view->data;
-  
-  io_cursor(0, 2);
-  io_printf(IO_CLEAR_CURSOR);
   
   for (int i = 0; i < bd_height - 2; i++) {
     int y = i + terminal->scroll_y;
@@ -65,7 +132,11 @@ void bd_terminal_draw(bd_view_t *view) {
     } else {
       bd_line_t line = terminal->lines[y];
       
-      for (int j = 0; j < line.size && j < bd_width - 2; j++) {
+      if (terminal->dirty) {
+        line.dirty = 1;
+      }
+      
+      for (int j = 0; line.dirty && j < line.size && j < bd_width - 2; j++) {
         bd_char_t chr = line.data[j];
         
         if (chr.fore_color < 0) {
@@ -101,13 +172,28 @@ void bd_terminal_draw(bd_view_t *view) {
         io_printf("%lc", chr.code_point);
       }
       
-      io_printf(IO_NORMAL IO_CLEAR_LINE);
+      if (line.dirty) {
+        io_printf(IO_NORMAL IO_CLEAR_LINE);
+        terminal->lines[y].dirty = 0;
+      }
       
       io_cursor(bd_width - 2, i + 2);
       io_printf(IO_SHADOW_1 " ");
     }
+    
+    int scroll_start_y = (terminal->scroll_y * (bd_height - 2)) / terminal->count;
+    int scroll_end_y = 1 + ((terminal->scroll_y + (bd_height - 2)) * (bd_height - 2)) / terminal->count;
+    
+    if (i >= scroll_start_y && i < scroll_end_y) {
+      io_printf(IO_SHADOW_2 " ");
+    } else {
+      io_printf(IO_NORMAL "\u2502");
+    }
+    
+    io_printf(IO_NORMAL);
   }
   
+  terminal->dirty = 0;
   int cursor_y = (terminal->cursor.y - terminal->scroll_y) + 2;
   
   if (cursor_y < 2 || cursor_y >= bd_height) {
@@ -128,7 +214,18 @@ int bd_terminal_tick(bd_view_t *view) {
   
   while (io_fread(terminal->file, buffer, 1) > 0) {
     length = 1;
-    // TODO: UTF-8
+    
+    if (buffer[0] >= 0xF0) {
+      length = 4;
+    } else if (buffer[0] >= 0xE0) {
+      length = 3;
+    } else if (buffer[0] >= 0xC0) {
+      length = 2;
+    }
+    
+    if (length > 1) {
+      io_fread(terminal->file, buffer + 1, length - 1);
+    }
     
     if (buffer[0] == '\x1B') {
       while (io_fread(terminal->file, buffer + length, 1) > 0) {
@@ -143,7 +240,7 @@ int bd_terminal_tick(bd_view_t *view) {
         continue;
       }
       
-      fprintf(stderr, "'%.*s'\n", length - 1, (char *)(buffer + 1));
+      // fprintf(stderr, "'%.*s'\n", length - 1, (char *)(buffer + 1));
       
       if (buffer[length - 1] == 'A') {
         int step = 1;
@@ -180,11 +277,71 @@ int bd_terminal_tick(bd_view_t *view) {
       }
       
       if (buffer[length - 1] == 'H' || buffer[length - 1] == 'f') {
-        int x, y;
-        sscanf((char *)(buffer + 2), "%d;%d", &y, &x);
+        int x = 1, y = 1;
+        
+        if (isdigit(buffer[2])) {
+          sscanf((char *)(buffer + 2), "%d;%d", &y, &x);
+        }
+        
+        if (x < 1) {
+          x = 1;
+        } else if (x > bd_width - 2) {
+          x = bd_width - 2;
+        }
+        
+        if (y < 1) {
+          y = 1;
+        } else if (y > bd_height - 2) {
+          y = bd_height - 2;
+        }
         
         terminal->cursor.x = x - 1;
         terminal->cursor.y = (y - 1) + terminal->scroll_y;
+      }
+      
+      if (buffer[length - 1] == 'J') {
+        int mode = 0;
+        
+        if (isdigit(buffer[2])) {
+          sscanf((char *)(buffer + 2), "%d", &mode);
+        }
+        
+        if (mode == 0) {
+          if (terminal->cursor.y < terminal->count) {
+            terminal->lines[terminal->cursor.y].data = realloc(terminal->lines[terminal->cursor.y].data, terminal->cursor.x * sizeof(bd_char_t));
+            terminal->lines[terminal->cursor.y].size = terminal->cursor.x;
+            
+            terminal->count = terminal->cursor.y + 1;
+            terminal->lines = realloc(terminal->lines, terminal->count * sizeof(bd_line_t));
+          }
+        } else if (mode == 1) {
+          for (int i = 0; i < terminal->cursor.y && i < terminal->count; i++) {
+            if (terminal->lines[terminal->cursor.y].data) {
+              free(terminal->lines[terminal->cursor.y].data);
+              
+              terminal->lines[terminal->cursor.y].data = NULL;
+              terminal->lines[terminal->cursor.y].size = 0;
+            }
+          }
+          
+          if (terminal->cursor.y < terminal->count) {
+            for (int i = 0; i < terminal->cursor.x && i < terminal->lines[terminal->cursor.y].size; i++) {
+              terminal->lines[terminal->cursor.y].data[i] = terminal->style;
+            }
+          }
+        } else if (mode == 2) {
+          terminal->count = 1;
+          terminal->lines = realloc(terminal->lines, terminal->count * sizeof(bd_line_t));
+          
+          terminal->lines[0] = (bd_line_t) {
+            .data = NULL,
+            .size = 0,
+            
+            .dirty = 1,
+          };
+        }
+        
+        terminal->dirty = 1;
       }
       
       if (buffer[length - 1] == 'K') {
@@ -196,16 +353,18 @@ int bd_terminal_tick(bd_view_t *view) {
         
         if (terminal->cursor.y < terminal->count) {
           if (mode == 0) {
-            terminal->lines[terminal->cursor.y].data = realloc(terminal->lines[terminal->cursor.y].data, terminal->cursor.x);
+            terminal->lines[terminal->cursor.y].data = realloc(terminal->lines[terminal->cursor.y].data, terminal->cursor.x * sizeof(bd_char_t));
             terminal->lines[terminal->cursor.y].size = terminal->cursor.x;
           } else if (mode == 1) {
-            for (int i = 0; i < terminal->cursor.x; i++) {
+            for (int i = 0; i < terminal->cursor.x && i < terminal->lines[terminal->cursor.y].size; i++) {
               terminal->lines[terminal->cursor.y].data[i] = terminal->style;
             }
           } else if (mode == 2) {
             terminal->lines[terminal->cursor.y].data = NULL;
             terminal->lines[terminal->cursor.y].size = 0;
           }
+          
+          terminal->lines[terminal->cursor.y].dirty = 1;
         }
       }
       
@@ -310,47 +469,8 @@ int bd_terminal_tick(bd_view_t *view) {
           }
         }
       }
-    } else if (buffer[0] == '\b') {
-      if (terminal->cursor.x) {
-        terminal->cursor.x--;
-      } else if (terminal->cursor.y) {
-        terminal->cursor.y--;
-        terminal->cursor.x = terminal->lines[terminal->cursor.y].size;
-      }
-    } else if (buffer[0] == '\r') {
-      terminal->cursor.x = 0;
-    } else if (buffer[0] == '\n') {
-      terminal->cursor.x = 0;
-      terminal->cursor.y++;
     } else {
-      unsigned int code_point = buffer[0]; // TODO: UTF-8
-      terminal->cursor.x++;
-      
-      if (terminal->cursor.y >= terminal->count) {
-        terminal->lines = realloc(terminal->lines, (terminal->cursor.y + 1) * sizeof(bd_line_t));
-        
-        for (int i = terminal->count; i <= terminal->cursor.y; i++) {
-          terminal->lines[i] = (bd_line_t) {
-            .data = NULL,
-            .size = 0,
-          };
-        }
-        
-        terminal->count = terminal->cursor.y + 1;
-      }
-      
-      if (terminal->lines[terminal->cursor.y].size < terminal->cursor.x) {
-        terminal->lines[terminal->cursor.y].data = realloc(terminal->lines[terminal->cursor.y].data, terminal->cursor.x * sizeof(bd_char_t));
-        
-        for (int i = terminal->lines[terminal->cursor.y].size; i < terminal->cursor.x; i++) {
-          terminal->lines[terminal->cursor.y].data[i] = terminal->style;
-        }
-        
-        terminal->lines[terminal->cursor.y].size = terminal->cursor.x;
-      }
-      
-      terminal->lines[terminal->cursor.y].data[terminal->cursor.x - 1] = terminal->style;
-      terminal->lines[terminal->cursor.y].data[terminal->cursor.x - 1].code_point = code_point;
+      __bd_terminal_write(terminal, length, buffer);
     }
     
     if (terminal->cursor.x < 0) {
@@ -365,12 +485,9 @@ int bd_terminal_tick(bd_view_t *view) {
       terminal->cursor.y = 0;
     }
     
-    if (terminal->cursor.y >= bd_height - 2) {
-      terminal->cursor.y = bd_height - 3;
-    }
-    
     if (terminal->scroll_y <= terminal->cursor.y - (bd_height - 2)) {
       terminal->scroll_y = terminal->cursor.y - (bd_height - 3);
+      terminal->dirty = 1;
     }
     
     if (terminal->count > bd_config.terminal_count) {
@@ -391,9 +508,40 @@ int bd_terminal_event(bd_view_t *view, io_event_t event) {
   bd_terminal_t *terminal = view->data;
   
   if (event.type == IO_EVENT_KEY_PRESS) {
-    if (event.key < 128) {
-      io_fwrite(terminal->file, &event.key, 1);
+    unsigned char buffer[4];
+    int length = 1, echo = 0;
+    
+    buffer[0] = event.key & 0xFF;
+    buffer[1] = (event.key >> 8) & 0xFF;
+    buffer[2] = (event.key >> 16) & 0xFF;
+    buffer[3] = (event.key >> 24) & 0x7F;
+    
+    if (buffer[0] >= 0xF0) {
+      length = 4;
+    } else if (buffer[0] >= 0xE0) {
+      length = 3;
+    } else if (buffer[0] >= 0xC0) {
+      length = 2;
     }
+    
+    if ((event.key >= 32 && event.key < 128) || strchr("\b\n\t", event.key)) {
+      io_fwrite(terminal->file, &event.key, 1);
+      echo = 1;
+    } else if (event.key & 0x80000000) {
+      io_fwrite(terminal->file, buffer, length);
+      echo = 1;
+    } else if (IO_UNALT(event.key) < 32) {
+      unsigned char key = IO_UNALT(event.key);
+      io_fwrite(terminal->file, &key, 1);
+    } else if (IO_EXTRA(event.key) == event.key) {
+      io_tsend(terminal->file, event.key);
+    }
+    
+    if (echo && io_techo(terminal->file)) {
+      __bd_terminal_write(terminal, length, buffer);
+    }
+  } else if (event.type == IO_EVENT_RESIZE) {
+    io_tresize(terminal->file, bd_width - 2, bd_height - 2);
   }
   
   return 0;
@@ -414,6 +562,10 @@ void bd_terminal_load(bd_view_t *view) {
   
   terminal->style = __bd_empty;
   terminal->file = io_topen(bd_config.shell_path);
+  
+  terminal->dirty = 0;
+  
+  io_tresize(terminal->file, bd_width - 2, bd_height - 2);
 }
 
 void bd_terminal_kill(bd_view_t *view) {

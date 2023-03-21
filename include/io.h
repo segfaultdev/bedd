@@ -46,6 +46,9 @@ void      io_cclose(io_file_t file);
 
 io_file_t io_topen(const char *path);
 void      io_tclose(io_file_t file);
+void      io_tresize(io_file_t file, int width, int height);
+void      io_tsend(io_file_t file, unsigned int key);
+int       io_techo(io_file_t file);
 
 extern const char *io_config;
 

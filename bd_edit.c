@@ -61,7 +61,7 @@ void bd_edit_draw(bd_view_t *view) {
   
   view->cursor = (bd_cursor_t) {
     -1, -1,
-  };
+    };
 }
 
 int bd_edit_event(bd_view_t *view, io_event_t event) {
