@@ -1298,7 +1298,7 @@ void bd_text_load(bd_view_t *view, const char *path) {
 int bd_text_save(bd_view_t *view, int closing) {
   bd_text_t *text = view->data;
   
-  if (text->path[0] && !text->dirty) {
+  if (closing && !text->path[0] && !text->dirty) {
     return 1;  // won't write to disk if it has a path and isn't dirty
   }
   
