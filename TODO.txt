@@ -1,4 +1,3 @@
-- Terminal tab
 - Allow alternative non-X11 clipboard (even if local)
 - Create .bdn format (bedd notes, allows for colored post-its with connections, links, images and todo lists)
 - Implement .sh, .html, .css, .js, .asm/.s and .py syntax highlighting
@@ -7,3 +6,5 @@
 - Use text-based format for config. file instead of binary
 - Binary hex-editor tab
 - Ctrl+U on every file tab type to reload file
+- Reduce RAM usage to a minimum by freeing blocks
+- Make terminal shell changeable in configuration
