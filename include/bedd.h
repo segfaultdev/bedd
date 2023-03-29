@@ -29,7 +29,7 @@ struct bd_config_t {
   };
   
   char shell_path[256];
-  const char *syntax_colors[st_color_count];
+  char syntax_colors[64][st_color_count];
 };
 
 struct bd_cursor_t {
