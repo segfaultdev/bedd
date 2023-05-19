@@ -225,7 +225,7 @@ int st_c_color(int prev_state, int *state, const char *text, int length) {
         is_keyword = 1;
       }
       
-      if (ident_length == 4 && strstr("auto,case,char,else,enum,goto,long,true,void", buffer)) {
+      if (ident_length == 4 && strstr("auto,bool,case,char,else,enum,goto,long,true,void", buffer)) {
         is_keyword = 1;
       }
       

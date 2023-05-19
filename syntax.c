@@ -96,6 +96,15 @@ syntax_t st_init(const char *filename) {
         .f_color = st_rs_color,
       };
     }
+    
+    if (!strcasecmp(filename, ".sh")) {
+      return (syntax_t) {
+        .lang = "sh/bash script",
+        .f_depth = st_depth,
+        .f_pair = st_c_pair,
+        .f_color = st_sh_color,
+      };
+    }
   }
   
   return (syntax_t) {

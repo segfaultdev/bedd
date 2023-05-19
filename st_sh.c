@@ -2,120 +2,151 @@
 #include <syntax.h>
 #include <ctype.h>
 
-// TODO: all of this (and fix dialog not resetting position on Enter)
+static int is_ident(char chr) {
+  return isalnum(chr) || strchr("_$", chr);
+}
 
 enum {
   st_sh_default,
-  st_sh_middle,
-  st_sh_title,
-  st_sh_code_inline,
-  st_sh_code_block,
-  st_sh_tag_first,
-  st_sh_tag_second,
-  st_sh_url,
+  st_sh_ident,
+  st_sh_number,
+  st_sh_string,
+  st_sh_char,
+  st_sh_line_comment,
+  st_sh_string_escape,
+  st_sh_char_escape,
 };
 
 int st_sh_color(int prev_state, int *state, const char *text, int length) {
-  if (prev_state == st_sh_url) {
-    if (!isalnum(text[0]) && !strchr(":/.-_%&=?@+", text[0])) {
-      *state = st_sh_middle;
+  if (prev_state == st_sh_line_comment) {
+    if (text[0] == '\n') {
+      *state = st_sh_default;
       return st_color_default;
     }
     
-    return st_color_function;
+    return st_color_comment;
   }
   
-  if (prev_state == st_sh_code_block) {
-    if (length >= 3 && text[0] == '`' && text[1] == '`' && text[2] == '`') {
-      *state = st_sh_middle;
+  if (prev_state == st_sh_string_escape) {
+    *state = st_sh_string;
+    return st_color_string;
+  }
+  
+  if (prev_state == st_sh_char_escape) {
+    *state = st_sh_char;
+    return st_color_string;
+  }
+  
+  if (prev_state == st_sh_string) {
+    if (text[0] == '\\') {
+      *state = st_sh_string_escape;
+    } else if (text[0] == '"') {
+      *state = st_sh_default;
+    }
+    
+    return st_color_string;
+  }
+  
+  if (prev_state == st_sh_char) {
+    if (text[0] == '\\') {
+      *state = st_sh_char_escape;
+    } else if (text[0] == '\'') {
+      *state = st_sh_default;
+    }
+    
+    return st_color_string;
+  }
+  
+  if (prev_state == st_sh_line_comment) {
+    if (text[0] == '\n') {
+      *state = st_sh_default;
     }
     
     return st_color_comment;
   }
   
-  if (prev_state == st_sh_code_inline) {
-    if (text[0] == '`') {
-      *state = st_sh_middle;
-    }
-    
+  if (text[0] == '#') {
+    *state = st_sh_line_comment;
     return st_color_comment;
   }
   
-  if (text[0] == '\n') {
+  if (strchr("+-*/%=&|^!?:.,;><\\~", text[0])) {
+    *state = st_sh_default;
+    return st_color_symbol;
+  }
+  
+  if (isspace(text[0]) || strchr("()[]{}\n", text[0])) {
     *state = st_sh_default;
     return st_color_default;
   }
   
-  if (prev_state == st_sh_tag_first) {
-    if (text[0] == ']') {
-      if (length >= 2 && text[1] == '(') {
-        *state = st_sh_tag_second;
-      } else {
-        *state = st_sh_middle;
-      }
-      
-      return st_color_default;
-    }
-    
-    return st_color_comment;
+  if (text[0] == '"') {
+    *state = st_sh_string;
+    return st_color_string;
   }
   
-  if (prev_state == st_sh_tag_second) {
-    if (text[0] == '(') {
-      return st_color_default;
-    } else if (text[0] == ')') {
-      *state = st_sh_middle;
-      return st_color_default;
-    }
-    
-    return st_color_function;
+  if (text[0] == '\'') {
+    *state = st_sh_char;
+    return st_color_string;
+  }
+  
+  if (text[0] == '#') {
+    *state = st_sh_ident;
+    return st_color_keyword;
   }
   
   if (prev_state == st_sh_default) {
-    if (text[0] == '#') {
-      *state = st_sh_title;
-      return st_color_type;
-    } else if (text[0] == '-' || text[0] == '*') {
-      *state = st_sh_middle;
-      return st_color_symbol;
-    } else if (!isspace(text[0])) {
-      *state = st_sh_middle;
-    }
-  }
-  
-  if (length >= 3 && text[0] == '`' && text[1] == '`' && text[2] == '`') {
-    *state = st_sh_code_block;
-    return st_color_comment;
-  }
-  
-  if (text[0] == '`') {
-    *state = st_sh_code_inline;
-    return st_color_comment;
-  }
-  
-  if (text[0] == '[') {
-    *state = st_sh_tag_first;
-    return st_color_default;
-  }
-  
-  if (prev_state == st_sh_middle && isspace(text[0])) {
-    return st_color_default;
-  }
-  
-  if (isalpha(text[0])) {
-    int start_length = 1;
-    
-    for (int i = 1; i < length; i++) {
-      if (!isalpha(text[i])) {
-        break;
+    if (isdigit(text[0])) {
+      *state = st_sh_number;
+      return st_color_number;
+    } else if (is_ident(text[0])) {
+      int is_keyword = 0;
+      int ident_length = 1;
+      
+      for (int i = 1; i < length; i++) {
+        if (!is_ident(text[i])) {
+          break;
+        }
+        
+        ident_length++;
       }
       
-      start_length++;
-    }
-    
-    if (length >= start_length + 3 && text[start_length + 0] == ':' && text[start_length + 1] == '/' && text[start_length + 2] == '/') {
-      *state = st_sh_url;
-      return st_color_function;
+      char buffer[ident_length + 1];
+      
+      memcpy(buffer, text, ident_length);
+      buffer[ident_length] = '\0';
+      
+      if (ident_length == 2 && strstr("do,fi,if,in", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 3 && strstr("set,for", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 4 && strstr("case,done,echo,esac,eval,exec,exit,read,trap,wait", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 5 && strstr("break,shift,umask,unset,while", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 6 && strstr("export,return,ulimit", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 8 && strstr("continue,readonly", buffer)) {
+        is_keyword = 1;
+      }
+      
+      *state = st_sh_ident;
+      
+      if (is_keyword) {
+        return st_color_keyword;
+      } else {
+        return st_color_default;
+      }
     }
   }
   
