@@ -663,7 +663,7 @@ static int __bd_text_spaces(bd_text_t *text, int y) {
 
 void bd_text_draw(bd_view_t *view) {
   bd_text_t *text = view->data;
-  int lind_size = 1, lind_max = 10, lind_left = 2, lind_right = 2;
+  int lind_size = 1, lind_max = 10, lind_left = 2, lind_right = 2, lind_post = 1;
   
   while (text->count >= lind_max) {
     lind_size++;
@@ -671,10 +671,10 @@ void bd_text_draw(bd_view_t *view) {
   }
   
   if (bd_config.column_tiny) {
-    lind_size = 4, lind_left = 0, lind_right = 1;
+    lind_size = 4, lind_left = 0, lind_right = 1, lind_post = 0;
   }
   
-  int view_width = bd_width - (lind_size + lind_left + lind_right + 1 + 2);
+  int view_width = bd_width - (lind_size + lind_left + lind_right + lind_post + 2);
   int view_height = bd_height - 2;
   
   bd_cursor_t min_cursor = BD_CURSOR_MIN(text->cursor, text->hold_cursor);
@@ -719,8 +719,10 @@ void bd_text_draw(bd_view_t *view) {
     int y = i + text->scroll.y;
     int is_selected = 0;
     
+    int guide_done = 0;
+    
     if (y < text->count) {
-      io_printf("%s%*s%*d%*s" IO_NORMAL "%c", (y == text->cursor.y ? IO_INVERT : IO_SHADOW_1), lind_left, "", lind_size, y + 1, lind_right, "", text->scroll.x ? '<' : ' ');
+      io_printf("%s%*s%*d%*s%c" IO_NORMAL "%*s", (y == text->cursor.y ? IO_INVERT : IO_SHADOW_1), lind_left, "", lind_size, y + 1, lind_right - 1, "", text->scroll.x ? '<' : ' ', lind_post, "");
       
       bd_line_t *line = text->lines + y;
       int space_count = __bd_text_spaces(text, y);
@@ -747,9 +749,24 @@ void bd_text_draw(bd_view_t *view) {
           }
         }
         
-        if (x == line->length) {
+        if (x == bd_config.column_guide) {
+          guide_done = 1;
+        }
+        
+        if (x <= line->length && x == line->length) {
+          if (bd_config.column_guide > 0 && x == bd_config.column_guide) {
+            if (is_selected) {
+              io_printf(IO_DARK_GRAY "\u2551");
+            } else {
+              io_printf(IO_BLACK "\u2551");
+            }
+          }
+          
           text->syntax.f_color(state, &state, "\n", 1);
-          io_printf(" ");
+          
+          if (x != bd_config.column_guide) {
+            io_printf(" ");
+          }
         } else if (x > line->length) {
           break;
         } else {
@@ -786,14 +803,40 @@ void bd_text_draw(bd_view_t *view) {
             memcpy(utf_8_buffer, line->data + byte_index, utf_8_size);
             utf_8_buffer[utf_8_size] = '\0';
             
-            io_printf("%s%s", bd_config.syntax_colors[temp_color], utf_8_buffer);
+            if (bd_config.column_guide > 0 && x >= bd_config.column_guide) {
+              io_printf(is_selected ? IO_DARK_GRAY : IO_BLACK);
+            } else {
+              io_printf(bd_config.syntax_colors[temp_color]);
+            }
+            
+            if (utf_8_buffer[0] == ' ' && (bd_config.column_guide > 0 && x == bd_config.column_guide)) {
+              io_printf("\u2551");
+            } else {
+              io_printf("%s", utf_8_buffer);
+            }
+            
             last_color = color;
+          }
+        }
+        
+        if (bd_config.column_guide > 0 && x == bd_config.column_guide) {
+          if (is_selected) {
+            io_printf(IO_SHADOW_1);
+          } else {
+            io_printf(IO_NO_SHADOW);
           }
         }
       }
       
-      io_printf(IO_NORMAL IO_CLEAR_LINE IO_SHADOW_1);
+      io_printf(IO_NORMAL IO_CLEAR_LINE);
+      
+      if (!guide_done && bd_config.column_guide > 0) {
+        io_cursor(lind_size + lind_left + lind_right + lind_post + bd_config.column_guide, 2 + i);
+        io_printf(IO_BLACK "\u2551" IO_NORMAL);
+      }
+      
       io_cursor(bd_width - 2, 2 + i);
+      io_printf(IO_SHADOW_1);
       
       for (int j = view_width + text->scroll.x; j < line->length; j++) {
         text->syntax.f_color(state, &state, (const char *)(line->data + j), line->length - j);
@@ -806,12 +849,16 @@ void bd_text_draw(bd_view_t *view) {
       io_printf((text->scroll.x + view_width < line->length) ? ">" : " ");
       line->syntax_state = state;
     } else {
-      io_printf("%*s: ", (lind_size + lind_left + lind_right) - 1, "");
+      io_printf("%*s:%*s", (lind_size + lind_left + lind_right) - 1, "", lind_post, "");
+      io_printf(IO_NORMAL IO_CLEAR_LINE);
       
-      io_printf(IO_CLEAR_LINE IO_SHADOW_1);
+      if (!guide_done && bd_config.column_guide > 0) {
+        io_cursor(lind_size + lind_left + lind_right + lind_post + bd_config.column_guide, 2 + i);
+        io_printf(IO_BLACK "\u2551" IO_NORMAL);
+      }
+      
       io_cursor(bd_width - 2, 2 + i);
-      
-      io_printf(":");
+      io_printf(IO_SHADOW_1 ":");
     }
     
     int scroll_start_y = (text->scroll.y * (bd_height - 2)) / (text->count + (bd_height - 2));
@@ -852,7 +899,7 @@ void bd_text_draw(bd_view_t *view) {
 
 int bd_text_event(bd_view_t *view, io_event_t event) {
   bd_text_t *text = view->data;
-  int lind_size = 1, lind_max = 10, lind_left = 2, lind_right = 2;
+  int lind_size = 1, lind_max = 10, lind_left = 2, lind_right = 2, lind_post = 1;
   
   while (text->count >= lind_max) {
     lind_size++;
@@ -860,7 +907,7 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
   }
   
   if (bd_config.column_tiny) {
-    lind_size = 4, lind_left = 0, lind_right = 1;
+    lind_size = 4, lind_left = 0, lind_right = 1, lind_post = 0;
   }
   
   if (event.type == IO_EVENT_KEY_PRESS) {
@@ -1177,7 +1224,7 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
         }
       }
     } else {
-      int cursor_x = (event.mouse.x - (lind_size + lind_left + lind_right + 1)) + text->scroll.x;
+      int cursor_x = (event.mouse.x - (lind_size + lind_left + lind_right + lind_post)) + text->scroll.x;
       int cursor_y = (event.mouse.y - 2) + text->scroll.y;
       
       if (cursor_y < 0) {

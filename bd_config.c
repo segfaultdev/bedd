@@ -14,7 +14,7 @@ bd_config_t bd_config = (bd_config_t) {
   .theme = theme_17,
   .xterm_colors = 1,
   .terminal_count = 2048,
-  .column_guide = 72,
+  .column_guide = 0,
   .column_tiny = 0,
   
   .shell_path = "/usr/bin/sh",

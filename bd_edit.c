@@ -15,7 +15,7 @@ static const int __edit_limits[] = {
   0, theme_count - 1,
   0, 1,
   256, 16384,
-  32, 180,
+  0, 180,
   0, 1,
 };
 
