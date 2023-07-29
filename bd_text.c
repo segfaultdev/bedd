@@ -663,14 +663,18 @@ static int __bd_text_spaces(bd_text_t *text, int y) {
 
 void bd_text_draw(bd_view_t *view) {
   bd_text_t *text = view->data;
-  int lind_size = 1, lind_max = 10;
+  int lind_size = 1, lind_max = 10, lind_left = 2, lind_right = 2;
   
   while (text->count >= lind_max) {
     lind_size++;
     lind_max *= 10;
   }
   
-  int view_width = bd_width - ((lind_size + 5) + 2);
+  if (bd_config.column_tiny) {
+    lind_size = 4, lind_left = 0, lind_right = 1;
+  }
+  
+  int view_width = bd_width - (lind_size + lind_left + lind_right + 1 + 2);
   int view_height = bd_height - 2;
   
   bd_cursor_t min_cursor = BD_CURSOR_MIN(text->cursor, text->hold_cursor);
@@ -716,11 +720,7 @@ void bd_text_draw(bd_view_t *view) {
     int is_selected = 0;
     
     if (y < text->count) {
-      if (y == text->cursor.y) {
-        io_printf(IO_INVERT "  %*d %c" IO_NORMAL " ", lind_size, y + 1, text->scroll.x ? '<' : ' ');
-      } else {
-        io_printf(IO_SHADOW_1 "  %*d %c" IO_NORMAL " ", lind_size, y + 1, text->scroll.x ? '<' : ' ');
-      }
+      io_printf("%s%*s%*d%*s" IO_NORMAL "%c", (y == text->cursor.y ? IO_INVERT : IO_SHADOW_1), lind_left, "", lind_size, y + 1, lind_right, "", text->scroll.x ? '<' : ' ');
       
       bd_line_t *line = text->lines + y;
       int space_count = __bd_text_spaces(text, y);
@@ -806,7 +806,7 @@ void bd_text_draw(bd_view_t *view) {
       io_printf((text->scroll.x + view_width < line->length) ? ">" : " ");
       line->syntax_state = state;
     } else {
-      io_printf("  %*c : ", lind_size, ' ');
+      io_printf("%*s: ", (lind_size + lind_left + lind_right) - 1, "");
       
       io_printf(IO_CLEAR_LINE IO_SHADOW_1);
       io_cursor(bd_width - 2, 2 + i);
@@ -828,7 +828,7 @@ void bd_text_draw(bd_view_t *view) {
   
   int temp_x = text->cursor.x > text->lines[text->cursor.y].length ? text->lines[text->cursor.y].length : text->cursor.x;
   
-  int cursor_x = (temp_x - text->scroll.x) + (lind_size + 5);
+  int cursor_x = (temp_x - text->scroll.x) + (lind_size + lind_left + lind_right + 1);
   int cursor_y = (text->cursor.y - text->scroll.y) + 2;
   
   if (cursor_x < lind_size + 5 || cursor_x >= bd_width - 2) {
@@ -852,6 +852,16 @@ void bd_text_draw(bd_view_t *view) {
 
 int bd_text_event(bd_view_t *view, io_event_t event) {
   bd_text_t *text = view->data;
+  int lind_size = 1, lind_max = 10, lind_left = 2, lind_right = 2;
+  
+  while (text->count >= lind_max) {
+    lind_size++;
+    lind_max *= 10;
+  }
+  
+  if (bd_config.column_tiny) {
+    lind_size = 4, lind_left = 0, lind_right = 1;
+  }
   
   if (event.type == IO_EVENT_KEY_PRESS) {
     if (IO_UNSHIFT(event.key) == '\t' && memcmp(&(text->cursor), &(text->hold_cursor), sizeof(bd_cursor_t))) {
@@ -1167,14 +1177,7 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
         }
       }
     } else {
-      int lind_size = 1, lind_max = 10;
-      
-      while (text->count >= lind_max) {
-        lind_size++;
-        lind_max *= 10;
-      }
-      
-      int cursor_x = (event.mouse.x - (5 + lind_size)) + text->scroll.x;
+      int cursor_x = (event.mouse.x - (lind_size + lind_left + lind_right + 1)) + text->scroll.x;
       int cursor_y = (event.mouse.y - 2) + text->scroll.y;
       
       if (cursor_y < 0) {

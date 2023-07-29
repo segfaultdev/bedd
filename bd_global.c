@@ -26,8 +26,12 @@ void bd_global_draw(void) {
       io_printf(IO_INVERT);
     }
     
-    io_printf("\u2576");
-    width -= 4;
+    if (bd_config.column_tiny) {
+      width -= 1;
+    } else {
+      io_printf("\u2576");
+      width -= 4;
+    }
     
     char title[256];
     strcpy(title, bd_views[i].title);
@@ -49,7 +53,11 @@ void bd_global_draw(void) {
       io_printf("\u2500");
     }
     
-    io_printf("\u2500\u00D7\u2574");
+    if (bd_config.column_tiny) {
+      io_printf("\u2574");
+    } else {
+      io_printf("\u2500\u00D7\u2574");
+    }
     
     if (i == bd_view) {
       io_printf(IO_SHADOW_1);

@@ -14,9 +14,12 @@ static const int __edit_limits[] = {
   4, 128,
   0, theme_count - 1,
   0, 1,
+  256, 16384,
+  32, 180,
+  0, 1,
 };
 
-static const int __edit_count = 10;
+static const int __edit_count = 13;
 
 void bd_edit_draw(bd_view_t *view) {
   io_cursor(0, 2);
@@ -59,9 +62,18 @@ void bd_edit_draw(bd_view_t *view) {
   io_cursor(2, 17);
   io_printf(IO_BOLD "%sxterm 256-color mode:" IO_NORMAL " %s", (index == 9 ? IO_INVERT : ""), bd_config.xterm_colors ? "Yes" : "No");
   
+  io_cursor(2, 19);
+  io_printf(IO_BOLD "%sTerminal line history length (default: 2048):" IO_NORMAL " %d", (index == 10 ? IO_INVERT : ""), bd_config.terminal_count);
+  
+  io_cursor(2, 21);
+  io_printf(IO_BOLD "%sColumn guide position (0 disables it, default: 72):" IO_NORMAL " %d", (index == 11 ? IO_INVERT : ""), bd_config.column_guide);
+  
+  io_cursor(2, 22);
+  io_printf(IO_BOLD "%sEnable compact UI (for ~80-column terminals):" IO_NORMAL " %s", (index == 12 ? IO_INVERT : ""), bd_config.column_tiny ? "Yes" : "No");
+  
   view->cursor = (bd_cursor_t) {
     -1, -1,
-    };
+  };
 }
 
 int bd_edit_event(bd_view_t *view, io_event_t event) {

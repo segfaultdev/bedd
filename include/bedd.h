@@ -12,20 +12,22 @@ typedef struct bd_view_t bd_view_t;
 struct bd_config_t {
   union {
     struct {
-      int indent_width;        // Anything other than 2 or 4 would be cringe af, but we must still provide room for customization and blah blah blah :p
-      int indent_spaces;       // Afects saving/loading, as in editing they're still shown as spaces no matter what
-      int indent_guides;       // Show indentation guides
-      int scroll_step;         // Lines to move per scroll step
-      int scroll_image_step;   // Blocks to move per image scroll step
-      int scroll_width_margin; // When scrolling sideways, how much margin to left to the right
-      int undo_edit_count;     // Character insertions/deletions per undo save
-      int undo_depth;          // Maximum amount of undoable steps
-      int theme;               // Selected theme
-      int xterm_colors;        // Enable xterm-like 256-color mode
-      int terminal_count;      // Maximum terminal line count
+      int indent_width;        // Anything other than 2 or 4 would be cringe af, but we must still provide room for customization and blah blah blah :p.
+      int indent_spaces;       // Afects saving/loading, as in editing they're still shown as spaces no matter what.
+      int indent_guides;       // Show indentation guides.
+      int scroll_step;         // Lines to move per scroll step.
+      int scroll_image_step;   // Blocks to move per image scroll step.
+      int scroll_width_margin; // When scrolling sideways, how much margin to left to the right.
+      int undo_edit_count;     // Character insertions/deletions per undo save.
+      int undo_depth;          // Maximum amount of undoable steps.
+      int theme;               // Selected theme.
+      int xterm_colors;        // Enable xterm-like 256-color mode.
+      int terminal_count;      // Maximum terminal line count.
+      int column_guide;        // Distance to show the guide at (or 0 if disabled).
+      int column_tiny;         // Enables smaller UI, designed for terminals with less columns (makes tabs smaller by path reduction, and reduces line number margins).
     };
     
-    int raw_data[11];
+    int raw_data[13];
   };
   
   char shell_path[256];
