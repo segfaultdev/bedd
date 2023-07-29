@@ -671,7 +671,7 @@ void bd_text_draw(bd_view_t *view) {
   }
   
   if (bd_config.column_tiny) {
-    lind_size = 4, lind_left = 0, lind_right = 1, lind_post = 0;
+    lind_size = 4, lind_left = 1, lind_right = 1, lind_post = 0;
   }
   
   int view_width = bd_width - (lind_size + lind_left + lind_right + lind_post + 2);
@@ -907,7 +907,7 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
   }
   
   if (bd_config.column_tiny) {
-    lind_size = 4, lind_left = 0, lind_right = 1, lind_post = 0;
+    lind_size = 4, lind_left = 1, lind_right = 1, lind_post = 0;
   }
   
   if (event.type == IO_EVENT_KEY_PRESS) {
