@@ -43,7 +43,8 @@ syntax_t st_init(const char *filename) {
   if (filename) {
     if (!strcasecmp(filename, ".h") || !strcasecmp(filename, ".c") ||
         !strcasecmp(filename, ".hh") || !strcasecmp(filename, ".cc") ||
-        !strcasecmp(filename, ".hpp") || !strcasecmp(filename, ".cpp")) {
+        !strcasecmp(filename, ".hpp") || !strcasecmp(filename, ".cpp") ||
+        !strcasecmp(filename, ".ij")) {
       return (syntax_t) {
         .lang = "C/C++",
         .f_depth = st_c_depth,
