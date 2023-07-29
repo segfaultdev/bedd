@@ -875,7 +875,7 @@ void bd_text_draw(bd_view_t *view) {
   
   int temp_x = text->cursor.x > text->lines[text->cursor.y].length ? text->lines[text->cursor.y].length : text->cursor.x;
   
-  int cursor_x = (temp_x - text->scroll.x) + (lind_size + lind_left + lind_right + 1);
+  int cursor_x = (temp_x - text->scroll.x) + (lind_size + lind_left + lind_right + lind_post);
   int cursor_y = (text->cursor.y - text->scroll.y) + 2;
   
   if (cursor_x < lind_size + 5 || cursor_x >= bd_width - 2) {
