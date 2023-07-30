@@ -749,11 +749,11 @@ void bd_text_draw(bd_view_t *view) {
           }
         }
         
-        if (x == bd_config.column_guide) {
+        if (x <= line->length && bd_config.column_guide > 0 && x == bd_config.column_guide) {
           guide_done = 1;
         }
         
-        if (x <= line->length && x == line->length) {
+        if (x == line->length) {
           if (bd_config.column_guide > 0 && x == bd_config.column_guide) {
             if (is_selected) {
               io_printf(IO_DARK_GRAY "\u2551");
@@ -764,7 +764,7 @@ void bd_text_draw(bd_view_t *view) {
           
           text->syntax.f_color(state, &state, "\n", 1);
           
-          if (x != bd_config.column_guide) {
+          if (!bd_config.column_guide || x != bd_config.column_guide) {
             io_printf(" ");
           }
         } else if (x > line->length) {
