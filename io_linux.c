@@ -328,6 +328,31 @@ void io_flush(void) {
   fflush(stdout);
 }
 
+static unsigned char indirect_buffer[256];
+static int indirect_read_head = 0, indirect_write_head = 0;
+
+static int indirect_read(unsigned char *ptr, int count) {
+  int done_count = 0;
+  
+  while (count && indirect_read_head != indirect_write_head) {
+    *(ptr++) = indirect_buffer[indirect_read_head];
+    
+    indirect_read_head = (indirect_read_head + 1) % 256;
+    done_count++, count--;
+  }
+  
+  if (count) {
+    done_count += read(STDIN_FILENO, ptr, count);
+  }
+  
+  return done_count;
+}
+
+static void indirect_unread(unsigned char chr) {
+  indirect_buffer[indirect_write_head] = chr;
+  indirect_write_head = (indirect_write_head + 1) % 256;
+}
+
 io_event_t io_get_event(void) {
   static time_t old_time = 0;
   static int old_width = 0, old_height = 0;
@@ -363,14 +388,14 @@ io_event_t io_get_event(void) {
   unsigned char ansi_buffer[256];
   unsigned char chr;
   
-  if (read(STDIN_FILENO, &chr, 1) > 0) {
+  if (indirect_read(&chr, 1) > 0) {
     unsigned int key = chr;
     
     if (chr == '\x1B') {
-      read(STDIN_FILENO, ansi_buffer, 1);
+      indirect_read(ansi_buffer, 1);
       
       if (ansi_buffer[0] == '[') {
-        read(STDIN_FILENO, ansi_buffer + 1, 1);
+        indirect_read(ansi_buffer + 1, 1);
       }
       
       if (ansi_buffer[0] < 32) {
@@ -384,10 +409,10 @@ io_event_t io_get_event(void) {
       } else if (ansi_buffer[1] == 'D') {
         key = IO_ARROW_LEFT;
       } else if (isdigit(ansi_buffer[1])) {
-        read(STDIN_FILENO, ansi_buffer + 2, 1);
+        indirect_read(ansi_buffer + 2, 1);
         
         if (ansi_buffer[2] == ';') {
-          read(STDIN_FILENO, ansi_buffer + 3, 2);
+          indirect_read(ansi_buffer + 3, 2);
           
           if (ansi_buffer[4] == 'A') {
             key = IO_ARROW_UP;
@@ -418,6 +443,11 @@ io_event_t io_get_event(void) {
           } else if (ansi_buffer[1] == '6') {
             key = IO_PAGE_DOWN;
           }
+        } else {
+          indirect_unread(ansi_buffer[1]);
+          indirect_unread(ansi_buffer[2]);
+          
+          goto mouse_fix_for_kitty;
         }
       } else if (ansi_buffer[1] == 'H') {
         key = IO_HOME;
@@ -426,11 +456,12 @@ io_event_t io_get_event(void) {
       } else if (ansi_buffer[1] == 'Z') {
         key = IO_SHIFT('\t');
       } else if (ansi_buffer[1] == '<') {
+mouse_fix_for_kitty:
         int mouse_type = 0, mouse_x = 0, mouse_y = 0;
         int offset = 2;
         
         for (;;) {
-          read(STDIN_FILENO, ansi_buffer + offset++, 1);
+          indirect_read(ansi_buffer + offset++, 1);
           
           if (isalpha(ansi_buffer[offset - 1])) {
             break;
@@ -509,7 +540,7 @@ io_event_t io_get_event(void) {
     }
     
     if (utf_8_size > 1) {
-      read(STDIN_FILENO, ansi_buffer, utf_8_size);
+      indirect_read(ansi_buffer, utf_8_size);
       key = chr | 0x80000000;
       
       for (int i = 0; i < utf_8_size - 1; i++) {
