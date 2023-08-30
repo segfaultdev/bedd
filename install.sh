@@ -1,5 +1,5 @@
-#!/usr/bin/sh
+#!/usr/bin/bash
 
-sh build.sh
+bash build.sh
 sudo cp bedd /usr/local/bin/
 rm ~/.beddcfg

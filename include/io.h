@@ -54,21 +54,24 @@ extern const char *io_config;
 
 // --- Output functions ---
 
+#define IO_THEME_BOLD   "\x1D"
+#define IO_THEME_UNBOLD "\x1E"
+
 #define IO_NORMAL        "\x1B[0m\x0E"
-#define IO_INVERT        "\x1B[0m\x1B[1m\x1C"
-#define IO_BOLD          "\x1B[0m\x1B[1m\x0E"
+#define IO_INVERT        "\x1B[0m" IO_THEME_BOLD "\x1C"
+#define IO_BOLD          "\x1B[0m" IO_THEME_BOLD "\x0E"
 #define IO_UNDERLINE     "\x1B[0m\x1B[4m\x0E"
 #define IO_NO_SHADOW     "\x0E"
-#define IO_SHADOW_1      "\x1B[22m\x1B[24m\x1B[27m\x0F"
-#define IO_SHADOW_2      "\x1B[22m\x1B[24m\x1B[27m\x10"
-#define IO_BOLD_SHADOW_1 "\x1B[0m\x1B[1m\x0F"
-#define IO_BOLD_SHADOW_2 "\x1B[0m\x1B[1m\x10"
+#define IO_SHADOW_1      IO_THEME_UNBOLD "\x1B[24m\x1B[27m\x0F"
+#define IO_SHADOW_2      IO_THEME_UNBOLD "\x1B[24m\x1B[27m\x10"
+#define IO_BOLD_SHADOW_1 "\x1B[0m" IO_THEME_BOLD "\x0F"
+#define IO_BOLD_SHADOW_2 "\x1B[0m" IO_THEME_BOLD "\x10"
 
 #define IO_XTERM_FORE(color) "\x1B[38;5;" color "m"
 #define IO_XTERM_BACK(color) "\x1B[48;5;" color "m"
 
 #define IO_DEFAULT_FORE "\x1B[39m"
-#define IO_DEFAULT_BACK "\x1B[49m"
+#define IO_DEFAULT_BACK "\x1B[49;25m"
 
 #define IO_WHITE     "\x1B[22m\x11"
 #define IO_BLACK     "\x1B[22m\x12"

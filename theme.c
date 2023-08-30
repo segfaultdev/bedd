@@ -40,6 +40,25 @@ static const char *__format_theme_16[] = {
   "\x1B[7m",
 };
 
+static const char *__format_theme_16_tty[] = {
+  "\x1B[49;25m",
+  "\x1B[100;5m",
+  "\x1B[47;25m",
+  
+  "\x1B[97;1m",
+  "\x1B[30;22m",
+  "\x1B[31;1m",
+  "\x1B[32;1m",
+  "\x1B[33;1m",
+  "\x1B[34;1m",
+  "\x1B[35;1m",
+  "\x1B[36;1m",
+  "\x1B[37;1m",
+  "\x1B[90;1m",
+  
+  "\x1B[49;7;5m",
+};
+
 static const char *__format_theme_cga_black[] = {
   "\x1B[38;5;231m\x1B[48;5;16m\x1B[1m",
   "\x1B[38;5;231m\x1B[48;5;59m\x1B[1m",
@@ -138,6 +157,7 @@ static const char *__format_theme_solarized_dark[] = {
 const char *theme_names[] = {
   "16 colors + background (terminal)",
   "16 colors (terminal)",
+  "16 colors + blink attr. (terminal)",
   "CGA black (256-color)",
   "CGA blue (256-color)",
   "Monochromatic green (256-color)",
@@ -148,6 +168,7 @@ const char *theme_names[] = {
 static const char **__format_themes[] = {
   __format_theme_17,
   __format_theme_16,
+  __format_theme_16_tty,
   __format_theme_cga_black,
   __format_theme_cga_blue,
   __format_theme_crt_green,
@@ -159,13 +180,40 @@ void theme_apply(char *buffer) {
   int length = strlen(buffer);
   
   for (int i = 0; i < length; i++) {
-    if ((buffer[i] >= 0x0E && buffer[i] <= 0x1A) || buffer[i] == 0x1C) {
-      if (buffer[i] == 0x1C) {
-        buffer[i]--;
+    if ((buffer[i] >= 0x0E && buffer[i] <= 0x1A) ||
+        (buffer[i] >= 0x1C && buffer[i] <= 0x1E)) {
+      const char *str;
+      
+      if (buffer[i] == 0x1D) {
+        if (bd_config.theme == theme_16_tty) {
+          str = "";
+        } else {
+          str = "\x1B[1m";
+        }
+      } else if (buffer[i] == 0x1E) {
+        if (bd_config.theme == theme_16_tty) {
+          str = "";
+        } else {
+          str = "\x1B[22m";
+        }
+      } else {
+        if (buffer[i] == 0x1C) {
+          buffer[i]--;
+        }
+        
+        str = __format_themes[bd_config.theme][buffer[i] - 0x0E];
       }
       
-      const char *str = __format_themes[bd_config.theme][buffer[i] - 0x0E];
       int str_length = strlen(str);
+      
+      if (str_length == 0) {
+        for (int j = i; j < length; j++) {
+          buffer[j] = buffer[j + 1];
+        }
+        
+        length--, i--;
+        continue;
+      }
       
       for (int j = length; j >= i + 1; j--) {
         buffer[j + (str_length - 1)] = buffer[j];

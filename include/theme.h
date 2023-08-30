@@ -4,6 +4,7 @@
 enum {
   theme_17,
   theme_16,
+  theme_16_tty,
   theme_cga_black,
   theme_cga_blue,
   theme_crt_green,

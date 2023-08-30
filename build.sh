@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/usr/bin/bash
 
 CFLAGS="-Os -s"
 # CFLAGS="-Og -g -fsanitize=undefined,address"

@@ -161,6 +161,8 @@ int bd_dialog(const char *title, int __width, const char *format, ...) {
             buffer_2[length_2] = '\0';
             offset++; // skip semicolon or bracket
             
+            io_printf(IO_WHITE);
+            
             if (index == select_index) {
               io_printf(" " IO_INVERT " %s " IO_SHADOW_1, buffer_2);
             } else {
