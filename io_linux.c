@@ -2,6 +2,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <stdbool.h>
 #include <termios.h>
 #include <dirent.h>
 #include <limits.h>
@@ -457,71 +458,87 @@ io_event_t io_get_event(void) {
         key = IO_SHIFT('\t');
       } else if (ansi_buffer[1] == '<') {
 mouse_fix_for_kitty:
-        int mouse_type = 0, mouse_x = 0, mouse_y = 0;
-        int offset = 2;
+        int mouse_mask = 0, mouse_x = 0, mouse_y = 0;
+        char chr;
         
         for (;;) {
-          indirect_read(ansi_buffer + offset++, 1);
+          indirect_read(&chr, 1);
           
-          if (isalpha(ansi_buffer[offset - 1])) {
+          if (!isdigit(chr)) {
             break;
           }
+          
+          mouse_mask = mouse_mask * 10 + (chr - '0');
         }
         
-        int mouse_state = isupper(ansi_buffer[offset - 1]);
-        offset = 2;
-        
-        while (isdigit(ansi_buffer[offset])) {
-          mouse_type = (mouse_type * 10) + (ansi_buffer[offset] - '0');
-          offset++;
+        if (isalpha(chr)) {
+          goto mouse_parse_end;
         }
         
-        mouse_type &= ~32;
-        offset++;
-        
-        while (isdigit(ansi_buffer[offset])) {
-          mouse_x = (mouse_x * 10) + (ansi_buffer[offset] - '0');
-          offset++;
+        for (;;) {
+          indirect_read(&chr, 1);
+          
+          if (!isdigit(chr)) {
+            break;
+          }
+          
+          mouse_x = mouse_x * 10 + (chr - '0');
         }
         
-        offset++;
-        
-        while (isdigit(ansi_buffer[offset])) {
-          mouse_y = (mouse_y * 10) + (ansi_buffer[offset] - '0');
-          offset++;
+        if (mouse_x > 0) {
+          mouse_x--;
         }
         
-        mouse_x--;
-        mouse_y--;
+        if (isalpha(chr)) {
+          goto mouse_parse_end;
+        }
         
-        // 0 = left click, 1 = middle click, 2 = right click
+        for (;;) {
+          indirect_read(&chr, 1);
+          
+          if (!isdigit(chr)) {
+            break;
+          }
+          
+          mouse_y = mouse_y * 10 + (chr - '0');
+        }
         
-        if (mouse_type == 0) {
-          if (mouse_state) {
-            io_event_t event = (io_event_t) {
-              .type = mouse_down ? IO_EVENT_MOUSE_MOVE : IO_EVENT_MOUSE_DOWN,
-              .mouse = {.x = mouse_x, .y = mouse_y},
-            };
-            
-            mouse_down = mouse_state;
-            return event;
+        if (mouse_y > 0) {
+          mouse_y--;
+        }
+        
+mouse_parse_end:
+        bool is_down = !(bool)(mouse_mask & 1);
+        bool is_right = (bool)(mouse_mask & 2);
+        
+        int move_type = (mouse_mask / 32) % 4;
+        
+        if (move_type == 1) {
+          is_down = (is_down && isupper(chr));
+          
+          if (mouse_down && is_down) {
+            move_type = 2;
           } else {
-            mouse_down = 0;
+            mouse_down = is_down;
             
             return (io_event_t) {
-              .type = IO_EVENT_MOUSE_UP,
+              .type = (is_down ? IO_EVENT_MOUSE_DOWN : IO_EVENT_MOUSE_UP),
               .mouse = {.x = mouse_x, .y = mouse_y},
             };
           }
-        } else if (mouse_type == 64) {
+        }
+        
+        if (move_type == 2) {
           return (io_event_t) {
-            .type = IO_EVENT_SCROLL,
-            .scroll = -1,
+            .type = IO_EVENT_MOUSE_MOVE,
+            .mouse = {.x = mouse_x, .y = mouse_y},
           };
-        } else if (mouse_type == 65) {
+        }
+        
+        if (move_type == 3) {
           return (io_event_t) {
             .type = IO_EVENT_SCROLL,
-            .scroll = 1,
+            .scroll = (is_down ? -1 : 1),
           };
         }
       }
