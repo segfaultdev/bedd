@@ -233,7 +233,7 @@ int st_c_color(int prev_state, int *state, const char *text, int length) {
         is_keyword = 1;
       }
       
-      if (ident_length == 6 && strstr("double,extern,inline,public,return,signed,sizeof,static,struct,switch", buffer)) {
+      if (ident_length == 6 && strstr("delete,double,extern,inline,public,return,signed,sizeof,static,struct,switch", buffer)) {
         is_keyword = 1;
       }
       
